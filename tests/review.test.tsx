@@ -207,6 +207,18 @@ describe("review 결과 (2판)", () => {
     // 묻지 못한 항목은 reason 의 말만(까닭 이름을 싣지 않는다).
     expect(text).toContain("저장소당 금액 상한에 걸려 묻지 못했습니다");
   });
+
+  it("확인할 것이 0건이면 맨 위 한 줄 바로 아래에 0의 뜻을 둔다(목록 줄과 같은 수, docs/commitments.md 의 1)", () => {
+    const data = sample();
+    const all = (data.checklist as Record<string, unknown>[]).map((item) => ({ ...item, status: "not-applicable" }));
+    const zero = parseReview({ ...data, checklist: all })!;
+    const html = renderToStaticMarkup(<ReviewView review={zero} />);
+    expect(textOf(elementsOf(html, '<p class="overview">')[0])).toContain("확인할 것 0건");
+    expect(html).toContain(`<p class="hint zero-note">${SITE.zeroIsNotClearance}</p>`);
+    expect(html.indexOf("zero-note")).toBeGreaterThan(html.indexOf('<p class="overview">'));
+    // 0이 아니면 두지 않는다.
+    expect(renderToStaticMarkup(<ReviewView review={parseReview(data)!} />)).not.toContain("zero-note");
+  });
 });
 
 describe("사례 쪽: review 2판 실측(2026-11-12)", () => {

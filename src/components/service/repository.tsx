@@ -4,7 +4,7 @@ import { keepArticle } from "@/components/text";
 import { policyCardId } from "@/lib/pack/href";
 import { scopeLabel } from "@/lib/report/scope";
 import { AI_CLEARED, AI_DISMISSED } from "@/lib/report/record";
-import { STATUS_LABEL } from "@/lib/report/status";
+import { CHECKLIST_LABEL, STATUS_LABEL } from "@/lib/report/status";
 import { aiReviewRan, type LocationView, type PolicyView, type ReportView } from "@/lib/report/view-model";
 import { analysisHref, shortCommit } from "@/lib/service/href";
 import { duration, finishedAt, formatKst } from "@/lib/service/steps";
@@ -27,7 +27,8 @@ export const LATEST_FINDINGS = 5;
  * 저장소 쪽의 "최신 분석" 상자(docs/redesign.md 3장 "저장소", 목업 repo). 가장 나중에 끝난 분석 하나를, 이미 저장된 CLI 결과를
  * 결과 화면과 같은 파서·화면 구조(`view`)로 읽어 요약한다. 새로 꾸미는 정보는 없다.
  *
- * - 머리 줄: 배지, 분석 id, 커밋, 요청 시각(KST), 걸린 시간(단계의 시각에서만), 사람이 볼 곳 N건, 결과 보기. 판정자를 켠
+ * - 머리 줄: 배지, 분석 id, 커밋, 요청 시각(KST), 걸린 시간(단계의 시각에서만), 그 커밋의 review 가 있으면 체크리스트의 확인할 것
+ *   N건(AI 검토가 본체, 2026-11-15), 정적 검사의 사람이 볼 곳 N건, 결과 보기. 판정자를 켠
  *   분석이면 AI 가 푼 경고 수(`run.ai_cleared`)와 적용 질문으로 빠진 판정 수(`run.ai_dismissed`. 목록이 없으면 알 수 없음)를
  *   더한다.
  * - 본문: 발견이 있는 정책마다 제목·대표 조문·상태 칩, 그 아래 발견 줄(첫 미확인 대안의 메시지 그대로, `경로:줄`, 판정 범위).
@@ -39,10 +40,13 @@ export function LatestAnalysis({
   analysis,
   view,
   features = null,
+  check = null,
 }: {
   repository: Repository;
   analysis: Analysis;
   view: ReportView | null;
+  /** 그 커밋의 review 체크리스트의 확인할 것 수(`ServiceStore.reviewCounts`). review 가 없으면 null. */
+  check?: number | null;
   /** 그 분석에서 감지된 기능(`ServiceStore.featureNames`). 머리 줄 아래에 짧게 적는다(발견 0건이어도 빈 상자가 아니게). */
   features?: string[] | null;
 }) {
@@ -72,9 +76,14 @@ export function LatestAnalysis({
               걸린 시간 <span className="v">{duration(started, ended)}</span>
             </span>
           )}
+          {typeof check === "number" && (
+            <span className="nw">
+              {CHECKLIST_LABEL.check} <span className="v">{check}건</span>
+            </span>
+          )}
           {view ? (
             <span className="nw">
-              사람이 볼 곳 <span className="v">{view.findingCount}건</span>
+              정적 검사 사람이 볼 곳 <span className="v">{view.findingCount}건</span>
             </span>
           ) : (
             <span className="nw">{findingCount(null)}</span>

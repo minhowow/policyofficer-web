@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Icon } from "@/components/Icon";
+import { DutyMap } from "@/components/policy/DutyMap";
 import { NotSeenList } from "@/components/result/Coverage";
 import { StatusChip } from "@/components/result/StatusChip";
-import { keepArticle } from "@/components/text";
-import { packMeta, policyHref, primaryLaw } from "@/lib/pack";
+import { dutyMap, lawGroups } from "@/lib/duties";
+import { packMeta } from "@/lib/pack";
 import { NOT_IN_PACK } from "@/lib/pack/guide";
 import { SCOPE_LEGEND } from "@/lib/report/scope";
 import { STATUS_LEGEND, STATUS_ORDER } from "@/lib/report/status";
@@ -13,41 +12,39 @@ import { SITE } from "@/lib/site";
 export const metadata: Metadata = { title: "조문 도감" };
 
 /**
- * 조문 도감 목록(목업 policy-index, docs/redesign.md 3장). 빌드할 때 그린다.
+ * 조문 도감 = 의무 지도(2026-11-15 오너 결정). 빌드할 때 그린다.
  *
- * - 메타 한 줄: 이 도감을 만든 팩, 팩 판, 정책의 수(팩 메타데이터에서 센다).
- * - 정책마다 한 줄: 제목, 대표 조문, 규칙의 수. 줄 전체가 그 정책 쪽으로 가는 링크다.
+ * - 한 줄: 의무 지도의 몇 개를 AI 검토가 묻고, 나머지는 왜 묻지 않는지(`data/duty-map.json` 에서 센다).
+ * - 메타 한 줄: 의무를 옮긴 CLI 커밋, 법령·기능의 수, 정적 규칙 팩과 판.
+ * - 법령마다 AI 검토가 묻는 의무(`DutyMap`). 기능·법령으로 걸러 본다. 정적 규칙이 있는 의무에는 표시가 있고, 펼치면 그 규칙(정책)이 있다.
  * - `#status` 상태의 뜻: 상태 7개(`STATUS_LEGEND`)와 판정 범위(`SCOPE_LEGEND`). 결과 화면의 곁칸과 데모의 표가 이리로 잇는다.
  * - `#scope` 검사에 들지 않는 파일과 정보(`SITE.notSeen`). 발견이 있는 결과의 검사 정보가 이리로 잇는다.
  */
 export default function PolicyIndexPage() {
   const { pack, policies } = packMeta;
+  const groups = lawGroups();
+  const krcore = dutyMap.duties.filter((duty) => !duty.candidate).length;
   return (
     <>
       {/* data-page: 머리글이 지금 쪽(조문 도감)을 표시하는 데 쓴다(CSS :has. 머리글의 HTML 은 모든 쪽에서 같다). */}
       <h1 data-page="policy">조문 도감</h1>
       <p className="pi-meta">
         <span>
-          팩 {pack.id ? <code translate="no">{pack.id}</code> : NOT_IN_PACK}
+          CLI <code translate="no">{dutyMap.cli.commit.slice(0, 7)}</code>
         </span>{" "}
+        <span>법령 {groups.length}</span> <span>기능 {dutyMap.features.length}</span>{" "}
         <span>
-          판 <code translate="no">{pack.digest}</code>
-        </span>{" "}
-        <span>정책 {policies.length}</span>
+          정적 규칙 {policies.length} · 팩 {pack.id ? <code translate="no">{pack.id}</code> : NOT_IN_PACK}
+        </span>
+      </p>
+      <p className="dm-lead">
+        의무 지도 {dutyMap.total}개 가운데 AI 검토가 묻는 것은 검토 후보 {dutyMap.candidates}개
+        {krcore > 0 && `와, 검토 후보는 아니지만 정적 규칙이 있어 함께 묻는 의무 ${krcore}개`}입니다. 나머지 {dutyMap.notAsked.total}개는 공공기관·금융회사 같은 지위에
+        걸리는 의무 {dutyMap.notAsked.status}개와, 조사 확신이 높지 않거나 조문 대조가 맞지 않은 의무 {dutyMap.notAsked.other}개라 묻지
+        않습니다.
       </p>
 
-      <ul className="policy-index">
-        {policies.map((policy) => (
-          <li key={policy.id}>
-            <Link href={policyHref(policy.id)} className="pi-row">
-              <span className="pi-title">{policy.title}</span>
-              <span className="pi-law">{keepArticle(primaryLaw(policy))}</span>
-              <span className="pi-n">규칙 {policy.rules.length}</span>
-              <Icon name="chevron-right" />
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <DutyMap groups={groups} />
 
       <section className="pi-sec" id="status" aria-labelledby="status-title">
         <h2 className="sec-h" id="status-title">

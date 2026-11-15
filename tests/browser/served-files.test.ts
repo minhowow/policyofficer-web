@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { caseChecklistHref, casesFile, casesHref } from "@/lib/cases";
+import { dutyAnchor, dutyMap } from "@/lib/duties";
 import { policyHref, policySlug } from "@/lib/pack";
 import { analysisHref, checklistHref, repoHref } from "@/lib/service/href";
 import { syntheticRepositories, syntheticStore } from "@/lib/service/synthetic";
@@ -329,15 +330,19 @@ describe("빌드된 사이트의 조문 도감 쪽", () => {
     for (const [, id] of html.matchAll(/href="#([^"]*)"/g)) expect(html, id).toContain(` id="${id}"`);
   });
 
-  it("목록(/policy/): 줄마다 정책 쪽의 주소이고, 메타 줄의 팩·판·정책 수가 팩 메타데이터에서 왔다. #status 와 #scope 가 있다", () => {
+  it("조문 도감(/policy/, 의무 지도): AI 검토가 묻는 의무가 빠짐없이 법령 묶음에 있고, 정책마다 그 의무 줄 안에 정책 쪽 링크가 있다. #status 와 #scope 가 있다", () => {
     const html = textOf(path.join("policy", "index.html"));
     const index = readPolicyIndex(html);
-    expect(index.rows.map((row) => row.href)).toEqual(policies.map((policy) => policyHref(policy.id)));
-    expect(index.rows.map((row) => [row.title, row.rules])).toEqual(policies.map((policy) => [policy.title, `규칙 ${policy.rules.length}`]));
-    for (const policy of policies) expect(contents.some(({ file }) => file === pageFile(policyHref(policy.id), "html")), policy.id).toBe(true);
-    expect(index.meta.replace(/\s+/g, " ")).toBe(`팩 ${pack.id} 판 ${pack.digest} 정책 ${policies.length}`);
+    const rows = index.groups.flatMap((group) => group.rows);
+    expect(rows.map((row) => row.id).sort()).toEqual(dutyMap.duties.map((duty) => dutyAnchor(duty.id)).sort());
+    for (const policy of policies) {
+      expect(rows.filter((row) => row.statics?.hrefs.includes(policyHref(policy.id))), policy.id).toHaveLength(1);
+      expect(contents.some(({ file }) => file === pageFile(policyHref(policy.id), "html")), policy.id).toBe(true);
+    }
+    expect(index.lead).toContain(`의무 지도 ${dutyMap.total}개`);
     expect(index.sections.map((section) => section.id)).toEqual(["status", "scope"]);
-    expect(outsideUrls(html)).toEqual([]);
+    // 밖으로 가는 주소는 법제처(의무마다의 조문 링크)뿐이다.
+    expect(outsideUrls(html).filter((url) => !url.startsWith("https://www.law.go.kr/"))).toEqual([]);
   });
 
   it("결과 화면들의 `/policy/#status`·`/policy/#scope` 링크와 규칙 id 링크(`/policy/<이름>/#rule-…`)가 가리키는 자리가 빌드된 쪽에 있다", () => {

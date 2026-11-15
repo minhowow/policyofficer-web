@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { syntheticRepositories, syntheticStore as store } from "@/lib/service/synthetic";
 import { analysisHref, repoHref } from "@/lib/service/href";
 import type { Analysis } from "@/lib/service/types";
-import { packMeta } from "@/lib/pack";
+import { dutyFeatureHref, dutyMap } from "@/lib/duties";
 import { SITE } from "@/lib/site";
 import { closeChrome, launchChrome, NO_STORAGE, openPage, overflow, serveSite, stored, type Site } from "./site";
 
@@ -83,8 +83,10 @@ describe("첫 화면", () => {
     expect(new Set(names).size).toBe(4);
     expect(await page.locator(".act-row[data-status=running]").getAttribute("href")).toBe(analysisHref("example-org", "night-push", byStatus("running").id));
     expect(await page.locator(".act-row[data-status=running] .act-step").innerText()).toContain("AI 검토");
-    // 발견 0건 줄이 보이므로 0의 뜻이 목록 아래에 보인다.
-    expect(main).toContain("발견 0건");
+    // 끝난 분석의 수: review 가 있으면 체크리스트의 확인할 것 수(AI 검토가 본체, 2026-11-15), 없으면 정적 검사의 발견 수.
+    expect(main).toMatch(/확인할 것 \d+건/);
+    // 정적 검사 발견 0건 줄이 보이므로 0의 뜻이 목록 아래에 보인다.
+    expect(main).toContain("정적 검사 발견 0건");
     expect(await page.getByText(SITE.zeroIsNotClearance, { exact: true }).isVisible()).toBe(true);
     // 요청 시각의 시간대는 목록 머리에 한 번 적는다.
     expect(await page.locator(".home-feed-hd .home-kst").textContent()).toBe("시각 KST");
@@ -128,7 +130,7 @@ describe("첫 화면", () => {
 });
 
 describe("검색 빈 상태 (/search/)", () => {
-  it("검색창, 최근 분석 상자(저장소마다 한 줄, 0의 뜻), 곁칸의 검사하는 정책(팩의 정책 모두)", async () => {
+  it("검색창, 최근 분석 상자(저장소마다 한 줄, 0의 뜻), 곁칸의 AI 검토가 묻는 의무(기능마다 의무 수, 누르면 조문 도감을 그 기능으로 거른다)", async () => {
     const { page, outside } = await open("/search/", 1280);
     expect(await page.locator("main h1").getAttribute("class")).toBe("visually-hidden");
     expect(await page.locator("#search-page-q").inputValue()).toBe("");
@@ -136,12 +138,20 @@ describe("검색 빈 상태 (/search/)", () => {
     const repos = hits.filter((hit) => hit.analyses > 0).length;
     expect(await page.locator(".search-home-recent .act-row").count()).toBe(Math.min(8, repos));
     expect(await page.getByText(SITE.zeroIsNotClearance, { exact: true }).isVisible()).toBe(true);
-    expect((await page.locator("#policies-title").textContent())?.replace(/\s+/g, " ")).toBe(`검사하는 정책 ${packMeta.policies.length}`);
-    expect(await page.locator(".search-home-side .pol-row").count()).toBe(packMeta.policies.length);
-    // 넓은 화면에서 정책은 오른쪽 곁칸이다.
+    expect((await page.locator("#duties-title").textContent())?.replace(/\s+/g, " ")).toBe(`AI 검토가 묻는 의무 ${dutyMap.asked}`);
+    expect(await page.locator(".search-home-side .pol-row").count()).toBe(dutyMap.features.length);
+    // 넓은 화면에서 곁칸은 오른쪽이다.
     const side = (await page.locator(".search-home-side").boundingBox())!;
     const recent = (await page.locator(".search-home-recent").boundingBox())!;
     expect(side.x).toBeGreaterThan(recent.x + recent.width);
+    // 기능 하나를 누르면 조문 도감이 그 기능으로 걸러 열린다.
+    const feature = dutyMap.features.find((entry) => entry.id === "genai")!;
+    await page.locator(`.search-home-side a[href="${dutyFeatureHref(feature.id)}"]`).click();
+    await page.waitForURL(`${site.origin}${dutyFeatureHref(feature.id)}`);
+    await page.locator(".dm-filter").waitFor();
+    await page.waitForFunction(() => document.querySelector<HTMLSelectElement>(".dm-filter select")?.value !== "-1");
+    const shown = await page.locator(".duty-row").evaluateAll((rows) => rows.filter((row) => (row as HTMLElement).offsetParent !== null).length);
+    expect(shown).toBe(dutyMap.duties.filter((duty) => duty.feature === feature.id).length);
     expect(outside).toEqual([]);
   });
 });

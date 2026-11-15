@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CaseFacts } from "@/components/cases/CaseFacts";
 import { EvalSection } from "@/components/cases/EvalSection";
 import { Icon } from "@/components/Icon";
-import { checkCount } from "@/components/review/ReviewView";
+import { checkCount } from "@/lib/review/text";
 import { casesFile, casesHref } from "@/lib/cases";
 import { CASE_STORIES } from "@/lib/cases/stories";
 import { REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";

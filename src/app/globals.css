@@ -1566,6 +1566,195 @@ main.wrap > h1 + .pi-meta {
   scroll-margin-top: var(--space-4);
 }
 
+/* ---------- 의무 지도(조문 도감, 2026-11-15): 한 줄, 걸러 보기, 법령 묶음, 의무 줄(펼치면 의무 한 줄·사실 줄·정적 규칙) ---------- */
+.dm-lead {
+  max-width: 72ch;
+  line-height: var(--leading-loose);
+}
+
+.dm-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.dm-filter label {
+  display: inline-flex;
+  flex: 0 1 22em;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.dm-filter label > span {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* 너비를 비율로 주어 가장 긴 보기의 길이가 쪽의 너비를 밀지 않게 한다. */
+.dm-filter select {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.dm-n {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+@media (max-width: 599px) {
+  .dm-filter label {
+    flex: 1 1 100%;
+  }
+
+  .dm-filter label > span {
+    flex: 0 0 2.5em;
+  }
+}
+
+.dm-list {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.dm-law {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+details.duty-row {
+  min-width: 0;
+  scroll-margin-top: var(--space-4);
+}
+
+details.duty-row > summary {
+  display: grid;
+  gap: 2px;
+  padding: 10px var(--space-4) 10px 40px;
+  line-height: var(--leading-snug);
+}
+
+details.duty-row > summary::before {
+  left: 20px;
+  top: calc(10px + 0.75em - 4px);
+}
+
+details.duty-row[open] > summary::before {
+  top: calc(10px + 0.75em - 5px);
+}
+
+@media (hover: hover) {
+  details.duty-row > summary:hover {
+    background: var(--bg-muted);
+  }
+}
+
+.dr-title {
+  font-weight: 600;
+}
+
+.dr-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.dr-body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: 0 var(--space-4) var(--space-4) 40px;
+  line-height: var(--leading-snug);
+}
+
+.dr-facts {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.dr-facts > div {
+  display: grid;
+  grid-template-columns: 6.5em minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.dr-facts dt {
+  color: var(--muted);
+}
+
+/* 좁은 화면에서는 이름표를 값 위에 둔다(값의 칸이 좁아 긴 걸리는 코드가 한 줄에 서너 글자씩 꺾였다). */
+@media (max-width: 599px) {
+  .dr-facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}
+
+.dr-facts dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dr-facts .ob-ext {
+  margin-left: var(--space-2);
+}
+
+.dr-static {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rule-muted);
+}
+
+.dr-static-h code,
+.dr-rules code {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.dr-static .question {
+  font-size: var(--text-md);
+}
+
+.dr-legal,
+.dr-rules {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.dr-legal .statute {
+  padding: var(--space-3);
+  font-size: var(--text-md);
+}
+
+.dr-static-link,
+.dr-more {
+  font-size: var(--text-sm);
+}
+
+.dr-more a {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+
 /* 이름 | 뜻의 줄(상태의 뜻). 좁은 화면에서는 위아래로 쌓는다. */
 .defs {
   margin: 0;
@@ -3914,6 +4103,21 @@ body:has(main [data-page="home"]) ::selection {
   margin-top: 2px;
   font-size: var(--text-xs);
   color: var(--muted);
+}
+
+/* 검색 쪽 곁칸의 기능 줄(AI 검토가 묻는 의무, 2026-11-15): 이름과 의무 수를 한 줄에. */
+.pol-row.pol-feat {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: 8px;
+}
+
+.pol-feat .pol-law {
+  flex: none;
+  margin-top: 0;
+  white-space: nowrap;
 }
 
 @media (max-width: 1011px) {

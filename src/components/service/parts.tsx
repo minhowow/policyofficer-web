@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { STATUS_LABEL } from "@/lib/report/status";
+import { CHECKLIST_LABEL, STATUS_LABEL } from "@/lib/report/status";
 import { repoHref } from "@/lib/service/href";
 import { ANALYSIS_STATUS_LABEL, formatKst } from "@/lib/service/steps";
 import type { AnalysisStatus, RepositoryActivity, RepositoryHit } from "@/lib/service/types";
@@ -64,9 +64,9 @@ export function RepoRow({ hit }: { hit: RepositoryHit }) {
 
 /**
  * 이 사이트에서 분석된 저장소의 한 줄(검색 0건 화면, 목업 search-empty). 분석 수, 가장 나중의 분석 날짜, 그리고 보이는 분석의
- * 발견 수(끝남) 또는 상태. 설명은 기록에 있을 때만(운영 DB 의 기록에는 없다).
+ * 수(끝남, `doneCount`) 또는 상태. 설명은 기록에 있을 때만(운영 DB 의 기록에는 없다).
  */
-export function AnalyzedRow({ activity, count }: { activity: RepositoryActivity; count: number | null | undefined }) {
+export function AnalyzedRow({ activity, count, check }: { activity: RepositoryActivity; count: number | null | undefined; check?: number | null }) {
   const { repository: repo, analysis, analyses, latestAt } = activity;
   return (
     <li>
@@ -79,7 +79,7 @@ export function AnalyzedRow({ activity, count }: { activity: RepositoryActivity;
           <span>
             최근 <time dateTime={latestAt}>{kstDate(latestAt)}</time>
           </span>
-          <span>{analysis.status === "succeeded" ? findingCount(count) : ANALYSIS_STATUS_LABEL[analysis.status]}</span>
+          <span>{analysis.status === "succeeded" ? doneCount(count, check) : ANALYSIS_STATUS_LABEL[analysis.status]}</span>
         </span>
         <Icon name="chevron-right" />
         {repo.description && <span className="sr-desc">{repo.description}</span>}
@@ -117,4 +117,17 @@ export function FeatureLine({ names, className }: { names: string[] | null | und
 /** 끝난 분석의 발견 수. 결과가 없거나 읽지 못했으면 0 이라고 적지 않고 모른다고 적는다. */
 export function findingCount(count: number | null | undefined): string {
   return typeof count === "number" ? `발견 ${count}건` : `발견 수 ${STATUS_LABEL["pack-unknown"]}`;
+}
+
+/**
+ * 목록 줄에 적는 끝난 분석의 수. 그 커밋의 review 가 있으면 체크리스트의 '확인할 것' 수, 없으면 정적 검사의 발견 수(AI 검토가 본체,
+ * 2026-11-15 오너 결정).
+ */
+export function doneCount(count: number | null | undefined, check: number | null | undefined): string {
+  return typeof check === "number" ? `${CHECKLIST_LABEL.check} ${check}건` : `정적 검사 ${findingCount(count)}`;
+}
+
+/** 목록 줄에 보이는 수가 0인지(0의 뜻을 함께 두는지). */
+export function shownZero(count: number | null | undefined, check: number | null | undefined): boolean {
+  return (typeof check === "number" ? check : count) === 0;
 }

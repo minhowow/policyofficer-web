@@ -17,7 +17,8 @@ CLI 는 옆 폴더 `../Plitsoft-SDP` 에 따로 있고, 다른 사람(에이전�
 ## 절대 규칙
 
 - **`../Plitsoft-SDP` 는 읽기만 한다.** 고치지 않는다. 그 소스(`src/policypack`)를 가져다 쓰지도 않는다.
-  CLI 와는 설치된 명령의 출력(`contract/`)과 팩 메타데이터(`data/pack-meta.json`)로만 이어진다.
+  CLI 와는 설치된 명령의 출력(`contract/`)과 팩 메타데이터(`data/pack-meta.json`), 의무 지도(`data/duty-map.json`: 실행기의 고정
+  커밋에서 기능–의무 표를 `git show` 로 옮긴 것. 2026-11-15 오너 결정. 의무 지도의 조문 인용은 싣지 않는다)로만 이어진다.
 - **CLI 출력에 없는 정보를 꾸며 내지 않는다.** `decision_path` 같은 자유 문장을 해석해 구조를 만들지 않는다.
   필요한 것이 출력에 없으면 `docs/cli-requests.md` 에 요청으로 적고, 화면에는 "아직 알 수 없음"으로 정직하게 보인다.
 - **서버는 `docs/direction.md` 의 구조 안에서만 넣는다.** route handler, DB, GitHub API 호출, 실행기(GitHub Actions)
@@ -37,7 +38,8 @@ CLI 는 옆 폴더 `../Plitsoft-SDP` 에 따로 있고, 다른 사람(에이전�
 
 ## 표기 (자세한 것은 docs/commitments.md)
 
-- 대상은 "JS/TS 코드(누가 썼든)"다. 특정 도구가 만든 코드용이라고 쓰지 않는다.
+- 대상은 "코드(누가 썼든)"다. 특정 도구가 만든 코드용이라고 쓰지 않는다. 'JS/TS 전용'으로 쓰지 않는다(정적 검사는 JS/TS 파일을
+  보고, 평가는 JS/TS 저장소에서 했다). 사이트 글의 중심은 AI 검토이고 정적 검사는 보조다(2026-11-15 오너 결정).
 - 판정 문구는 `src/lib/report/status.ts` 에 있는 것만 쓴다(다섯 가지 상태와 "발견 없음", "알 수 없음"). 단정하는 말,
   점수, 등급, 순위는 없다.
 - 판정자를 켜 보라고 권할 때는 판정 대상 코드가 외부 API 로 나간다는 사실을 함께 적는다. AI 가 푼 경고와 적용 질문으로
@@ -82,7 +84,7 @@ npm run pack-meta   # 팩에서 data/pack-meta.json 다시 만들기
 
 | 경로 | 내용 |
 |---|---|
-| `src/app/` | 페이지: `/`(첫 화면: 표지·검색창·최근 분석), `/search`(빈 상태: 최근 분석·검사하는 정책, 질의: 결과·0건), `/r/[owner]/[repo]`(저장소), `/r/[owner]/[repo]/a/[id]`(분석), `/r/[owner]/[repo]/a/[id]/checklist`(의무 체크리스트 인쇄용 보기) — 이 다섯은 요청 때 그린다, `/view`(결과 파일), `/demo`(고치기 전·후), `/policy`(조문 도감), `/how`(구조 그림: 쉬운 판 셋·따라가 보기·접어 둔 자세한 판 셋. 자료는 `src/lib/how/`, 포스터·보고서용 파일은 `docs/figures/`), `/cases`(사례 넷, 41곳 평가 `data/eval-41.json`), `/cases/[slug]/checklist`(사례의 인쇄용 보기) — 빌드할 때 그린다. 체크리스트 마크다운 파일은 `/api/analyses/[id]/checklist/`, `/api/cases/[slug]/checklist/`(`src/lib/review/checklist.ts`) |
+| `src/app/` | 페이지: `/`(첫 화면: 표지·검색창·최근 분석), `/search`(빈 상태: 최근 분석·AI 검토가 묻는 의무(기능별), 질의: 결과·0건), `/r/[owner]/[repo]`(저장소), `/r/[owner]/[repo]/a/[id]`(분석), `/r/[owner]/[repo]/a/[id]/checklist`(의무 체크리스트 인쇄용 보기) — 이 다섯은 요청 때 그린다, `/view`(결과 파일), `/demo`(고치기 전·후), `/policy`(조문 도감 = 의무 지도: AI 검토가 묻는 의무를 법령별로, 기능·법령으로 거름. 자료 `data/duty-map.json`, 정적 규칙 정책은 그 의무 줄 안과 `/policy/[id]`), `/how`(구조 그림: 쉬운 판 셋·따라가 보기·접어 둔 자세한 판 셋. 자료는 `src/lib/how/`, 포스터·보고서용 파일은 `docs/figures/`), `/cases`(사례 넷, 41곳 평가 `data/eval-41.json`), `/cases/[slug]/checklist`(사례의 인쇄용 보기) — 빌드할 때 그린다. 체크리스트 마크다운 파일은 `/api/analyses/[id]/checklist/`, `/api/cases/[slug]/checklist/`(`src/lib/review/checklist.ts`) |
 | `src/lib/service/` | 분석 서비스의 데이터 모델과 `ServiceStore` 인터페이스, 합성 구현(`synthetic.ts`, SERVICE_STORE=synthetic 미리보기·시험용), 이름 검사, 최근 분석 고르기(`activity.ts`), 두벌식 → QWERTY(`keyboard.ts`), 자동 완성의 질의 꼴·합치기·상태 줄(`suggest.ts`) |
 | `src/server/` | 서버 코드(모두 `import "server-only"`): 설정(`config.ts`, 환경 변수와 기본값), DB(`db/`, pg·PGlite, `migrations/*.sql`), GitHub 클라이언트(`github.ts`), 실행기 깨우기(`runner.ts`), 저장소 구현(`store/`, `getStore()` 가 고른다), `/api/` 의 일(`api.ts`), 실행기 콜백의 상태 전이(`callbacks.ts`)와 서명(`signature.ts`) |
 | `src/app/api/` | route handler: `analyses/`(요청), `analyses/[id]/`(진행), `repos/suggest/`(검색창 자동 완성), `runner/[id]/`(실행기 콜백), `runner/claim/`(로컬 실행기). `src/server/api.ts` 를 부르기만 한다. 서버 코드는 `src/server/` 와 여기에만 둔다 |
@@ -94,7 +96,7 @@ npm run pack-meta   # 팩에서 data/pack-meta.json 다시 만들기
 | `src/lib/pack/` | 팩 메타데이터 타입과 읽기 |
 | `contract/` | CLI 와의 이음매: 스키마, 실제 출력 수집본, v1 초안 예시, 합성 데모 코드 |
 | `data/pack-meta.json` | 생성물. 정책·조문 원문·대안·질문 |
-| `scripts/` | 수집, 팩 메타데이터 생성, 가짜 GitHub API(`github-stub.mjs`), 로컬 실행기(`local-runner.mjs`, `--fixture`), 죽은 CSS 점검(`css-unused.mjs`), 구조 그림 내보내기(`export-figures.mjs`), 41곳 평가의 숫자와 포스터 그림(`export-eval.mjs`, `export-eval-figure.mjs`) |
+| `scripts/` | 수집, 팩 메타데이터 생성, 가짜 GitHub API(`github-stub.mjs`), 로컬 실행기(`local-runner.mjs`, `--fixture`), 죽은 CSS 점검(`css-unused.mjs`), 구조 그림 내보내기(`export-figures.mjs`), 41곳 평가의 숫자와 포스터 그림(`export-eval.mjs`, `export-eval-figure.mjs`), 의무 지도(`export-duty-map.mjs`: 실행기의 CLI 커밋에서 `git show` 로 기능–의무 표를 읽어 `data/duty-map.json`) |
 | `.env.example` | 환경 변수 이름(값은 비운다). 배포할 때 오너가 할 일은 `docs/deploy.md` |
 | `tests/` | 계약 시험, 화면 구조 시험, 그려 본 화면 시험, 약속 시험, 서버 시험(`server-*.test.ts`, 메모리 PGlite + 가짜 GitHub), 실행기 시험(`runner.test.ts`). `tests/browser/` 는 빌드된 사이트를 `next start` 로 띄워 Chrome 으로 연다. `tests/fixtures/` 는 손으로 만든 시험용 자료 |
 | `docs/` | 로드맵, 약속, 구조, CLI 에 보낸 요청, CLI 따라가기(`cli-followup.md`) |

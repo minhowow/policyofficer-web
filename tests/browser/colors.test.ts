@@ -853,7 +853,7 @@ describe("강제 색 모드(윈도의 고대비 테마 등)", () => {
       ["/search/", "#search-page-q", "#search-page-q", 1280],
       ["/policy/", ".site-header input[role=combobox]", ".site-header input[role=combobox]", 1280],
       ["/policy/", '.hdr-nav a[href="/demo/"]', '.hdr-nav a[href="/demo/"]', 1280],
-      ["/policy/", ".pi-row", ".pi-row", 1280],
+      ["/policy/", ".duty-row > summary", ".duty-row > summary", 1280],
       ["/demo/", ".segmented button", ".segmented button", 1280],
       ["/demo/", ".record-btn", ".record-btn", 1280],
       [FOUND, ".finding summary", ".finding summary", 1280],
@@ -927,8 +927,8 @@ describe("줄바꿈: 사이트가 쓴 글에서 닫는 따옴표·괄호 뒤의 
   // (첫 화면, 검색의 세 상태, 저장소, 분석의 다섯 상태, 결과 보기, 데모, 조문 도감)으로 넓혔다.
   //
   // 팩과 CLI 출력의 글(조문 원문, 알리는 말, 질문, 고치는 법, 판정 경로)에도 같은 꼴이 있고 너비에 따라 줄이 바뀐다. 그 글은
-  // 손대지 않으므로 뺀다. 줄이 바뀐 글 조각이 팩 메타데이터나 결과 파일(수집본, v1 초안 예시, 시험용 자료)에 든 글의 일부이면
-  // 그 글로 친다.
+  // 손대지 않으므로 뺀다. 줄이 바뀐 글 조각이 팩 메타데이터나 결과 파일(수집본, v1 초안 예시, 시험용 자료), CLI 의 기능–의무 표에서
+  // 옮긴 의무 지도(data/duty-map.json: 의무 한 줄, 걸리는 코드)에 든 글의 일부이면 그 글로 친다.
   const WIDTHS_ = [320, 344, 375, 414, 700, 1280];
   const outside: string[] = [];
   const collect = (value: unknown): void => {
@@ -937,6 +937,7 @@ describe("줄바꿈: 사이트가 쓴 글에서 닫는 따옴표·괄호 뒤의 
     else if (value !== null && typeof value === "object") Object.values(value).forEach(collect);
   };
   collect(readPackFile());
+  collect(readJson("data", "duty-map.json"));
   for (const dir of [["contract", "cli-current"], ["contract", "samples-v1-draft"], ["tests", "fixtures"]]) {
     for (const name of jsonFiles(...dir)) collect(readJson(...dir, name));
   }

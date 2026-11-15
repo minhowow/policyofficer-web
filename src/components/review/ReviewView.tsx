@@ -6,15 +6,14 @@ import { Where } from "@/components/result/Where";
 import { keepParticles } from "@/components/text";
 import { REVIEW_STATUSES, type Review, type ReviewCitation, type ReviewItem, type ReviewStatus } from "@/lib/review";
 import { layoutFlow } from "@/lib/review/flow";
-import { CHECKS, firstSentence, gateText, notAnsweredText, SANCTION } from "@/lib/review/text";
+import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, SANCTION } from "@/lib/review/text";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { fileLink, shortCommit } from "@/lib/service/href";
+import { SITE } from "@/lib/site";
 import { CitedLines, FlowFigure } from "./FlowFigure";
 
-/** 확인할 것의 수: 세 갈래를 합친다. 품목 신호가 없어 묻지 않은 품목 의무(묶음 goods)는 넣지 않는다. 사례 목록도 쓴다. */
-export function checkCount(items: readonly ReviewItem[]): number {
-  return items.filter((item) => CHECKS.includes(item.status) && item.group !== "goods").length;
-}
+/** 확인할 것(세 갈래)의 수. 체크리스트 내보내기·목록 줄의 수와 같은 함수다(`lib/review/text.ts`). */
+export { checkCount };
 
 /**
  * review 결과(policypack review 2판)의 화면(2026-11-11 오너 지시). 위에서부터:
@@ -65,6 +64,8 @@ export function ReviewView({
           확인할 것 <b>{check}건</b>
         </span>
       </p>
+      {/* 확인할 것이 0건이어도 법적 문제가 없다는 뜻이 아니다(docs/commitments.md 의 1. 목록 줄도 같은 수에 이 말을 단다). */}
+      {check === 0 && <p className="hint zero-note">{SITE.zeroIsNotClearance}</p>}
       <ServiceTier review={review} code={code} />
       <Tier n={2} name="개인정보 흐름">
         {review.flow.nodes.length === 0 ? (

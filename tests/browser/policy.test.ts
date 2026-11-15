@@ -1,5 +1,6 @@
 import type { Browser, BrowserContext, Page, Request } from "playwright-core";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { dutyAnchor, dutyFeatureHref, dutyMap, lawGroups, policyHomeDuty } from "@/lib/duties";
 import { policyHref, ruleAnchor } from "@/lib/pack";
 import type { PolicyMeta } from "@/lib/pack/types";
 import { readPackFile } from "../helpers";
@@ -19,6 +20,7 @@ import {
   serveSite,
   settle,
   stored,
+  textContrast,
   undrawn as undrawnIn,
   type OpenOptions,
   type Site,
@@ -120,7 +122,7 @@ const statutes = (page: Page) =>
   );
 
 /** 일부러 화면에서만 가린 것: 화면 낭독기용 글. */
-const VEILED = ".visually-hidden";
+const VEILED = ".visually-hidden, .dm-filter select";
 
 /**
  * 정책 쪽의 글 가운데 화면에 그려지지 않는 것. 없어야 한다(tests/browser/site.ts 의 `undrawn`). 접어 둔 곳 안의 글과 일부러
@@ -139,6 +141,17 @@ const shownNames = (page: Page, selector: string) =>
         .trim(),
     ),
   );
+
+/**
+ * 조문 도감(의무 지도)에서 정책 쪽으로 간다. 정책은 그것이 가리키는 의무 줄 안에 있다(2026-11-15). 줄을 펼치고 '자세히' 링크를 누른다.
+ */
+async function toPolicy(page: Page, policy: PolicyMeta): Promise<void> {
+  const link = page.locator(`.dr-more a[href="${policyHref(policy.id)}"]`);
+  await link.evaluate((a) => {
+    (a.closest("details") as HTMLDetailsElement).open = true;
+  });
+  await link.click();
+}
 
 describe("브라우저가 읽은 조문 원문", () => {
   it("주소로 열었을 때: 팩 메타데이터와 글자 그대로 같고, 줄바꿈과 빈칸이 화면에 그대로 보인다. 글꼴은 이 컴퓨터의 명조다", async () => {
@@ -171,7 +184,7 @@ describe("브라우저가 읽은 조문 원문", () => {
     const { page } = await open(INDEX);
     await page.evaluate(() => ((window as unknown as { kept: boolean }).kept = true));
     for (const policy of policies) {
-      await page.locator(`.policy-index a[href="${policyHref(policy.id)}"]`).click();
+      await toPolicy(page, policy);
       await page.waitForURL(`**${policyHref(policy.id)}`);
       await shown(page, policy.title);
       await openAll(page);
@@ -213,7 +226,7 @@ describe("쪽에 그려진 글은 틀 안에서 읽은 글이 전부다", () => 
     };
     await page.evaluate(() => ((window as unknown as { kept: boolean }).kept = true));
     for (const policy of policies) {
-      await page.locator(`.policy-index a[href="${policyHref(policy.id)}"]`).click();
+      await toPolicy(page, policy);
       await page.waitForURL(`**${policyHref(policy.id)}`);
       await shown(page, policy.title);
       await whole(policy, "목록에서 눌러 왔을 때");
@@ -517,12 +530,12 @@ describe("쪽이 스스로 내는 요청이 없다", () => {
     const seen: string[] = [];
     context.on("request", (request) => seen.push(`${request.method()} ${request.url()}`));
 
-    // 쪽을 열 때의 요청은 서버에 적힌다(머리 링크와 목록 링크의 프리페치까지). 이 시험이 요청을 본다는 뜻이다.
+    // 쪽을 열 때의 요청은 서버에 적힌다(머리 링크의 프리페치까지). 이 시험이 요청을 본다는 뜻이다. 정책 쪽 링크는 접힌 의무 줄 안에
+    // 있어 미리 받지 않는다(2026-11-15 의무 지도).
     await settle(site, page);
     const loading = site.requests.slice(start).map((request) => request.url);
     expect(loading[0]).toBe(INDEX);
     expect(loading.some((url) => url.startsWith("/demo/"))).toBe(true);
-    expect(loading.some((url) => url.startsWith(policyHref(policies[0].id)))).toBe(true);
 
     let hovered = 0;
     for (const policy of policies) {
@@ -742,5 +755,114 @@ describe("키보드만으로", () => {
     if (policy.rules.some((rule) => rule.alternatives.some((alt) => alt.kind === "ai") || rule.applies_question)) {
       expect(await page.locator(".policy-section > .judge-note").innerText()).toContain(CODE_LEAVES);
     }
+  });
+});
+
+describe("조문 도감(의무 지도, 2026-11-15)", () => {
+  // 걸러 보기(기능·법령, 주소의 ?f=), 주소의 자리(#duty-…)로 열기, 정적 규칙이 든 의무 줄과 같은 정책의 다른 의무에서 그리로 가기,
+  // 좁은 화면·어두운 테마. 줄이 220개라 모두 펼쳐 재는 것은 가장 좁은 너비 하나에서만 한다(같은 때에 도는 다른 시험의 창을 늦추지
+  // 않게).
+  const ROWS = 220;
+  const view = (pathname: string, width = 1280, colorScheme: "light" | "dark" = "light") =>
+    open(pathname, { viewport: { width, height: 900 }, colorScheme });
+  /** 화면에 보이는 의무 줄의 id. */
+  const visibleRows = (page: Page) =>
+    page.locator(".duty-row").evaluateAll((rows) => rows.filter((row) => (row as HTMLElement).offsetParent !== null).map((row) => row.id));
+  const groups = lawGroups();
+  const countOf = (feature: string) => dutyMap.duties.filter((duty) => duty.feature === feature).length;
+
+  it.each([
+    [1280, "light"],
+    [375, "dark"],
+  ] as const)("%dpx %s: 의무가 모두 보이고(접힌 채), 가로로 넘치지 않고, 글이 바탕과 구별된다. 바깥 요청·브라우저 저장소 없음", async (width, scheme) => {
+    expect(dutyMap.asked).toBe(ROWS);
+    const { page, outside } = await view(INDEX, width, scheme);
+    expect((await visibleRows(page)).length).toBe(dutyMap.asked);
+    expect(await page.locator(".dm-n").textContent()).toBe(`의무 ${dutyMap.asked}`);
+    expect(await page.locator(".duty-row[open]").count()).toBe(0);
+    expect(await overflow(page)).toMatchObject({ page: 0, over: [] });
+    // 펼친 안쪽의 글: 정적 규칙이 든 줄과 앞의 몇 줄.
+    await page.evaluate(() => {
+      const rows = [...document.querySelectorAll<HTMLDetailsElement>(".duty-row")];
+      for (const row of [...rows.slice(0, 4), ...rows.filter((r) => r.querySelector(".dr-static, .dr-static-link"))]) row.open = true;
+    });
+    expect((await textContrast(page, { root: "main" })).low).toEqual([]);
+    expect(outside).toEqual([]);
+    expect(await stored(page)).toEqual(NO_STORAGE);
+  });
+
+  it("320px: 모두 펼쳐도 가로로 넘치지 않는다(정적 규칙의 조문 원문, 긴 걸리는 코드)", async () => {
+    const { page } = await view(INDEX, 320);
+    expect(await overflow(page)).toMatchObject({ page: 0, over: [] });
+    await page.locator(".duty-row").evaluateAll((rows) => rows.forEach((row) => ((row as HTMLDetailsElement).open = true)));
+    expect(await overflow(page)).toMatchObject({ page: 0, over: [] });
+  });
+
+  it("기능으로, 법령으로, 둘을 함께 거른다. 보이는 수가 바뀌고, 맞는 의무가 없는 법령은 묶음째, 법령 묶음의 수는 감춘다. 주소는 그대로다", async () => {
+    const { page } = await view(INDEX);
+    const url = page.url();
+    const [feature, law] = await page.locator(".dm-filter select").all();
+    expect(await page.locator(".dm-law > h2 > .count").first().isVisible()).toBe(true);
+    await feature.selectOption(String(dutyMap.features.findIndex((entry) => entry.id === "genai")));
+    const shown = await visibleRows(page);
+    expect(shown.sort()).toEqual(dutyMap.duties.filter((duty) => duty.feature === "genai").map((duty) => dutyAnchor(duty.id)).sort());
+    expect(await page.locator(".dm-n").textContent()).toBe(`의무 ${countOf("genai")}`);
+    const lawsShown = await page.locator(".dm-law").evaluateAll((sections) => sections.filter((s) => (s as HTMLElement).offsetParent !== null).length);
+    expect(lawsShown).toBe(groups.filter((group) => group.duties.some((duty) => duty.feature === "genai")).length);
+    expect(await page.locator(".dm-law > h2 > .count").evaluateAll((counts) => counts.filter((c) => (c as HTMLElement).offsetParent !== null).length)).toBe(0);
+    const at = groups.findIndex((group) => group.duties.some((duty) => duty.feature === "genai"));
+    await law.selectOption(String(at));
+    expect((await visibleRows(page)).length).toBe(groups[at].duties.filter((duty) => duty.feature === "genai").length);
+    await feature.selectOption("-1");
+    expect((await visibleRows(page)).length).toBe(groups[at].duties.length);
+    expect(await page.locator(".dm-n").textContent()).toBe(`의무 ${groups[at].duties.length}`);
+    expect(page.url()).toBe(url);
+  });
+
+  it("주소의 ?f= 로 그 기능을 골라 연다(검색 쪽 곁칸의 기능 링크). 머리글의 '조문 도감'을 누르면(?f= 없는 주소) 거른 것이 풀린다", async () => {
+    const { page } = await view(dutyFeatureHref("ad-send"));
+    await page.waitForFunction(() => document.querySelector<HTMLSelectElement>(".dm-filter select")?.value !== "-1");
+    expect(await page.locator(".dm-filter select").first().inputValue()).toBe(String(dutyMap.features.findIndex((entry) => entry.id === "ad-send")));
+    expect((await visibleRows(page)).length).toBe(countOf("ad-send"));
+    await page.locator('.site-header .hdr-nav a[href="/policy/"]').click();
+    await page.waitForURL(`${site.origin}${INDEX}`);
+    await page.waitForFunction(() => document.querySelector<HTMLSelectElement>(".dm-filter select")?.value === "-1");
+    expect((await visibleRows(page)).length).toBe(dutyMap.asked);
+  });
+
+  it("주소의 자리(#duty-…)로 열면 그 의무 줄이 펼쳐져 창 안에 있다", async () => {
+    const duty = dutyMap.duties.find((entry) => entry.policies.length > 0)!;
+    const { page } = await view(`${INDEX}#${dutyAnchor(duty.id)}`);
+    await page.waitForFunction((id) => (document.getElementById(id) as HTMLDetailsElement | null)?.open === true, dutyAnchor(duty.id));
+    const box = (await page.locator(`#${dutyAnchor(duty.id)}`).boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(-1);
+    expect(box.y).toBeLessThan(900);
+  });
+
+  it("정적 규칙: 정책이 든 의무 줄을 펼치면 정책의 질문·근거 조문·규칙, 자세한 정책 쪽 링크. 같은 정책의 다른 의무에서는 그 줄로 가서 펼친다(주소는 그대로)", async () => {
+    const { page } = await view(INDEX);
+    const url = page.url();
+    for (const policy of policies) {
+      const home = policyHomeDuty(policy.id)!;
+      const row = page.locator(`#${dutyAnchor(home.id)}`);
+      await row.locator(":scope > summary").click();
+      const block = row.locator(".dr-static");
+      expect(await block.isVisible(), policy.id).toBe(true);
+      expect(await block.locator("b").textContent(), policy.id).toBe(policy.title);
+      expect(await block.locator(".dr-rules > li").count(), policy.id).toBe(policy.rules.length);
+      expect(await block.locator(".dr-more a").getAttribute("href"), policy.id).toBe(policyHref(policy.id));
+      await row.locator(":scope > summary").click();
+    }
+    // 정책 하나가 의무 둘을 가리키는 것: 둘째 의무에서 첫째로(국외 이전 정책은 국외 이전 의무가 첫째다).
+    const shared = policies.find((policy) => dutyMap.duties.filter((duty) => duty.policies.includes(policy.id)).length > 1)!;
+    const first = policyHomeDuty(shared.id)!;
+    const second = dutyMap.duties.find((duty) => duty.policies.includes(shared.id) && duty.id !== first.id)!;
+    await page.locator(`#${dutyAnchor(second.id)} > summary`).click();
+    await page.locator(`#${dutyAnchor(second.id)} .dr-static-link a`).click();
+    await page.waitForFunction((id) => (document.getElementById(id) as HTMLDetailsElement | null)?.open === true, dutyAnchor(first.id));
+    const box = (await page.locator(`#${dutyAnchor(first.id)}`).boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(-1);
+    expect(box.y).toBeLessThan(900);
+    expect(page.url()).toBe(url);
   });
 });

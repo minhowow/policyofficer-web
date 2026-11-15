@@ -9,10 +9,12 @@ import { RepoRow } from "@/components/service/parts";
 import { LATEST_FINDINGS, LatestAnalysis } from "@/components/service/repository";
 import { SearchHome, SearchResults } from "@/components/service/SearchResults";
 import { keepArticle } from "@/components/text";
+import { dutyFeatureHref, dutyMap } from "@/lib/duties";
 import { packMeta, policyHref } from "@/lib/pack";
 import { paragraphOf } from "@/lib/pack/legal";
 import { parseProfile } from "@/lib/profile";
 import { CHECKLIST_LABEL } from "@/lib/report/status";
+import { checklistDoc } from "@/lib/review/checklist";
 import { NO_FEATURES, NO_JUDGEMENT } from "@/components/result/Tiers";
 import { parseReport } from "@/lib/report/parse";
 import type { Report } from "@/lib/report/types";
@@ -773,12 +775,20 @@ describe("최근 분석 고르기 (첫 화면의 줄)", () => {
 });
 
 describe("첫 화면·검색 빈 상태의 최근 분석 줄", () => {
-  it("줄은 분석 쪽 링크이고, 끝난 분석은 발견 수(화면 낭독기에는 '끝남, '), 나머지는 상태 글. 분석 중이면 단계 점과 지금 단계", async () => {
+  it("줄은 분석 쪽 링크이고, 끝난 분석은 review 의 '확인할 것' 수(없으면 정적 검사의 발견 수, 화면 낭독기에는 '끝남, '), 나머지는 상태 글. 분석 중이면 단계 점과 지금 단계", async () => {
     const rows = await store.recentActivity(10);
-    const findings = await store.findingCounts(rows.map(({ analysis }) => analysis.id));
-    const html = renderToStaticMarkup(<ActivityList rows={rows} findings={findings} variant="feed" />);
+    const ids = rows.map(({ analysis }) => analysis.id);
+    const findings = await store.findingCounts(ids);
+    const checks = await store.reviewCounts(ids);
+    const html = renderToStaticMarkup(<ActivityList rows={rows} findings={findings} checks={checks} variant="feed" />);
     for (const { repository: r, analysis } of rows) expect(html).toContain(linked(analysisHref(r.owner, r.name, analysis.id)));
-    expect(html).toContain('<span class="visually-hidden">끝남, </span>발견 0건');
+    // AI 검토가 본체(2026-11-15): review 가 있는 저장소(생성형 AI 채팅 합성)는 체크리스트의 확인할 것 수, 없으면 정적 검사의 발견 수.
+    const reviewed = rows.find(({ analysis }) => analysis.status === "succeeded" && typeof checks[analysis.id] === "number")!;
+    const review = (await store.getReview(reviewed.analysis.owner, reviewed.analysis.name, reviewed.analysis.commit))!;
+    expect(checks[reviewed.analysis.id]).toBe(checklistDoc(review).overview.check);
+    expect(html).toContain(`<span class="visually-hidden">끝남, </span>확인할 것 ${checks[reviewed.analysis.id]}건`);
+    expect(html).toContain('<span class="visually-hidden">끝남, </span>정적 검사 발견 0건');
+    expect(Object.values(checks).filter((n) => n !== null)).toHaveLength(1);
     expect(textOf(html)).toContain("분석 중");
     expect(textOf(html)).toContain("대기 중");
     expect(html.match(/class="act-trail"/g)).toHaveLength(1);
@@ -797,15 +807,17 @@ describe("첫 화면·검색 빈 상태의 최근 분석 줄", () => {
     expect(text).not.toContain(SITE.zeroIsNotClearance);
   });
 
-  it("검색 빈 상태: 최근 분석 상자, 검사하는 정책(팩의 정책 모두, 조문 도감 링크). 분석이 없으면 '아직 분석 없음'", async () => {
+  it("검색 빈 상태: 최근 분석 상자, AI 검토가 묻는 의무(기능마다 의무 수, 조문 도감을 그 기능으로 거른 링크). 분석이 없으면 '아직 분석 없음'", async () => {
     const rows = await store.recentActivity(8);
     const findings = await store.findingCounts(rows.map(({ analysis }) => analysis.id));
     const html = renderToStaticMarkup(<SearchHome recent={{ ok: true, rows, findings }} tagged />);
-    expect(html.match(/class="pol-row"/g)).toHaveLength(packMeta.policies.length);
-    for (const policy of packMeta.policies) expect(html).toContain(linked(policyHref(policy.id)));
-    expect(textOf(html)).toContain(`검사하는 정책 ${packMeta.policies.length}`);
-    // 대표 조문의 끝 '제N조 제M항'은 한 덩어리로 줄을 바꾼다(글자는 팩 그대로).
-    expect(html).toContain('<span class="nobreak">제50조 제3항</span>');
+    expect(html.match(/class="pol-row pol-feat"/g)).toHaveLength(dutyMap.features.length);
+    // 부품 시험에는 trailingSlash 가 걸리지 않아 Link 가 '/policy?f=' 로 적는다. 빌드된 쪽은 '/policy/?f=' 다.
+    for (const feature of dutyMap.features) expect(html).toContain(`href="${dutyFeatureHref(feature.id).replace("/?", "?")}"`);
+    expect(textOf(html)).toContain(`AI 검토가 묻는 의무 ${dutyMap.asked}`);
+    expect(dutyMap.features.reduce((n, feature) => n + dutyMap.duties.filter((duty) => duty.feature === feature.id).length, 0)).toBe(dutyMap.asked);
+    // 정적 규칙의 정책 목록은 곁칸에 두지 않는다(정적 검사는 보조, 2026-11-15).
+    expect(textOf(html)).not.toContain("검사하는 정책");
     expect(textOf(html)).toContain(SITE.zeroIsNotClearance);
     expect(textOf(html)).toContain("합성 예시");
     const empty = textOf(renderToStaticMarkup(<SearchHome recent={{ ok: true, rows: [], findings: {} }} tagged={false} />));

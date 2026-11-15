@@ -26,6 +26,8 @@ export function EvalSection() {
         <span>
           <time dateTime={evalFile.ranOn}>{evalFile.ranOn}</time>
         </span>{" "}
+        {/* 평가에 쓴 저장소의 언어(2026-11-15 오너 결정: 'JS/TS 전용'이 아니라 '평가는 JS/TS 저장소에서 했다'로 적는다). */}
+        <span>JS/TS 저장소</span>{" "}
         <span>
           조사 <code translate="no">{evalFile.model}</code>
         </span>{" "}

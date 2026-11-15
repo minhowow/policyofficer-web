@@ -186,6 +186,12 @@ export interface ServiceStore {
    */
   findingCounts(ids: string[]): Promise<Record<string, number | null>>;
   /**
+   * 끝난 분석마다 그 저장소·커밋의 review 체크리스트에서 '확인할 것'(세 갈래, 묻지 않은 품목 의무는 빼고)의 수(`checkCount`). 어느
+   * 분석에서 받았든 `getReview` 와 같은 것을 센다. review 결과가 없거나 읽지 못하면 null. 목록 줄의 오른쪽에 정적 검사의 발견 수보다
+   * 먼저 싣는다(AI 검토가 본체, 2026-11-15 오너 결정).
+   */
+  reviewCounts(ids: string[]): Promise<Record<string, number | null>>;
+  /**
    * 끝난 분석의 저장소 프로필(`policypack profile` 의 JSON, `lib/profile`). 실행기가 검사와 함께 돌려 보낸 것을 받은 그대로 두었다가
    * 읽는다. 끝나지 않았거나, 프로필을 받지 못했거나(그 기능이 생기기 전의 분석, 실행기에서 프로필이 실패), 읽지 못하면 null.
    */

@@ -12,6 +12,7 @@ import nightPushMainProfile from "@contract/cli-current/profile/night-push.main.
 import plainMainProfile from "@contract/cli-current/profile/plain.main.json";
 import { featureNames, parseProfile } from "@/lib/profile";
 import { parseReview } from "@/lib/review";
+import { checkCount } from "@/lib/review/text";
 import genaiChatReview from "@contract/review/genai-chat.review.json";
 import { parseReport } from "@/lib/report/parse";
 import { serviceFindingCount } from "@/lib/report/types";
@@ -175,6 +176,11 @@ const ANALYSES: Analysis[] = [
 
 const newestFirst = (a: Analysis, b: Analysis) => b.requestedAt.localeCompare(a.requestedAt);
 
+/** 손으로 만든 review 2판 합성 예시(contract/review/genai-chat.review.json)는 생성형 AI 채팅 합성 저장소에만 있다(커밋을 가리지 않는다). */
+function syntheticReview(owner: string, name: string) {
+  return `${owner}/${name}`.toLowerCase() === "example-studio/genai-chat" ? parseReview(genaiChatReview) : null;
+}
+
 function analysesOf(owner: string, name: string): Analysis[] {
   const key = repoKey(owner, name);
   return ANALYSES.filter((analysis) => repoKey(analysis.owner, analysis.name) === key).sort(newestFirst);
@@ -236,9 +242,18 @@ export const syntheticStore: ServiceStore = {
     const analysis = ANALYSES.find((entry) => entry.id === id);
     return analysis?.status === "succeeded" ? parseProfile(PROFILES[id] ?? null) : null;
   },
+  async reviewCounts(ids) {
+    const counts: Record<string, number | null> = {};
+    for (const id of ids) {
+      const analysis = ANALYSES.find((entry) => entry.id === id);
+      if (analysis?.status !== "succeeded") continue;
+      const review = syntheticReview(analysis.owner, analysis.name);
+      counts[id] = review ? checkCount(review.checklist) : null;
+    }
+    return counts;
+  },
   async getReview(owner, name) {
-    // 손으로 만든 review 2판 합성 예시(contract/review/genai-chat.review.json)는 생성형 AI 채팅 합성 저장소에만 있다(커밋을 가리지 않는다).
-    return `${owner}/${name}`.toLowerCase() === "example-studio/genai-chat" ? parseReview(genaiChatReview) : null;
+    return syntheticReview(owner, name);
   },
   async featureNames(ids) {
     const names: Record<string, string[] | null> = {};

@@ -1,6 +1,7 @@
 import "server-only";
 import { parseProfileText } from "@/lib/profile";
 import { parseReviewText } from "@/lib/review";
+import { checkCount } from "@/lib/review/text";
 import { ServiceUnavailableError } from "@/lib/service/errors";
 import { repoKey } from "@/lib/service/href";
 import { isAnalysisId, newAnalysisId } from "@/lib/service/id";
@@ -266,6 +267,27 @@ export function createDbStore(deps: DbStoreDeps): ServiceStore {
         [wanted],
       );
       return Object.fromEntries(rows.rows.map((row) => [row.id, row.finding_count]));
+    },
+
+    async reviewCounts(ids) {
+      const wanted = ids.filter(isAnalysisId);
+      if (wanted.length === 0) return {};
+      const db = await database();
+      // 분석마다 같은 저장소·커밋의 가장 나중에 받은 review(getReview 와 같은 것).
+      const rows = await db.query<{ id: string; review: string | null }>(
+        `SELECT a.id,
+           (SELECT r.review FROM results r JOIN analyses b ON b.id = r.analysis_id
+             WHERE b.repo_key = a.repo_key AND b.commit_sha = a.commit_sha AND b.status = 'succeeded' AND r.review IS NOT NULL
+             ORDER BY b.finished_at DESC NULLS LAST, b.requested_at DESC, b.id DESC LIMIT 1) AS review
+         FROM analyses a WHERE a.id = ANY($1::text[]) AND a.status = 'succeeded'`,
+        [wanted],
+      );
+      return Object.fromEntries(
+        rows.rows.map((row) => {
+          const review = parseReviewText(row.review);
+          return [row.id, review ? checkCount(review.checklist) : null];
+        }),
+      );
     },
 
     async getProfile(id) {

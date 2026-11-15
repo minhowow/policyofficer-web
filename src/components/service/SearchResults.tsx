@@ -1,14 +1,13 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { keepArticle } from "@/components/text";
-import { packMeta, policyHref, primaryLaw } from "@/lib/pack";
+import { dutyFeatureHref, dutyMap } from "@/lib/duties";
 import { hangulToQwerty } from "@/lib/service/keyboard";
 import { searchHref } from "@/lib/service/href";
 import { FAKE_GITHUB_NOTE, githubStatusLine } from "@/lib/service/suggest";
 import type { RepositoryActivity, SearchOutcome } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
 import { ActivityList } from "./activity";
-import { AnalyzedRow, RepoRow } from "./parts";
+import { AnalyzedRow, RepoRow, shownZero } from "./parts";
 import { SearchForm } from "./SearchForm";
 
 /**
@@ -40,15 +39,21 @@ const FAKE_GITHUB = FAKE_GITHUB_NOTE;
 
 /** 읽은 최근 분석. DB 에 닿지 못하면 그 까닭이다. */
 export type LoadedActivity =
-  | { ok: true; rows: RepositoryActivity[]; findings: Record<string, number | null>; features?: Record<string, string[] | null> }
+  | {
+      ok: true;
+      rows: RepositoryActivity[];
+      findings: Record<string, number | null>;
+      checks?: Record<string, number | null>;
+      features?: Record<string, string[] | null>;
+    }
   | { ok: false; message: string };
 
 /**
  * 검색 쪽의 빈 상태(`/search/` 를 질의 없이 연 쪽. 도구 화면의 이름이 여기로 온다. 목업 search-home #closed). 검색창, 이 사이트의
- * 최근 분석 상자, 곁칸의 검사하는 정책(팩 메타데이터의 정책 모두. 수를 글로 박아 두지 않는다).
+ * 최근 분석 상자, 곁칸의 AI 검토가 묻는 의무(의무 지도의 기능마다 의무 수, 누르면 조문 도감에서 그 기능으로 거른다. 수는 의무 지도에서
+ * 센다). 2026-11-15 까지 곁칸은 정적 규칙의 정책 여섯이었다(AI 검토가 본체, 정적 검사는 보조. 오너 결정).
  */
 export function SearchHome({ recent, tagged }: { recent: LoadedActivity; tagged: boolean }) {
-  const policies = packMeta.policies;
   return (
     <div className="search-home" data-page="search-home">
       <div className="search-home-q">
@@ -65,24 +70,25 @@ export function SearchHome({ recent, tagged }: { recent: LoadedActivity; tagged:
         ) : recent.rows.length === 0 ? (
           <p className="box-empty">아직 분석 없음</p>
         ) : (
-          <ActivityList rows={recent.rows} findings={recent.findings} features={recent.features} variant="box" />
+          <ActivityList rows={recent.rows} findings={recent.findings} checks={recent.checks} features={recent.features} variant="box" />
         )}
       </section>
-      <section className="box search-home-side" aria-labelledby="policies-title">
+      <section className="box search-home-side" aria-labelledby="duties-title">
         <div className="box-hd">
-          <h2 id="policies-title">
-            검사하는 정책 <span className="count">{policies.length}</span>
+          <h2 id="duties-title">
+            AI 검토가 묻는 의무 <span className="count">{dutyMap.asked}</span>
           </h2>
           <Link href="/policy/" className="box-end">
             조문 도감
           </Link>
         </div>
         <ul className="pol-list">
-          {policies.map((policy) => (
-            <li key={policy.id}>
-              <Link href={policyHref(policy.id)} className="pol-row">
-                <span className="pol-title">{policy.title}</span>
-                <span className="pol-law">{keepArticle(primaryLaw(policy))}</span>
+          {dutyMap.features.map((feature) => (
+            <li key={feature.id}>
+              {/* 미리 받지 않는다: 의무 지도는 큰 쪽이고 기능마다 주소(?f=)가 달라 링크 수만큼 받는다. */}
+              <Link href={dutyFeatureHref(feature.id)} className="pol-row pol-feat" prefetch={false}>
+                <span className="pol-title">{feature.name}</span>
+                <span className="pol-law">의무 {dutyMap.duties.filter((duty) => duty.feature === feature.id).length}</span>
               </Link>
             </li>
           ))}
@@ -188,11 +194,12 @@ export function SearchResults({
   );
 }
 
-/** 검색 0건 아래의 "이 사이트에서 분석된 저장소". 없으면 그리지 않는다. 발견 0건이 보이면 0의 뜻을 둔다. */
+/** 검색 0건 아래의 "이 사이트에서 분석된 저장소". 없으면 그리지 않는다. 0건이 보이면 0의 뜻을 둔다. */
 function Analyzed({ analyzed, tagged }: { analyzed: LoadedActivity; tagged: boolean }) {
   if (!analyzed.ok) return <p className="notice notice-warn">{analyzed.message}</p>;
   if (analyzed.rows.length === 0) return null;
-  const zero = analyzed.rows.some(({ analysis }) => analysis.status === "succeeded" && analyzed.findings[analysis.id] === 0);
+  const checks = analyzed.checks ?? {};
+  const zero = analyzed.rows.some(({ analysis }) => analysis.status === "succeeded" && shownZero(analyzed.findings[analysis.id], checks[analysis.id]));
   return (
     <section aria-labelledby="analyzed-title">
       <div className="sec-h">
@@ -201,7 +208,7 @@ function Analyzed({ analyzed, tagged }: { analyzed: LoadedActivity; tagged: bool
       </div>
       <ul className="box sr-list">
         {analyzed.rows.map((activity) => (
-          <AnalyzedRow key={activity.analysis.id} activity={activity} count={analyzed.findings[activity.analysis.id]} />
+          <AnalyzedRow key={activity.analysis.id} activity={activity} count={analyzed.findings[activity.analysis.id]} check={checks[activity.analysis.id]} />
         ))}
       </ul>
       {zero && <p className="hint zero-note">{SITE.zeroIsNotClearance}</p>}

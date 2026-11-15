@@ -3,6 +3,7 @@ import path from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { featureNames, parseProfile } from "@/lib/profile";
 import { parseReview } from "@/lib/review";
+import { checkCount } from "@/lib/review/text";
 import type { Analysis } from "@/lib/service/types";
 import { syntheticRepositories, syntheticStore } from "@/lib/service/synthetic";
 import { getAnalysis, postAnalysis, postRunnerClaim, postRunnerEvent, type ApiDeps } from "@/server/api";
@@ -416,7 +417,7 @@ describe("review 를 결과와 함께 받아 두고, 같은 커밋이면 다시 
   const reviewCapture = JSON.parse(readFileSync(path.join(root, "contract", "review", "genai-chat.review.json"), "utf8")) as Record<string, unknown>;
 
   it("읽히는 review 는 받은 그대로 두고 읽히지 않으면 비운다(분석은 끝남). 같은 커밋의 review 는 어느 분석에서 왔든 가장 새것을 대소문자 없이 읽고, 있으면 실행기에 맡기지 않는다", async () => {
-    const { deps, later } = setup({ POOL_SIZE: "5", REVIEW: "on" });
+    const { deps, stub, later } = setup({ POOL_SIZE: "5", REVIEW: "on" });
     const once = async (review: unknown) => {
       const analysis = (await requestAnalysis(deps)).body.analysis!;
       const claimed = (await (await postRunnerClaim(signed("claim", {}, { at: deps.now() }), deps)).json()) as { analysis: { id: string; review: boolean } };
@@ -448,6 +449,28 @@ describe("review 를 결과와 함께 받아 두고, 같은 커밋이면 다시 
     // 합성 미리보기는 genai-chat 표본에만 review 수집본을 준다.
     expect(await syntheticStore.getReview("Example-Studio", "genai-chat", commit)).toEqual(parseReview(reviewCapture));
     expect(await syntheticStore.getReview("example-org", "kids-signup", commit)).toBeNull();
+
+    // 목록 줄의 '확인할 것' 수(AI 검토가 본체, 2026-11-15): 그 커밋의 가장 새 review 에서 센다. review 를 읽지 못한 분석도 같은 커밋의
+    // review 를 쓴다(getReview 와 같다). 다른 커밋의 끝난 분석은 null, 끝나지 않은 분석과 id 가 아닌 것은 없다.
+    const checks = checkCount(parseReview(newer)!.checklist);
+    expect(checks).toBeGreaterThan(0);
+    later(1);
+    const other = (await requestAnalysis(deps, "example-org", "night-push")).body.analysis!.id;
+    await runToFinish(deps, other);
+    expect((await event(deps, other, { event: "result", output: capture })).body.status).toBe("succeeded");
+    stub.setHead("example-org", "night-push", "2");
+    later(61);
+    const waiting = (await requestAnalysis(deps, "example-org", "night-push")).body.analysis!.id;
+    expect(waiting).not.toBe(other);
+    expect(await deps.store().reviewCounts([broken.analysis.id, stored.analysis.id, again.analysis.id, other, waiting, "not-an-id"])).toEqual({
+      [broken.analysis.id]: checks,
+      [stored.analysis.id]: checks,
+      [again.analysis.id]: checks,
+      [other]: null,
+    });
+    expect(await deps.store().reviewCounts([])).toEqual({});
+    const synthetic = await syntheticStore.reviewCounts(["4qqa6fdx2h", "wtk33e9zuf", "9f4gxaqj6s"]);
+    expect(synthetic).toEqual({ "4qqa6fdx2h": checkCount(parseReview(reviewCapture)!.checklist), wtk33e9zuf: null });
   });
 });
 

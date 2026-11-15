@@ -9,7 +9,7 @@ export interface NotSeenItem {
 const NOT_SEEN: readonly NotSeenItem[] = [
   {
     what: "JS/TS 가 아닌 파일",
-    why: "다른 언어의 코드, HTML·템플릿, JSON·YAML 설정 파일은 검사하지 않고, '검사하지 않은 파일'에도 싣지 않습니다.",
+    why: "정적 검사는 다른 언어의 코드, HTML·템플릿, JSON·YAML 설정 파일을 검사하지 않고, '검사하지 않은 파일'에도 싣지 않습니다.",
   },
   {
     what: "목록 없이 빠지는 JS/TS 파일",
@@ -61,7 +61,12 @@ export const SITE = {
    * 낸다(파일로 쓰는 선택지가 없다). 그래서 출력을 파일로 돌려 저장하는 모양이다. SARIF 는 `--output-format sarif` 다.
    */
   scanExample: `${CLI} scan src/ --output-format json > result.json`,
-  tagline: "JS/TS 코드에서 국내 법·정책상 검토가 필요한 지점을 조문과 함께 보여 줍니다.",
+  /**
+   * 사이트 설명(쪽의 description). 본체는 AI 검토(review)이고 정적 검사는 보조다(2026-11-15 오너 결정). 정적 검사의 대상은 JS/TS
+   * 파일이지만 AI 검토는 저장소의 파일을 가리지 않고 읽으므로 'JS/TS 전용'으로 적지 않는다(평가는 JS/TS 저장소에서 했다).
+   */
+  tagline:
+    "공개 저장소의 코드를 AI 가 읽고, 서비스의 기능에 걸리는 국내 법 의무를 조문과 함께 체크리스트로 보여 줍니다. 정적 검사는 이를 돕는 보조입니다.",
   /** 모든 화면에 붙는 면책. docs/commitments.md 의 표기 약속. */
   disclaimer: `${NOT_LEGAL_ADVICE} ${PEOPLE_DECIDE}`,
   /**
@@ -129,7 +134,7 @@ export const SITE = {
    * 발견이 있는 결과에서는 검사 정보의 링크가 조문 도감으로 잇는다(docs/redesign.md 3장, docs/architecture.md 의 "커버리지 보기").
    * 도구가 보는 범위에 관한 사실만 적는다(검사 대상 파일의 코드를 읽기만 한다). 법에 관한 판단은 적지 않는다.
    * 무엇을 검사하지 않고 무엇을 목록에 싣지 않는지는 CLI README 의 "써 보기"와 CLI 소스 `discover.py` 에 있고,
-   * CLI 0.3.0.dev0 을 실제로 돌려 확인했다(docs/architecture.md 의 "빈 결과 화면"). 대상(tagline 의 JS/TS)이나
+   * CLI 0.3.0.dev0 을 실제로 돌려 확인했다(docs/architecture.md 의 "빈 결과 화면"). 정적 검사의 대상(JS/TS)이나
    * CLI 의 동작이 바뀌면 함께 고친다.
    *
    * 빠지는 것을 늘어놓은 글은 "그 밖에는 다 봤다"로 읽힌다. 그래서 JS/TS 파일인데 목록 없이 빠지는 것(이름으로
@@ -162,9 +167,10 @@ export const SITE = {
       "이 도구는 검사한 파일의 코드를 읽기만 합니다. 아래는 보지 못하므로, 이 결과에 나온 발견이 전부라는 뜻은 아닙니다.",
     /**
      * 조문 도감 `/policy#scope` 의 첫 문단(목업 policy-index 의 글). 그 구역으로 잇는 것은 발견이 있는 결과의 검사 정보뿐이다(발견이
-     * 0인 결과는 목록을 쪽 안에 펼쳐 둔다). 어느 한 결과의 쪽이 아니라서 `leadWithFindings` 의 "이 결과에"를 뺐다.
+     * 0인 결과는 목록을 쪽 안에 펼쳐 둔다). 어느 한 결과의 쪽이 아니라서 `leadWithFindings` 의 "이 결과에"를 뺐다. 조문 도감이 AI
+     * 검토가 묻는 의무 지도가 된 뒤로(2026-11-15) 이 목록이 AI 검토까지의 말로 읽히지 않게 정적 검사의 말이라고 밝힌다.
      */
-    bookLead: "이 도구는 검사한 파일의 코드를 읽기만 합니다. 아래는 보지 못하므로, 결과에 나온 발견이 전부라는 뜻은 아닙니다.",
+    bookLead: "정적 검사는 검사한 파일의 코드를 읽기만 합니다. 아래는 보지 못하므로, 정적 검사 결과에 나온 발견이 전부라는 뜻은 아닙니다.",
     items: NOT_SEEN,
     /**
      * 결과를 만든 팩이 이 사이트에 실린 팩과 판이 다를 때 덧붙인다. 대상 언어는 팩이 정하는데(이 사이트의 팩은

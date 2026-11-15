@@ -426,9 +426,11 @@ describe("DB + GitHub 으로 띄운 사이트", () => {
     // 실행 자리(1)는 앞서 보낸 QUEUED 가 쓰고 있다. 이 분석은 대기열의 첫째다.
     expect(await page.locator(".live-now").textContent()).toBe("대기열 1번째");
 
-    // 로컬 실행기가 QUEUED 를 먼저 돌리고(단계 사이 4초), 그 결과를 받은 서버가 자리를 이 분석에 넘기면 곧바로 집어 이어서 돌린다
-    // ('실행기에 보냄'은 집어 가기까지의 한순간이라 쪽에 그려지지 않을 수 있다). 쪽이 3초마다 읽으므로 중간 단계 하나는 그려진다.
-    const runner = runLocalRunner(["--fixture", "--once", "--step-delay", "4000", "--site", site.origin], { RUNNER_SECRET });
+    // 로컬 실행기가 QUEUED 를 먼저 돌리고(단계 사이 3초), 그 결과를 받은 서버가 자리를 이 분석에 넘기면 곧바로 집어 이어서 돌린다
+    // ('실행기에 보냄'은 집어 가기까지의 한순간이라 쪽에 그려지지 않을 수 있다). 이 분석은 받기·검사가 합해 6초 넘게 걸리고 쪽이
+    // 3초마다 읽으므로 중간 단계 하나는 그려진다. 4초로 두면 QUEUED 의 review 쉼(검사 단계 안의 일, 2026-11-13)까지 더해 두 분석이 창
+    // 하나의 한도(28초)에 닿았다.
+    const runner = runLocalRunner(["--fixture", "--once", "--step-delay", "3000", "--site", site.origin], { RUNNER_SECRET });
     try {
       await page.locator(".step-active .step-name", { hasText: /저장소 받기|검사/ }).waitFor({ timeout: 30_000 });
       expect(await page.locator(".an-meta .badge").textContent()).toBe("분석 중");

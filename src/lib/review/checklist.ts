@@ -1,7 +1,7 @@
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { SITE } from "@/lib/site";
 import { REVIEW_STATUSES, type Review, type ReviewItem, type ReviewStatus } from "./index";
-import { CHECKS, firstSentence, gateText, notAnsweredText, SANCTION } from "./text";
+import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, SANCTION } from "./text";
 
 /**
  * 의무 체크리스트 내보내기(2026-11-13 오너 지시): 결과 쪽의 체크리스트를 마크다운 파일로 받고, 인쇄용 보기로 본다. 둘은 이 파일의
@@ -109,7 +109,7 @@ export function checklistDoc(review: Review, recheck: readonly string[] = []): C
     overview: {
       features: review.profile.features.filter((feature) => feature.removed === null).length,
       obligations: review.obligations.listed,
-      check: items.filter((item) => CHECKS.includes(item.status) && item.group !== "goods").length,
+      check: checkCount(items),
     },
     groups,
     run: review.run,

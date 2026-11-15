@@ -9,6 +9,11 @@ import type { ReviewItem, ReviewStatus } from "./index";
 /** 확인할 것의 세 갈래. */
 export const CHECKS: readonly ReviewStatus[] = ["seen-in-code", "check-outside", "check-applicability"];
 
+/** 확인할 것(세 갈래)의 수. 묻지 않은 품목 의무(group goods)는 세지 않는다(화면의 '확인할 것' 머리와 같은 수). */
+export function checkCount(items: readonly ReviewItem[]): number {
+  return items.filter((item) => CHECKS.includes(item.status) && item.group !== "goods").length;
+}
+
 /**
  * 화면에 싣지 않는 처분의 말(docs/commitments.md 1장: 처분 사례와 그 액수를 화면에 싣지 않는다). 의무 한 줄에 이 말이 들면 그 줄은
  * 적지 않고 법·조문·법제처 링크만 둔다. 소스의 문구 시험(tests/commitments.test.ts)이 이 낱말을 글자 그대로 막으므로 글자 번호로

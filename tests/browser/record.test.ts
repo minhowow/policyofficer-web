@@ -498,7 +498,7 @@ describe("인쇄하면 기록만 나온다", () => {
     // 조문 도감도 그대로다.
     const policy = await open("/policy/");
     await asPrint(policy.page);
-    expect(await drawn(policy.page, [".site-header", ".site-footer", "main > h1", ".policy-index"])).toEqual([true, true, true, true]);
+    expect(await drawn(policy.page, [".site-header", ".site-footer", "main > h1", ".dm-list"])).toEqual([true, true, true, true]);
   });
 
   it.each([375, 1280])(

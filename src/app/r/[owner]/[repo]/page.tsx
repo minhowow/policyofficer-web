@@ -44,14 +44,16 @@ export default async function RepositoryPage({ params }: PageProps<"/r/[owner]/[
       const features = await store.featureNames(done);
       const latest = analyses.find((analysis) => analysis.status === "succeeded") ?? null;
       const result = latest ? await store.getResult(latest.id) : null;
+      // 최신 분석의 커밋에 review 가 있으면 체크리스트의 확인할 것 수(머리 줄에 정적 검사의 수보다 먼저).
+      const check = latest ? ((await store.reviewCounts([latest.id]))[latest.id] ?? null) : null;
       // 대기열(DB 에서 센 것). 대기 중인 분석이 몇 번째인지 적는다. 합성은 null.
       const queue = await store.queue();
-      return { repository, analyses, findings, features, latest, result, queue };
+      return { repository, analyses, findings, features, latest, result, check, queue };
     })(),
   );
   if (!found.ok) return <Unavailable owner={owner} repo={repo} message={found.message} />;
   if (!found.value) notFound();
-  const { repository, analyses, findings, features, latest, result, queue } = found.value;
+  const { repository, analyses, findings, features, latest, result, check, queue } = found.value;
   const parsed = latest ? parseReport(result) : null;
   const view = parsed?.ok ? buildReportView(parsed.report, parsed.contract, packMeta) : null;
 
@@ -80,7 +82,7 @@ export default async function RepositoryPage({ params }: PageProps<"/r/[owner]/[
         <RequestAction repository={repository} closed={store.requestsClosed()} />
       </header>
 
-      {latest && <LatestAnalysis repository={repository} analysis={latest} view={view} features={features[latest.id]} />}
+      {latest && <LatestAnalysis repository={repository} analysis={latest} view={view} features={features[latest.id]} check={check} />}
 
       <section aria-labelledby="history-title" className="repo-history">
         <div className="sec-h">

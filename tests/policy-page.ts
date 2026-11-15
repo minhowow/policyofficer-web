@@ -538,10 +538,14 @@ export const POLICY_FRAME = [
 ];
 
 export interface PolicyIndexRead {
-  /** 메타 한 줄(팩, 판, 정책 수). */
+  /** 메타 한 줄(CLI 커밋, 법령·기능 수, 정적 규칙 수와 팩). */
   meta: string;
-  /** 정책 줄: 주소, 제목, 대표 조문, 규칙 수. */
-  rows: { href: string; title: string; law: string; rules: string }[];
+  /** 의무 지도의 몇 개를 AI 검토가 묻고 나머지는 왜 묻지 않는지의 한 줄. */
+  lead: string;
+  /** 걸러 보기의 고르기 둘(기능, 법령)의 보기 글(첫 보기 '모든 …' 포함). */
+  filters: { label: string; options: string[] }[];
+  /** 법령 묶음: 제목(수 빼고), 수, 의무 줄. */
+  groups: { name: string; count: string; rows: DutyRowRead[] }[];
   /** 상태의 뜻(#status): 이름과 뜻. 상태는 칩으로 그렸는지도 읽는다. */
   status: { label: string; text: string; chip: boolean }[];
   /** 검사에 들지 않는 파일과 정보(#scope): 제목, 첫 문단, 항목(무엇, 왜, 까닭들). */
@@ -550,20 +554,97 @@ export interface PolicyIndexRead {
   sections: { id: string; title: string }[];
 }
 
-/** 조문 도감 목록(/policy)을 읽는다. 부품만 그려 낸 HTML 이든 빌드된 쪽이든 본문(main) 또는 그 조각을 준다. */
+/** 의무 줄 하나(접는 줄). */
+export interface DutyRowRead {
+  id: string;
+  open: boolean;
+  /** 줄의 기능 차례(data-f). */
+  f: string;
+  title: string;
+  /** 둘째 줄의 조각들(조문, 기능, '정적 규칙'). */
+  sub: string[];
+  /** 펼친 안의 의무 한 줄. 없으면 null. */
+  duty: string | null;
+  /** 사실 줄(기능, 걸리는 코드, 조문). */
+  facts: { label: string; value: string; html: string }[];
+  /** 법제처 링크(밖으로 가는 링크). */
+  ext: string[];
+  /** 정적 규칙: 정책 쪽 링크와 규칙 링크(그 정책이 다른 의무에 실렸으면 그 의무의 자리로 가는 링크 하나). */
+  statics: { title: string; hrefs: string[] } | null;
+}
+
+/** 요소 안의 바로 아래 요소들. 요소 사이의 글은 빈칸뿐이어야 한다(아니면 읽지 않고 실패한다). */
+function childrenOf(element: string): string[] {
+  const inner = element.slice(element.indexOf(">") + 1, element.lastIndexOf("</"));
+  const out: string[] = [];
+  let at = 0;
+  while (at < inner.length) {
+    if (inner[at] === "<") {
+      const child = elementAt(inner, at);
+      out.push(child);
+      at += child.length;
+    } else {
+      const next = inner.indexOf("<", at);
+      const text = inner.slice(at, next === -1 ? undefined : next);
+      if (text.trim()) throw new Error(`요소 사이에 글이 있습니다: ${text}`);
+      at = next === -1 ? inner.length : next;
+    }
+  }
+  return out;
+}
+
+function dutyRowOf(details: string): DutyRowRead {
+  const tag = openTag(details);
+  const summary = need(details, "<summary>");
+  const sub = need(summary, '<span class="dr-sub">');
+  const body = need(details, '<div class="dr-body">');
+  const duty = first(body, '<p class="dr-duty">');
+  const facts = need(body, '<dl class="dr-facts">');
+  const block = first(body, '<section class="dr-static"') ?? first(body, '<p class="dr-static-link">');
+  return {
+    id: attribute(tag, "id") ?? "",
+    open: / open=""/.test(tag),
+    f: attribute(tag, "data-f") ?? "",
+    title: plain(need(summary, '<span class="dr-title">')),
+    sub: childrenOf(sub).map(plain),
+    duty: duty === null ? null : plain(duty),
+    facts: elementsOf(facts, "<div>").map((row) => {
+      const dd = need(row, "<dd>");
+      return { label: plain(need(row, "<dt>")), value: plain(dd), html: dd };
+    }),
+    ext: [...body.matchAll(/<a class="ob-ext" href="([^"]*)"/g)].map((m) => decodeEntities(m[1])),
+    statics:
+      block === null
+        ? null
+        : {
+            title: plain(block.startsWith("<section") ? need(block, "<b>") : block),
+            hrefs: [...block.matchAll(/<a [^>]*href="([^"]*)"/g)].map((m) => decodeEntities(m[1])),
+          },
+  };
+}
+
+/** 조문 도감(/policy, 의무 지도)을 읽는다. 부품만 그려 낸 HTML 이든 빌드된 쪽이든 본문(main) 또는 그 조각을 준다. */
 export function readPolicyIndex(html: string): PolicyIndexRead {
-  const list = need(html, '<ul class="policy-index">');
+  const list = need(html, '<div class="dm-list">');
+  const filter = need(html, '<div class="dm-filter">');
   const status = need(html, '<section class="pi-sec" id="status"');
   const scope = need(html, '<section class="pi-sec" id="scope"');
   const box = need(scope, '<div class="box not-seen-box">');
   return {
     meta: plain(need(html, '<p class="pi-meta">')),
-    rows: elementsOf(list, "<li>").map((item) => ({
-      href: decodeEntities(/href="([^"]*)"/.exec(item)?.[1] ?? ""),
-      title: plain(need(item, '<span class="pi-title">')),
-      law: plain(need(item, '<span class="pi-law">')),
-      rules: plain(need(item, '<span class="pi-n">')),
+    lead: plain(need(html, '<p class="dm-lead">')),
+    filters: elementsOf(filter, "<label>").map((label) => ({
+      label: plain(need(label, "<span>")),
+      options: elementsOf(label, "<option").map(plain),
     })),
+    groups: elementsOf(list, '<section class="dm-law"').map((section) => {
+      const h2 = need(section, "<h2");
+      return {
+        name: plain(h2.replace(/<span class="count">[\s\S]*?<\/span>/, "")).trim(),
+        count: plain(need(h2, '<span class="count">')),
+        rows: elementsOf(section, '<details class="duty-row"').map(dutyRowOf),
+      };
+    }),
     status: elementsOf(need(status, '<dl class="box rows defs">'), "<div>").map((row) => {
       const dt = need(row, "<dt>");
       return { label: plain(dt), text: plain(need(row, "<dd>")), chip: dt.includes('<span class="chip chip-') };
