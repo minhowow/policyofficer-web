@@ -1,7 +1,7 @@
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { SITE } from "@/lib/site";
 import { REVIEW_STATUSES, type Review, type ReviewItem, type ReviewStatus } from "./index";
-import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, SANCTION } from "./text";
+import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, rebutLine, SANCTION } from "./text";
 
 /**
  * 의무 체크리스트 내보내기(2026-11-13 오너 지시): 결과 쪽의 체크리스트를 마크다운 파일로 받고, 인쇄용 보기로 본다. 둘은 이 파일의
@@ -119,12 +119,11 @@ export function checklistDoc(review: Review, recheck: readonly string[] = []): C
 /** 검증 정보의 줄(이름, 값). 화면의 검증 정보와 같은 수다. */
 export function verificationRows(run: Review["run"]): [string, string][] {
   const sum = (record: Record<string, number>) => Object.values(record).reduce((a, b) => a + b, 0);
-  const v = run.verificationCounts;
   const notAsked = sum(run.notAsked);
   return [
     ["인용", `${run.citations}개 · 검사기가 거절 ${run.citationsRejected}개`],
     ["부재 검색", `${run.searches}개 · 건수가 맞지 않음 ${run.searchesRejected}개`],
-    ["반박", `유지 ${v.upheld ?? 0} · 뒤집음 ${v.overturned ?? 0}${v["overturn-ungrounded"] ? ` · 근거 없는 뒤집기 거절 ${v["overturn-ungrounded"]}` : ""}`],
+    ["반박", rebutLine(run)],
     ["가린 비밀값", `${sum(run.masked)}개`],
     ...(notAsked > 0 ? [["묻지 않은 의무", `${notAsked}개`] as [string, string]] : []),
     ["모델", `조사 ${run.models.investigate} · 반박 ${run.models.verify}`],

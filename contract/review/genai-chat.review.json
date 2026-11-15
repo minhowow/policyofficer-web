@@ -971,7 +971,8 @@
         "question": "개인정보 처리방침은 어디에 공개되어 있나요?"
       },
       "verification": {
-        "result": "upheld"
+        "result": "not-run",
+        "why": "rebut-scope"
       },
       "citations": [],
       "searches": [],
@@ -1010,7 +1011,8 @@
         "question": "가입 환영 메일 말고 이벤트·할인 같은 광고 메일도 보내나요?"
       },
       "verification": {
-        "result": "upheld"
+        "result": "not-run",
+        "why": "rebut-scope"
       },
       "citations": [
         {
@@ -1105,7 +1107,8 @@
         "question": ""
       },
       "verification": {
-        "result": "upheld"
+        "result": "not-run",
+        "why": "rebut-scope"
       },
       "citations": [],
       "searches": [
@@ -1154,7 +1157,8 @@
         "question": ""
       },
       "verification": {
-        "result": "upheld"
+        "result": "not-run",
+        "why": "rebut-scope"
       },
       "citations": [],
       "searches": [
@@ -1187,7 +1191,8 @@
       "asked": false,
       "first": null,
       "verification": {
-        "result": "upheld"
+        "result": "not-run",
+        "why": "rebut-scope"
       },
       "citations": [],
       "searches": [],
@@ -1237,8 +1242,9 @@
       "not-applicable": 1
     },
     "verification_counts": {
-      "upheld": 10,
-      "overturned": 1
+      "upheld": 6,
+      "overturned": 1,
+      "not-run": 5
     },
     "citations": 31,
     "citations_rejected": 2,
@@ -1261,6 +1267,8 @@
       "error": null,
       "duties": 4
     },
-    "questions": []
+    "questions": [],
+    "rebut": true,
+    "rebut_scope": "found"
   }
 }

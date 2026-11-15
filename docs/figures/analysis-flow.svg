@@ -45,7 +45,7 @@
   <text class="hw-title" x="90" y="123" font-size="17" font-weight="700" data-in="sig">신호</text>
   <text class="hw-tag t-tool" x="312" y="114" font-size="12" font-weight="700" text-anchor="end" data-in="sig">도구</text>
   <text class="hw-line" x="90" y="148" font-size="14" data-in="sig">의존성·import·호출·주소</text>
-  <text class="hw-line" x="90" y="169" font-size="14" data-in="sig">→ 기능(26가지 중)·플랫폼</text>
+  <text class="hw-line" x="90" y="169" font-size="14" data-in="sig">→ 기능의 단서 (JS·TS)</text>
   <rect class="hw-box t-tool" x="76" y="213" width="246" height="91" rx="8" data-id="stat"/>
   <text class="hw-title" x="90" y="240" font-size="17" font-weight="700" data-in="stat">정적 검사</text>
   <text class="hw-tag t-tool" x="312" y="231" font-size="12" font-weight="700" text-anchor="end" data-in="stat">도구</text>
@@ -54,9 +54,9 @@
   <rect class="hw-box t-model" x="76" y="330" width="246" height="133" rx="8" stroke-dasharray="7 5" data-id="und"/>
   <text class="hw-title" x="90" y="357" font-size="17" font-weight="700" data-in="und">AI 이해</text>
   <text class="hw-tag t-model" x="312" y="348" font-size="12" font-weight="700" text-anchor="end" data-in="und">모델</text>
-  <text class="hw-line" x="90" y="382" font-size="14" data-in="und">haiku 5.5</text>
-  <text class="hw-line" x="90" y="403" font-size="14" data-in="und">서비스 요약</text>
-  <text class="hw-line" x="90" y="424" font-size="14" data-in="und">기능 더하기·빼기</text>
+  <text class="hw-line" x="90" y="382" font-size="14" data-in="und">haiku 5.5 · 언어 상관없이</text>
+  <text class="hw-line" x="90" y="403" font-size="14" data-in="und">기능(27가지 중)을 인용과 정함</text>
+  <text class="hw-line" x="90" y="424" font-size="14" data-in="und">플랫폼 · 서비스 요약</text>
   <text class="hw-line" x="90" y="445" font-size="14" data-in="und">개인정보 흐름</text>
   <rect class="hw-box t-tool" x="76" y="489" width="246" height="70" rx="8" data-id="g1"/>
   <text class="hw-title" x="90" y="516" font-size="17" font-weight="700" data-in="g1">관문 ①</text>
@@ -76,10 +76,10 @@
   <text class="hw-title" x="664" y="357" font-size="17" font-weight="700" data-in="reb">반박</text>
   <text class="hw-tag t-model" x="890" y="348" font-size="12" font-weight="700" text-anchor="end" data-in="reb">모델</text>
   <text class="hw-line" x="664" y="382" font-size="14" data-in="reb">sonnet 5.5</text>
-  <text class="hw-line" x="664" y="403" font-size="14" data-in="reb">빼는 답엔 지키지 않은 곳,</text>
-  <text class="hw-line" x="664" y="424" font-size="14" data-in="reb">코드에서 본 것·저장소 밖엔</text>
-  <text class="hw-line" x="664" y="445" font-size="14" data-in="reb">지킨 근거나 조건 없음을 찾음</text>
-  <text class="hw-line" x="664" y="466" font-size="14" data-in="reb">해당 여부부터·모름은 안 함</text>
+  <text class="hw-line" x="664" y="403" font-size="14" data-in="reb">충족 근거 있음엔 지키지 않은 곳,</text>
+  <text class="hw-line" x="664" y="424" font-size="14" data-in="reb">코드에서 본 것엔 지킨 근거나</text>
+  <text class="hw-line" x="664" y="445" font-size="14" data-in="reb">조건 없음을 찾음</text>
+  <text class="hw-line" x="664" y="466" font-size="14" data-in="reb">그 밖은 반박하지 않음</text>
   <rect class="hw-box t-tool" x="650" y="510" width="250" height="70" rx="8" data-id="g3"/>
   <text class="hw-title" x="664" y="537" font-size="17" font-weight="700" data-in="g3">관문 ①②③</text>
   <text class="hw-tag t-tool" x="890" y="528" font-size="12" font-weight="700" text-anchor="end" data-in="g3">도구</text>

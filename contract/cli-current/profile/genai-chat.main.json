@@ -17,7 +17,7 @@
   "features": [
     {
       "id": "genai",
-      "name": "AI 기능(생성형 AI·자동화 결정)",
+      "name": "생성형 AI(LLM·생성 API 호출)",
       "evidence": [
         {
           "file": "src/chat/ChatPanel.tsx",

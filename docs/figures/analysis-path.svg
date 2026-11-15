@@ -69,8 +69,8 @@
   <text class="hw-line" x="512" y="564" font-size="14" data-in="runner">CLI 설치 (고정 커밋)</text>
   <text class="hw-line" x="512" y="585" font-size="14" data-in="runner">진행·결과를 서명해 보냄</text>
   <rect class="hw-box t-plain" x="760" y="482" width="244" height="133" rx="8" data-id="cli"/>
-  <text class="hw-title" x="774" y="509" font-size="17" font-weight="700" data-in="cli">CLI b5888e5</text>
-  <text class="hw-tag t-plain" x="994" y="500" font-size="12" font-weight="700" text-anchor="end" data-in="cli">handoff-w11-8</text>
+  <text class="hw-title" x="774" y="509" font-size="17" font-weight="700" data-in="cli">CLI 122de1d</text>
+  <text class="hw-tag t-plain" x="994" y="500" font-size="12" font-weight="700" text-anchor="end" data-in="cli">handoff-w11-13</text>
   <text class="hw-line" x="774" y="534" font-size="14" data-in="cli">scan · AI 판정 (haiku)</text>
   <text class="hw-line" x="774" y="555" font-size="14" data-in="cli">profile 명령 (모델 없음)</text>
   <text class="hw-line" x="774" y="576" font-size="14" data-in="cli">review (haiku·sonnet)</text>

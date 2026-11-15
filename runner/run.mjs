@@ -45,6 +45,9 @@ export const DEFAULTS = {
   reviewChecker: "anthropic:claude-sonnet-5-5",
   reviewMaxUsd: 3,
   reviewTimeLimitSeconds: 420,
+  // 반박할 항목(CLI 의 --rebut-scope, handoff-w11-13 부터). found: '코드에서 본 것'·'충족 근거 있음'에만 반박한다(2026-11-15 오너
+  // 지시. 12곳 실측으로 반박 비용이 44%). 나머지 항목의 반박은 not-run(why rebut-scope)이다.
+  reviewRebutScope: "found",
   // review 의 시간 상한을 넘겨도 CLI 가 답을 정리해 낼 틈. 이것까지 지나면 멈추고 결과만 보낸다.
   reviewMarginSeconds: 90,
 };
@@ -397,13 +400,19 @@ export function reviewOptions(env) {
     checker: env.REVIEW_CHECKER || DEFAULTS.reviewChecker,
     maxUsd: positiveNumber(env.REVIEW_MAX_USD, DEFAULTS.reviewMaxUsd),
     timeLimitSeconds: positiveNumber(env.REVIEW_TIME_LIMIT_SECONDS, DEFAULTS.reviewTimeLimitSeconds),
+    rebutScope: REBUT_SCOPES.includes(env.REVIEW_REBUT_SCOPE) ? env.REVIEW_REBUT_SCOPE : DEFAULTS.reviewRebutScope,
   };
 }
 
-/** `policypack review` 의 인자(저장소 폴더는 지금 폴더). 모델 id 의 모양이 맞지 않으면 null. */
-export function reviewArgs({ model, checker, maxUsd, timeLimitSeconds }) {
-  if (!MODEL_ID.test(model) || !MODEL_ID.test(checker)) return null;
-  return ["review", ".", "--model", model, "--checker", checker, "--max-usd", String(maxUsd), "--time-limit", String(timeLimitSeconds)];
+/** CLI 가 받는 반박 범위. */
+const REBUT_SCOPES = ["all", "found"];
+
+/** `policypack review` 의 인자(저장소 폴더는 지금 폴더). 모델 id 의 모양이나 반박 범위가 맞지 않으면 null. 묶음(--batch)은 CLI 기본(duty)이다. */
+export function reviewArgs({ model, checker, maxUsd, timeLimitSeconds, rebutScope }) {
+  if (!MODEL_ID.test(model) || !MODEL_ID.test(checker) || !REBUT_SCOPES.includes(rebutScope)) return null;
+  return [
+    "review", ".", "--model", model, "--checker", checker, "--max-usd", String(maxUsd), "--time-limit", String(timeLimitSeconds), "--rebut-scope", rebutScope,
+  ];
 }
 
 /**

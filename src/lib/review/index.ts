@@ -94,6 +94,11 @@ export interface ReviewItem {
   notAnswered: string | null;
   /** 반박 검증의 결과(upheld · overturned · overturn-ungrounded · not-run). */
   verification: string;
+  /**
+   * not-run 의 까닭(business-judgment, no-answer, rebut-off, rebut-scope 등). rebut-scope 는 웹이 반박을 '코드에서 본 것'·'충족 근거
+   * 있음'에만 걸어(CLI 의 --rebut-scope found, handoff-w11-13 부터) 묻지 않은 것이다. 없으면 빈 글.
+   */
+  verificationWhy: string;
   /** 걸리는 조건은 있는데 찾지 못한 지킨 처리(CLI f4967db 부터, 없으면 빈 글). */
   missing: string;
   /** 한 줄로 묶어 보일 묶음(`goods`: 품목 신호가 없어 묻지 않은 품목 의무). 없으면 null. */
@@ -110,6 +115,11 @@ export interface Review {
   profile: {
     commit: string | null;
     platforms: string[];
+    /**
+     * 플랫폼의 출처(handoff-w11-13 부터): signal 은 package.json 으로 가름, model 은 가르지 못해 이해 단계가 인용과 함께 적은 것
+     * (JS·TS 가 없는 저장소), none 은 둘 다 없음. 이 판 전의 결과에는 없다(null).
+     */
+    platformsFrom: string | null;
     summary: string;
     features: ReviewFeature[];
     files: { service: number; testOrConfig: number } | null;
@@ -128,6 +138,8 @@ export interface Review {
     searches: number;
     searchesRejected: number;
     verificationCounts: Record<string, number>;
+    /** 반박할 항목(all · found, handoff-w11-13 부터). 이 판 전의 결과에는 없다(null). */
+    rebutScope: string | null;
     masked: Record<string, number>;
     notAsked: Record<string, number>;
   };
@@ -157,6 +169,12 @@ function searchesOf(v: unknown): ReviewSearch[] {
       : [],
   );
 }
+
+/** 답의 남은 부족한 점(`remaining`). '없음'이면 빈 글. */
+const remainingOf = (answer: unknown): string => {
+  const text = isObj(answer) ? (str(answer.remaining)?.trim() ?? "") : "";
+  return text === "없음" ? "" : text;
+};
 
 const isStatus = (v: unknown): v is ReviewStatus => typeof v === "string" && (REVIEW_STATUSES as readonly string[]).includes(v);
 const KINDS: readonly string[] = ["input", "server", "store", "external"];
@@ -223,7 +241,10 @@ export function parseReview(data: unknown): Review | null {
       reason: gated ? reason.slice(note.length).trim() : reason,
       notAnswered: str(it.not_answered),
       verification: isObj(it.verification) ? (str(it.verification.result) ?? "") : "",
-      missing: str(it.missing)?.trim() ?? "",
+      verificationWhy: isObj(it.verification) ? (str(it.verification.why) ?? "") : "",
+      // 조건은 있는데 찾지 못한 지킨 처리. '충족'이라 답하며 남은 부족한 점을 적어 옮긴 항목(gate remaining-gap, handoff-w11-13)은
+      // missing 이 비었으면 그 남은 부족한 점이다.
+      missing: str(it.missing)?.trim() || (gate && str(gate.why) === "remaining-gap" ? remainingOf(it.first) : ""),
       group: str(it.group),
       gate: gated ? (str(gate.why) ?? null) : null,
     });
@@ -236,7 +257,14 @@ export function parseReview(data: unknown): Review | null {
     : null;
   return {
     summary: { counts: counts(summary.counts) as Partial<Record<ReviewStatus, number>>, top: strs(summary.top) },
-    profile: { commit: str(profile.commit), platforms: strs(profile.platforms), summary: str(profile.summary) ?? "", features, files },
+    profile: {
+      commit: str(profile.commit),
+      platforms: strs(profile.platforms),
+      platformsFrom: str(profile.platforms_from),
+      summary: str(profile.summary) ?? "",
+      features,
+      files,
+    },
     flow: { nodes, edges },
     obligations: { listed: Array.isArray(obligations.listed) ? obligations.listed.length : 0, statusOnly: num(obligations.status_only) ?? 0 },
     checklist: items,
@@ -250,6 +278,7 @@ export function parseReview(data: unknown): Review | null {
       searches: num(run.searches) ?? 0,
       searchesRejected: num(run.searches_rejected) ?? 0,
       verificationCounts: counts(run.verification_counts),
+      rebutScope: str(run.rebut_scope),
       masked: counts(run.masked),
       notAsked: counts(run.not_asked),
     },

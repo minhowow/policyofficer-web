@@ -5,9 +5,11 @@
  * - 그림 1: 이 저장소의 코드(src/server/config.ts 의 기본값. 운영 환경 변수는 이 값들을 바꾸지 않는다), .github/workflows/analyze.yml,
  *   runner/run.mjs, src/server/queue.ts·callbacks.ts, src/server/db/migrations/. VM 이 작업 뒤 사라지는 것은 GitHub 호스팅 실행기의
  *   성질이다(이 저장소는 '분석마다 새 VM'만 적는다).
- * - 그림 2·3: CLI 세션의 사실 자료(~/.cache/policypack-eval/structure-2026-11-13/cli-structure.md, 태그 handoff-w11-8 기준)와 그 태그의
- *   CLI 코드. 의무 지도는 법령 206개(법률·시행령·시행규칙·고시)를 읽어 뽑은 의무 795개이고, 795줄에 적힌 법령 이름은 113개다
- *   (CLI docs/lawmap/README.md, duties.jsonl). 기능은 26가지(features.yaml 의 features. 품목 6가지는 따로). 상태 이름은 사이트의 말
+ * - 그림 2·3: CLI 세션의 사실 자료(~/.cache/policypack-eval/structure-2026-11-13/cli-structure.md, 태그 handoff-w11-8 기준)와 고정
+ *   태그(handoff-w11-13)의 CLI 코드·docs/output.md. 의무 지도는 법령 206개(법률·시행령·시행규칙·고시)를 읽어 뽑은 의무 795개이고, 795줄에
+ *   적힌 법령 이름은 113개다(CLI docs/lawmap/README.md, duties.jsonl). 기능은 27가지(features.yaml 의 features. handoff-w11-13 에서
+ *   '그 밖의 AI(분류·인식 모델)'가 더해졌다. 품목 6가지는 따로). 기능은 이해 단계가 기능마다 인용과 함께 정한다(언어와 상관없이, JS·TS
+ *   신호는 단서). 웹은 반박을 '코드에서 본 것'·'충족 근거 있음'에만 건다(runner 의 --rebut-scope found). 상태 이름은 사이트의 말
  *   (src/lib/report/status.ts)을 쓴다.
  * - 따라가 보기: data/cases.json 의 사례(TRACE)를 그대로 읽는다. 고른 까닭은 그 사례의 한 줄 요약(src/lib/cases/stories.ts)이 이 의무다.
  * CLI 를 옮겨 고정하면(CLI_PIN) 낱말과 숫자를 다시 보고 `node scripts/export-figures.mjs` 로 docs/figures/ 를 다시 뽑는다
@@ -19,7 +21,7 @@ import { SITE } from "../site.ts";
 import { BIG, boxHeight, Canvas, SIZE, wrap, type Figure, type Tone } from "./draw.ts";
 
 /** 실행기가 고정한 CLI(analyze.yml 의 CLI_COMMIT 앞 7자리, contract/cli-current/MANIFEST.json 과 같다)와 그 커밋을 가리키는 태그. */
-export const CLI_PIN = { commit: "b5888e5", tag: "handoff-w11-8" } as const;
+export const CLI_PIN = { commit: "122de1d", tag: "handoff-w11-13" } as const;
 
 /** 따라가 보기의 사례와 의무(jobtalk: 상담 메시지를 OpenAI 로 보내는데 가입 동의문에 국외 이전이 없다). */
 export const TRACE = { slug: "jobtalk", duty: "pipa-28-8-1" } as const;
@@ -179,10 +181,10 @@ function reviewSimple(): Figure {
   const lx = c.swatch(16, 34, "model", "AI 가 말한 것", BIG.line);
   c.swatch(lx + 32, 34, "tool", "도구가 한 것", BIG.line);
   const steps: [string, string, Tone][] = [
-    ["무슨 서비스인지 파악", "신호로 찾고 AI 가 보탬", "tool"],
+    ["무슨 서비스인지 파악", "AI 가 코드를 읽어 정함", "model"],
     ["걸리는 법 의무 고르기", "AI 없이 정해 둔 규칙으로", "tool"],
     ["의무마다 근거 찾기", "AI 가 코드를 읽고 답함", "model"],
-    ["다른 AI 가 반박", "반대 근거를 다시 찾아봄", "model"],
+    ["다른 AI 가 반박", "본 것·충족만 다시 따짐", "model"],
     ["도구가 직접 확인", "AI 답을 코드에서 대조", "tool"],
     ["체크리스트", "사람이 확인할 목록", "keep"],
   ];
@@ -675,14 +677,14 @@ function reviewFigure(): Figure {
   c.text(C.x, top - 14, "의무마다 · 동시 6", { cls: "hw-lane-name", size: SIZE.lane, bold: true });
 
   // A: 프로필(위에서 아래로).
-  const sig = put(c, "sig", A.x, top, A.w, "신호", ["의존성·import·호출·주소", "→ 기능(26가지 중)·플랫폼"], { tone: "tool", tag: "도구" });
+  const sig = put(c, "sig", A.x, top, A.w, "신호", ["의존성·import·호출·주소", "→ 기능의 단서 (JS·TS)"], { tone: "tool", tag: "도구" });
   const stat = put(c, "stat", A.x, sig.bottom + gap, A.w, "정적 검사", ["kr-core 팩 · Semgrep", "→ 의무별 정적 경고"], { tone: "tool", tag: "도구" });
-  const und = put(c, "und", A.x, stat.bottom + gap, A.w, "AI 이해", ["haiku 5.5", "서비스 요약", "기능 더하기·빼기", "개인정보 흐름"], { tone: "model", tag: "모델" });
+  const und = put(c, "und", A.x, stat.bottom + gap, A.w, "AI 이해", ["haiku 5.5 · 언어 상관없이", "기능(27가지 중)을 인용과 정함", "플랫폼 · 서비스 요약", "개인정보 흐름"], { tone: "model", tag: "모델" });
   const g1 = put(c, "g1", A.x, und.bottom + gap, A.w, "관문 ①", ["인용을 못 넘은 주장은 버림"], { tone: "tool", tag: "도구" });
   // C: 의무마다 조사 → 관문 → 반박 → 관문.
   const inv = put(c, "inv", C.x, top, C.w, "조사", ["haiku 5.5 · 의무 하나씩", "코드 읽기·검색 도구로", "상태·인용·근거를 답함"], { tone: "model", tag: "모델" });
   const g2 = put(c, "g2", C.x, inv.bottom + gap, C.w, "관문 ①②③", ["못 넘으면 상태를 낮춤"], { tone: "tool", tag: "도구" });
-  const rebLines = ["sonnet 5.5", "빼는 답엔 지키지 않은 곳,", "코드에서 본 것·저장소 밖엔", "지킨 근거나 조건 없음을 찾음", "해당 여부부터·모름은 안 함"];
+  const rebLines = ["sonnet 5.5", "충족 근거 있음엔 지키지 않은 곳,", "코드에서 본 것엔 지킨 근거나", "조건 없음을 찾음", "그 밖은 반박하지 않음"];
   const reb = put(c, "reb", C.x, g2.bottom + gap, C.w, "반박", rebLines, {
     tone: "model",
     tag: "모델",
@@ -767,9 +769,9 @@ function reviewFigure(): Figure {
       {
         title: "프로필",
         items: [
-          { tag: "도구", tone: "tool", title: "신호", lines: ["의존성·import·호출 모양·주소·경로 낱말·화면 파일", "→ 기능(26가지 중)·플랫폼"] },
+          { tag: "도구", tone: "tool", title: "신호", lines: ["의존성·import·호출 모양·주소·경로 낱말·화면 파일", "→ 기능의 단서 (JS·TS)"] },
           { tag: "도구", tone: "tool", title: "정적 검사", lines: ["kr-core 팩 · Semgrep", "→ 의무별 정적 경고"] },
-          { tag: "모델", tone: "model", title: "AI 이해", lines: ["haiku 5.5", "서비스 요약 · 기능 더하기·빼기 · 개인정보 흐름"] },
+          { tag: "모델", tone: "model", title: "AI 이해", lines: ["haiku 5.5 · 언어 상관없이", "기능(27가지 중)을 기능마다 인용과 함께 정함 · 플랫폼 · 서비스 요약 · 개인정보 흐름"] },
           { tag: "도구", tone: "tool", title: "관문 ①", lines: ["인용을 못 넘은 주장은 버림"] },
         ],
       },
@@ -781,7 +783,7 @@ function reviewFigure(): Figure {
         items: [
           { tag: "모델", tone: "model", title: "조사", lines: ["haiku 5.5 · 의무 하나씩", "코드 읽기·검색 도구로 상태·인용·근거를 답함"] },
           { tag: "도구", tone: "tool", title: "관문 ①②③", lines: ["못 넘으면 상태를 낮춤"] },
-          { tag: "모델", tone: "model", title: "반박", lines: ["sonnet 5.5", "빼는 답엔 지키지 않은 곳, 코드에서 본 것·저장소 밖엔 지킨 근거나 조건 없음을 찾음", "해당 여부부터·모름은 반박하지 않음"] },
+          { tag: "모델", tone: "model", title: "반박", lines: ["sonnet 5.5", "충족 근거 있음엔 지키지 않은 곳, 코드에서 본 것엔 지킨 근거나 조건 없음을 찾음", "그 밖(저장소 밖·해당 여부부터·해당 없음 등)은 반박하지 않음"] },
           { tag: "도구", tone: "tool", title: "관문 ①②③", lines: ["못 넘으면 앞 판단을 둠"] },
         ],
       },
@@ -810,10 +812,10 @@ function reviewFigure(): Figure {
       },
     ],
     notes: [
-      "보라(점선)는 모델이 말한 것, 파랑은 모델 없이 도구가 한 것이다. 어느 의무를 물을지는 코드의 규칙이 고른다: 의무 795개에서 지위 의무를 빼고, 있는 기능(신호와, 인용이 관문을 넘은 AI 의 더하기·빼기)에 걸리는 것 가운데 검토 후보와 kr-core 의무만. 정적 검사(kr-core·Semgrep)의 경고는 같은 의무의 질문에 힌트로 붙는 보조다.",
-      "모델의 답은 모두 관문을 거쳐 상태가 정해진다. 관문은 인용한 글이 그 파일 코드에 글자 그대로 있는지, '없다'는 답의 검색을 다시 돌려 줄 수가 같은지, '해당 없음'의 조건과 근거가 갖춰졌는지를 직접 확인하고, 못 넘으면 빼지 않고 상태를 낮춘다.",
-      "관문은 인용한 줄이 그 의무와 관련 있는지, 검색어가 충분히 넓은지는 보지 않는다. 그래서 체크리스트는 사람이 확인할 목록이다.",
-      "조사는 haiku 5.5, 반박은 sonnet 5.5 이다. 의무 하나씩 묻고 여섯 개까지 동시에 돈다. 웹은 한 건에 어림 $3·420초 상한을 건다(새 질문마다 본다).",
+      "보라(점선)는 모델이 말한 것, 파랑은 모델 없이 도구가 한 것이다. 기능은 AI 가 코드를 읽어 언어와 상관없이 정한다(기능마다 인용과 함께. JS·TS 의 의존성·import 신호는 단서다). 정적 검사 규칙과 41곳 평가는 JS/TS 저장소 기준이다. Java·Python·Go 저장소 4곳에서 동작을 확인했다.",
+      "어느 의무를 물을지는 코드의 규칙이 고른다: 의무 795개에서 지위 의무를 빼고, 있는 기능에 걸리는 것 가운데 검토 후보와 kr-core 의무만. 정적 검사(kr-core·Semgrep)의 경고는 같은 의무의 질문에 힌트로 붙는 보조다.",
+      "모델의 답은 모두 관문을 거쳐 상태가 정해진다. 관문은 인용한 글이 그 파일 코드에 글자 그대로 있는지, '없다'는 답의 검색을 다시 돌려 줄 수가 같은지, '해당 없음'의 조건과 근거가 갖춰졌는지를 직접 확인하고, 못 넘으면 빼지 않고 상태를 낮춘다. 인용한 줄이 그 의무와 관련 있는지, 검색어가 충분히 넓은지는 보지 않는다. 그래서 체크리스트는 사람이 확인할 목록이다.",
+      "조사는 haiku 5.5, 반박은 sonnet 5.5 이다. 웹은 반박을 '코드에서 본 것'·'충족 근거 있음'에만 건다(그 밖의 항목은 반박 안 함). 의무 하나씩 묻고 여섯 개까지 동시에 돈다. 웹은 한 건에 어림 $3·420초 상한을 건다(새 질문마다 본다).",
     ],
   };
 }
@@ -843,7 +845,7 @@ function usesFigure(): Figure {
   // 가운데: 함께 쓰는 것.
   const mi = inner(M);
   const packLines = ["정책 6 · 의무 8 · 조문 원문 8", "Semgrep 규칙으로 옮겨 씀", "두 쪽이 함께 씀"];
-  const mapLines = ["법령 206개를 읽어 뽑은 의무", "(의무가 나온 법령 113개)", "기능 26가지와 이은 표", "profile · review 만 읽음 (웹 쪽)", "kr-core 는 그 가운데 8개"];
+  const mapLines = ["법령 206개를 읽어 뽑은 의무", "(의무가 나온 법령 113개)", "기능 27가지와 이은 표", "profile · review 만 읽음 (웹 쪽)", "kr-core 는 그 가운데 8개"];
   const contractLines = ["scan: report-1 JSON 스키마", "review: review-2 JSON 스키마", "profile: 판 1 (스키마 파일 없음)"];
   const pack = put(c, "pack", mi.x, top, mi.w, "정책 팩 kr-core", packLines);
   const map = put(c, "map", mi.x, pack.bottom + gap, mi.w, "의무 지도 795", mapLines);

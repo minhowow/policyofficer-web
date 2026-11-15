@@ -6,7 +6,7 @@ import { Where } from "@/components/result/Where";
 import { keepParticles } from "@/components/text";
 import { REVIEW_STATUSES, type Review, type ReviewCitation, type ReviewItem, type ReviewStatus } from "@/lib/review";
 import { layoutFlow } from "@/lib/review/flow";
-import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, SANCTION } from "@/lib/review/text";
+import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, rebutLine, SANCTION } from "@/lib/review/text";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { fileLink, shortCommit } from "@/lib/service/href";
 import { SITE } from "@/lib/site";
@@ -99,7 +99,11 @@ function ServiceTier({ review, code }: { review: Review; code: CodeSource | null
     <Tier n={1} name="이 저장소가 하는 일">
       {review.profile.summary && <p className="rv-summary">{keepParticles(review.profile.summary)}</p>}
       {review.profile.platforms.length > 0 && (
-        <p className="hint tier-note">플랫폼: {review.profile.platforms.map((p) => PLATFORM[p] ?? p).join(" · ")}</p>
+        <p className="hint tier-note">
+          플랫폼: {review.profile.platforms.map((p) => PLATFORM[p] ?? p).join(" · ")}
+          {/* package.json 으로 가르지 못해 AI 가 인용과 함께 정한 플랫폼(handoff-w11-13 부터). */}
+          {review.profile.platformsFrom === "model" && " (AI 가 코드에서 인용과 함께 정함)"}
+        </p>
       )}
       {kept.length > 0 && (
         <ul className="rv-features">
@@ -345,9 +349,6 @@ function Checklist({ review, items, held, code }: { review: Review; items: Revie
 function Verification({ review }: { review: Review }) {
   const { run } = review;
   const sum = (record: Record<string, number>) => Object.values(record).reduce((a, b) => a + b, 0);
-  const overturned = run.verificationCounts.overturned ?? 0;
-  const upheld = run.verificationCounts.upheld ?? 0;
-  const refusedOverturn = run.verificationCounts["overturn-ungrounded"] ?? 0;
   const notAsked = sum(run.notAsked);
   return (
     <section className="box info rv-verify" aria-labelledby="rv-verify-title">
@@ -369,10 +370,7 @@ function Verification({ review }: { review: Review }) {
         </div>
         <div>
           <dt>반박</dt>
-          <dd>
-            유지 {upheld} · 뒤집음 {overturned}
-            {refusedOverturn > 0 && ` · 근거 없는 뒤집기 거절 ${refusedOverturn}`}
-          </dd>
+          <dd>{rebutLine(run)}</dd>
         </div>
         <div>
           <dt>가린 비밀값</dt>

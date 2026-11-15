@@ -333,10 +333,15 @@ describe("도구 설치와 검사", () => {
   it("review: 워크플로의 REVIEW_* 를 CLI 옵션으로 넘긴다(한 건의 금액·시간 상한). 실패해도 던지지 않고 null 이며, 까닭의 비밀값은 가린다", () => {
     // 기본값은 워크플로에 값이 없을 때다(조사 haiku, 반박 sonnet, $3, 420초).
     expect(reviewArgs(reviewOptions({}))).toEqual([
-      "review", ".", "--model", "anthropic:claude-haiku-5-5", "--checker", "anthropic:claude-sonnet-5-5", "--max-usd", "3", "--time-limit", "420",
+      "review", ".", "--model", "anthropic:claude-haiku-5-5", "--checker", "anthropic:claude-sonnet-5-5", "--max-usd", "3", "--time-limit", "420", "--rebut-scope", "found",
     ]);
     const options = reviewOptions({ REVIEW_MODEL: "anthropic:m1", REVIEW_CHECKER: "anthropic:m2", REVIEW_MAX_USD: "0.5", REVIEW_TIME_LIMIT_SECONDS: "120" });
-    expect(reviewArgs(options)).toEqual(["review", ".", "--model", "anthropic:m1", "--checker", "anthropic:m2", "--max-usd", "0.5", "--time-limit", "120"]);
+    expect(reviewArgs(options)).toEqual(["review", ".", "--model", "anthropic:m1", "--checker", "anthropic:m2", "--max-usd", "0.5", "--time-limit", "120", "--rebut-scope", "found"]);
+    // 반박 범위(2026-11-15 오너 지시: 기본 found). 워크플로가 all 을 주면 all, 모르는 값이면 기본. 묶음(--batch)은 넘기지 않는다(CLI 기본 duty).
+    expect(reviewOptions({ REVIEW_REBUT_SCOPE: "all" }).rebutScope).toBe("all");
+    expect(reviewOptions({ REVIEW_REBUT_SCOPE: "bogus" }).rebutScope).toBe("found");
+    expect(reviewArgs({ ...options, rebutScope: "bogus" })).toBeNull();
+    expect(reviewArgs(options)).not.toContain("--batch");
     // 읽을 수 없는 상한은 기본값이고, 모양이 맞지 않는 모델 id 는 돌리지 않는다.
     expect(reviewOptions({ REVIEW_MAX_USD: "-1", REVIEW_TIME_LIMIT_SECONDS: "x" })).toMatchObject({ maxUsd: 3, timeLimitSeconds: 420 });
     expect(reviewArgs({ ...options, model: "a b" })).toBeNull();
@@ -496,7 +501,10 @@ describe("워크플로 (.github/workflows/analyze.yml)", () => {
     // review 는 입력(기본 "false")으로만 켜고, 한 건의 상한은 이 파일에서 정한다. 입력은 셸 글이 아니라 환경 변수로 넘긴다.
     expect(workflow).toMatch(/ {6}review:\n {8}description: [^\n]+\n {8}required: false\n {8}default: "false"\n {8}type: string\n/);
     expect(workflow).toMatch(/REVIEW: \$\{\{ inputs\.review \}\}\n/);
-    for (const name of ["REVIEW_MODEL", "REVIEW_CHECKER", "REVIEW_MAX_USD", "REVIEW_TIME_LIMIT_SECONDS"]) expect(workflow).toContain(`\n      ${name}: `);
+    for (const name of ["REVIEW_MODEL", "REVIEW_CHECKER", "REVIEW_MAX_USD", "REVIEW_TIME_LIMIT_SECONDS", "REVIEW_REBUT_SCOPE"]) expect(workflow).toContain(`\n      ${name}: `);
+    // 반박은 '코드에서 본 것'·'충족 근거 있음'에만(2026-11-15 오너 지시). 묶음(--batch)은 정하지 않는다(CLI 기본).
+    expect(workflow).toMatch(/\n {6}REVIEW_REBUT_SCOPE: found\n/);
+    expect(workflow).not.toContain("REVIEW_BATCH");
     expect(workflow).toMatch(/CLI_REPO: minhowow\/Plitsoft-SDP\n/);
     expect(workflow).toMatch(/CLI_COMMIT: [0-9a-f]{40}\n/);
     expect(workflow).toMatch(/UV_VERSION: \d+\.\d+\.\d+\n/);

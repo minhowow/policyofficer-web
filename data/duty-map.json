@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/export-duty-map.mjs",
   "cli": {
-    "commit": "b5888e50012118bbfbb27f05af7e21779b3d7949"
+    "commit": "122de1d66d32371f40b5cbb118e96a51e5dd48ee"
   },
   "total": 795,
   "candidates": 218,
@@ -54,7 +54,7 @@
     },
     {
       "id": "genai",
-      "name": "AI 기능(생성형 AI·자동화 결정)"
+      "name": "생성형 AI(LLM·생성 API 호출)"
     },
     {
       "id": "external-transfer",

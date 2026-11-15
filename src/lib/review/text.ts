@@ -35,6 +35,7 @@ export const SANCTION = new RegExp(
  */
 export function gateText(item: ReviewItem): string | undefined {
   const na = REVIEW_STATUS_LABEL["not-applicable"];
+  const seen = REVIEW_STATUS_LABEL["seen-in-code"].split(" · ").at(-1);
   switch (item.gate) {
     case "condition-present":
       return item.status === "seen-in-code"
@@ -51,9 +52,36 @@ export function gateText(item: ReviewItem): string | undefined {
       return `나이·본인·지역을 확인하는 장치가 없다는 것은 그런 이용자가 없다는 근거가 아니라 AI 가 낸 '${na}'을 받지 않았습니다.`;
     case "applies-unknown":
       return `AI 가 걸리는지 모른다고 답해 '${REVIEW_STATUS_LABEL["check-applicability"].split(" · ").at(-1)}'으로 옮겼습니다.`;
+    // CLI handoff-w11-13 까지 더해진 까닭.
+    case "free-input":
+      return `걸리는 조건이 이용자가 자유 입력에 넣을 수 있다는 추측뿐이라 AI 가 낸 '${seen}'을 받지 않았습니다.`;
+    case "other-side":
+      return `저장소가 서버만 또는 화면만이라 반대쪽이 하는 의무를 '${REVIEW_STATUS_LABEL["check-outside"].split(" · ").at(-1)}'으로 옮겼습니다.`;
+    case "prohibition":
+      return `금지 의무인데 금지된 행위 자체를 보인 줄이 없어 AI 가 낸 '${seen}'을 받지 않았습니다.`;
+    case "same-model":
+      return `조사와 반박이 같은 모델이라 '${REVIEW_STATUS_LABEL["evidence-found"]}'으로 올리는 반박을 받지 않았습니다.`;
+    case "remaining-gap":
+      return `AI 가 '${REVIEW_STATUS_LABEL["evidence-found"]}'이라 답하면서 남은 부족한 점을 적어 '${seen}'으로 옮겼습니다.`;
     default:
       return undefined;
   }
+}
+
+/**
+ * 반박 줄(검증 정보): 유지·뒤집음과 근거 없는 뒤집기 거절, 반박하지 않은 항목의 수. 반박을 '코드에서 본 것'·'충족 근거 있음'에만 건
+ * 결과(run.rebut_scope found)면 그렇다고 덧붙인다. 화면과 내보낸 파일이 같은 말을 쓴다.
+ */
+export function rebutLine(run: { verificationCounts: Record<string, number>; rebutScope: string | null }): string {
+  const v = run.verificationCounts;
+  const parts = [`유지 ${v.upheld ?? 0}`, `뒤집음 ${v.overturned ?? 0}`];
+  if (v["overturn-ungrounded"]) parts.push(`근거 없는 뒤집기 거절 ${v["overturn-ungrounded"]}`);
+  if (v["not-run"]) parts.push(`반박 안 함 ${v["not-run"]}`);
+  const scope =
+    run.rebutScope === "found"
+      ? ` (반박은 '${REVIEW_STATUS_LABEL["seen-in-code"].split(" · ").at(-1)}'·'${REVIEW_STATUS_LABEL["evidence-found"]}'에만)`
+      : "";
+  return `${parts.join(" · ")}${scope}`;
 }
 
 /** 글의 첫 문장(마침표·물음표 다음 빈칸까지). 나머지가 있으면 함께 돌려준다. 글을 고치지 않는다. */

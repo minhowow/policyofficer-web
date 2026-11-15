@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ReviewView } from "@/components/review/ReviewView";
 import { parseReview } from "@/lib/review";
+import { gateText } from "@/lib/review/text";
 import { layoutFlow } from "@/lib/review/flow";
 import CasePage from "@/app/cases/[slug]/page";
 import CasesPage from "@/app/cases/page";
@@ -62,8 +63,52 @@ describe("review 결과 (2판)", () => {
     // 검증 정보: 결과에 실린 수 그대로.
     const info = textOf(elementsOf(html, '<section class="box info rv-verify"')[0]);
     expect(info).toContain("31개 · 검사기가 거절 2개");
-    expect(info).toContain("유지 10 · 뒤집음 1");
+    // 반박은 '코드에서 본 것'·'충족 근거 있음'에만 건다(실행기의 --rebut-scope found, 2026-11-15). 나머지는 '반박 안 함'으로 센다.
+    expect(info).toContain(
+      `유지 6 · 뒤집음 1 · 반박 안 함 5 (반박은 '${REVIEW_STATUS_LABEL["seen-in-code"].split(" · ").at(-1)}'·'${REVIEW_STATUS_LABEL["evidence-found"]}'에만)`,
+    );
     expect(info).toContain("$1.42 (상한 $2)");
+    // 반박하지 않은 항목의 줄에는 반박 이야기가 없다(뒤집힌 항목에만 '반박이 바꿈').
+    for (const item of parseReview(sample())!.checklist.filter((entry) => entry.verification === "not-run")) {
+      expect(item.verificationWhy).toBe("rebut-scope");
+      expect(["seen-in-code", "evidence-found"]).not.toContain(item.status);
+    }
+    expect(html.match(/반박이 바꿈/g)).toHaveLength(1);
+  });
+
+  it("CLI handoff-w11-13 의 덧붙인 키: AI 가 정한 플랫폼, 관문 까닭 다섯, '충족'의 남은 부족한 점. 모르는 키는 무시하고 판을 거부하지 않는다", () => {
+    const data = sample();
+    const validate = new Ajv({ strict: false, allErrors: true }).compile(readJson("contract", "schema", "review.cli-2.schema.json") as object);
+    const profile = { ...(data.profile as Record<string, unknown>), platforms: ["server"], platforms_from: "model", platform_evidence: [] };
+    const items = data.checklist as Record<string, unknown>[];
+    const gated = (item: Record<string, unknown>, why: string, extra: Record<string, unknown> = {}) => {
+      const first = item.first as Record<string, unknown>;
+      const note = `[${why}]`;
+      return { ...item, reason: `${note} 모델의 말.`, first: { ...first, ...extra, gate: { from: "evidence-found", why, note } } };
+    };
+    const checklist = [
+      gated(items[0], "remaining-gap", { remaining: "동의 철회 화면이 없음" }),
+      gated(items[1], "prohibition"),
+      gated(items[2], "free-input"),
+      gated(items[3], "other-side"),
+      gated(items[4], "same-model"),
+      ...items.slice(5),
+    ].map((item) => ({ ...item, missing: item === items[0] ? undefined : (item as Record<string, unknown>).missing }));
+    const next = { ...data, profile, checklist };
+    expect(validate(next), JSON.stringify(validate.errors?.slice(0, 3))).toBe(true);
+    const review = parseReview(next)!;
+    expect(review.profile.platformsFrom).toBe("model");
+    expect(review.checklist.slice(0, 5).map((item) => item.gate)).toEqual(["remaining-gap", "prohibition", "free-input", "other-side", "same-model"]);
+    // 남은 부족한 점은 '없는 것'으로 보인다(missing 이 비었을 때).
+    expect(review.checklist[0].missing).toBe("동의 철회 화면이 없음");
+    const html = renderToStaticMarkup(<ReviewView review={review} />);
+    const text = textOf(html);
+    expect(text).toContain("플랫폼: 서버 (AI 가 코드에서 인용과 함께 정함)");
+    for (const item of review.checklist.slice(0, 5)) expect(gateText(item), item.gate!).toBeTruthy();
+    expect(text).toContain("남은 부족한 점을 적어");
+    expect(text).toContain("금지된 행위 자체를 보인 줄이 없어");
+    expect(text).not.toContain("[remaining-gap]");
+    for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(text), why).toBe(false);
   });
 
   it("인용은 관문을 통과한 것만, 의무 한 줄에 처분의 말이 들면 싣지 않는다", () => {
