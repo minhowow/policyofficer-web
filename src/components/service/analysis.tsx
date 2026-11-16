@@ -70,7 +70,25 @@ export function AnalysisTitle({ repository, tagged }: { repository: Repository; 
         </Link>
       </h1>
       {tagged && <span className="tag">합성 예시</span>}
+      {/* 저장소 쪽 머리와 같은 자리(첫 줄 오른쪽, 조문별 검사 기록 단추가 있으면 그 왼쪽). */}
+      <GitHubLink repository={repository} />
     </>
+  );
+}
+
+/**
+ * 저장소를 GitHub 에서 여는 보조 단추(2026-11-16 오너 요청). 주소는 GitHub 이 돌려준 html_url(서버가 github.com/{owner}/{name} 과
+ * 같은지 본 것)뿐이고, 없으면(합성 예시, 가짜 GitHub, GitHub 에 닿지 못해 기록의 이름만 있을 때) 두지 않는다. 새 탭으로 열고, 그렇다는
+ * 것을 화면 낭독기에도 읽힌다.
+ */
+export function GitHubLink({ repository }: { repository: Repository }) {
+  if (!repository.htmlUrl) return null;
+  return (
+    <a className="btn gh-btn" href={repository.htmlUrl} target="_blank" rel="noopener noreferrer">
+      GitHub 에서 보기
+      <Icon name="external" />
+      <span className="visually-hidden"> (새 탭)</span>
+    </a>
   );
 }
 
@@ -283,6 +301,8 @@ export function RequestAction({ repository, closed }: { repository: Repository; 
   const label = requestLabel(repository);
   return (
     <div className="request">
+      {/* 주 단추(분석 요청) 왼쪽의 보조 단추. 요청을 받지 않을 때도 둔다. */}
+      <GitHubLink repository={repository} />
       {closed === null ? (
         <RequestButton owner={repository.owner} name={repository.name} label={label} />
       ) : (

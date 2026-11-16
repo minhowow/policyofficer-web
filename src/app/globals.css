@@ -4289,18 +4289,43 @@ body:has(main [data-page="home"]) ::selection {
   color: var(--ink);
 }
 
-/* 분석 요청: 주 단추 하나와, 받지 않을 때 그 까닭(서버가 돌려준 말) */
+/*
+ * 분석 요청: 보조 단추(GitHub 에서 보기)와 주 단추 하나가 한 줄, 받지 않을 때 그 까닭(서버가 돌려준 말)은 그 아래 줄. 두 단추가 한
+ * 줄에 들어가지 않는 너비에서는 주 단추가 아래 줄로 내려간다(겹치지 않는다).
+ */
 .request {
   grid-column: 2;
   grid-row: 1 / span 3;
-  display: grid;
-  justify-items: end;
-  gap: var(--space-1);
-  max-width: 300px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  max-width: 360px;
 }
 
 .request .hint {
+  flex: 1 1 100%;
   text-align: right;
+}
+
+.gh-btn .ic {
+  color: var(--muted);
+}
+
+/* 링크지만 단추 모양이라 밑줄 대신 바탕으로 가리킨 것을 보인다. */
+.gh-btn:hover {
+  text-decoration: none;
+  background: var(--bg-muted);
+}
+
+/* 분석 쪽 머리의 첫 줄: 오른쪽 끝(조문별 검사 기록 단추가 있으면 그 왼쪽). */
+.ttl .gh-btn {
+  margin-left: auto;
+}
+
+.ttl .gh-btn + .record-btn {
+  margin-left: 0;
 }
 
 .request button {
@@ -4346,9 +4371,15 @@ body:has(main [data-page="home"]) ::selection {
   .request {
     grid-column: 1;
     grid-row: auto;
-    justify-items: stretch;
+    justify-content: flex-start;
     max-width: none;
     margin-top: var(--space-1);
+  }
+
+  /* 좁은 화면에서는 단추가 줄을 채운다(한 줄에 둘, 들어가지 않으면 한 줄에 하나씩). */
+  .request > .btn,
+  .request > button {
+    flex: 1 1 auto;
   }
 
   .request .hint {

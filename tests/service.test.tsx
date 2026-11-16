@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import { AnalysisDashboard } from "@/components/service/AnalysisDashboard";
 import { ActivityList } from "@/components/service/activity";
-import { Failed, HistoryTable, InProgress, PROGRESS_NOTE, RequestAction, StepList } from "@/components/service/analysis";
+import { AnalysisTitle, Failed, HistoryTable, InProgress, PROGRESS_NOTE, RequestAction, StepList } from "@/components/service/analysis";
 import { LiveAnalysis, POLL_MS } from "@/components/service/LiveAnalysis";
 import { movingText } from "@/components/service/RequestButton";
 import { RepoRow } from "@/components/service/parts";
@@ -29,7 +29,7 @@ import { activeLabel, activeStep, duration, finishedAt, formatKst, scanParts, ST
 import { SYNTHETIC_RESULT_SOURCES, syntheticRepositories, syntheticStore as store } from "@/lib/service/synthetic";
 import type { Analysis, Repository } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
-import { closedDetailsAt, elementsOf, readJson, textOf } from "./helpers";
+import { closedDetailsAt, elementAt, elementsOf, readJson, textOf } from "./helpers";
 import { BANNED_WORDING } from "./wording";
 
 // 분석 서비스(방향 B): 데이터 모델, 합성 저장소(SERVICE_STORE=synthetic 의 미리보기), 주소, 그리고 쪽의 부품. 운영 구현
@@ -342,6 +342,27 @@ describe("부품", () => {
     expect(html).toContain('<p id="request-note" class="hint" role="status"></p>');
     // 요청에 관한 풀이 문장은 두지 않는다(docs/redesign.md 2.3).
     expect(textOf(html)).toBe("develop 최신 커밋 분석");
+  });
+
+  it("GitHub 에서 보기(2026-11-16 오너 요청): 분석 요청 단추 왼쪽의 보조 단추, 새 탭(화면 낭독기에도), 요청을 받지 않을 때도 있다. 주소는 GitHub 이 준 html_url 뿐", () => {
+    const real = { ...repos[0].repository, owner: "minhowow", name: "Plitsoft-SDP-Web", htmlUrl: "https://github.com/minhowow/Plitsoft-SDP-Web", synthetic: false };
+    const link = '<a class="btn gh-btn" href="https://github.com/minhowow/Plitsoft-SDP-Web" target="_blank" rel="noopener noreferrer">';
+    for (const closed of [null, SITE.service.noServer]) {
+      const html = renderToStaticMarkup(<RequestAction repository={real} closed={closed} />);
+      expect(html.indexOf(link), String(closed)).toBeGreaterThan(-1);
+      // 주 단추보다 앞(왼쪽)이다. 보조 단추 모양(.btn: 테두리만)이고, 주 단추는 그대로 하나다.
+      expect(html.indexOf(link)).toBeLessThan(html.indexOf("<button"));
+      expect(html.match(/<button/g)).toHaveLength(1);
+      expect(textOf(elementAt(html, html.indexOf(link)))).toBe("GitHub 에서 보기 (새 탭)");
+      expect(elementAt(html, html.indexOf(link))).toContain('<span class="visually-hidden"> (새 탭)</span>');
+    }
+    // 합성 예시(GitHub 주소가 없다)에는 두지 않는다. 주소를 이름으로 만들지 않는다.
+    expect(renderToStaticMarkup(<RequestAction repository={repos[0].repository} closed={null} />)).not.toContain("gh-btn");
+    expect(renderToStaticMarkup(<RequestAction repository={{ ...real, htmlUrl: null }} closed={null} />)).not.toContain("gh-btn");
+    // 분석 쪽 머리(제목 줄)에도 같은 단추.
+    const title = renderToStaticMarkup(<AnalysisTitle repository={real} tagged={false} />);
+    expect(title).toContain(link);
+    expect(title.indexOf("</h1>")).toBeLessThan(title.indexOf(link));
   });
 
   it("요청 단추가 옮겨 가며 적는 말: 대기열의 몇 번째인지만 적고 실행 자리의 수는 적지 않는다", () => {
