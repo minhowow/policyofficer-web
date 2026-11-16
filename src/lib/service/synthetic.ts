@@ -11,8 +11,7 @@ import kidsSignupMainProfile from "@contract/cli-current/profile/kids-signup.mai
 import nightPushMainProfile from "@contract/cli-current/profile/night-push.main.json";
 import plainMainProfile from "@contract/cli-current/profile/plain.main.json";
 import { featureNames, parseProfile } from "@/lib/profile";
-import { parseReview } from "@/lib/review";
-import { checkCount } from "@/lib/review/text";
+import { parseReview, reviewFactsOf } from "@/lib/review";
 import genaiChatReview from "@contract/review/genai-chat.review.json";
 import { parseReport } from "@/lib/report/parse";
 import { serviceFindingCount } from "@/lib/report/types";
@@ -22,7 +21,7 @@ import { matchRepositories } from "./search";
 import { SUGGEST_ROWS } from "./suggest";
 import { STEP_ORDER } from "./steps";
 import { SITE } from "@/lib/site";
-import type { Analysis, AnalysisStep, Repository, RepositoryHit, ServiceStore, StepName } from "./types";
+import type { Analysis, AnalysisStep, Repository, RepositoryHit, ReviewFacts, ServiceStore, StepName } from "./types";
 
 /**
  * 합성 저장소. DB 도 GitHub 도 부르지 않고 `ServiceStore` 를 채운다. SERVICE_STORE=synthetic 일 때만 쓰는 미리보기·시험용이다
@@ -242,13 +241,13 @@ export const syntheticStore: ServiceStore = {
     const analysis = ANALYSES.find((entry) => entry.id === id);
     return analysis?.status === "succeeded" ? parseProfile(PROFILES[id] ?? null) : null;
   },
-  async reviewCounts(ids) {
-    const counts: Record<string, number | null> = {};
+  async reviewFacts(ids) {
+    const counts: Record<string, ReviewFacts | null> = {};
     for (const id of ids) {
       const analysis = ANALYSES.find((entry) => entry.id === id);
       if (analysis?.status !== "succeeded") continue;
       const review = syntheticReview(analysis.owner, analysis.name);
-      counts[id] = review ? checkCount(review.checklist) : null;
+      counts[id] = review ? reviewFactsOf(review) : null;
     }
     return counts;
   },

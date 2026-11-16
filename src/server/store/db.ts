@@ -1,7 +1,6 @@
 import "server-only";
 import { parseProfileText } from "@/lib/profile";
-import { parseReviewText } from "@/lib/review";
-import { checkCount } from "@/lib/review/text";
+import { parseReviewText, reviewFactsOf } from "@/lib/review";
 import { ServiceUnavailableError } from "@/lib/service/errors";
 import { repoKey } from "@/lib/service/href";
 import { isAnalysisId, newAnalysisId } from "@/lib/service/id";
@@ -269,7 +268,7 @@ export function createDbStore(deps: DbStoreDeps): ServiceStore {
       return Object.fromEntries(rows.rows.map((row) => [row.id, row.finding_count]));
     },
 
-    async reviewCounts(ids) {
+    async reviewFacts(ids) {
       const wanted = ids.filter(isAnalysisId);
       if (wanted.length === 0) return {};
       const db = await database();
@@ -285,7 +284,7 @@ export function createDbStore(deps: DbStoreDeps): ServiceStore {
       return Object.fromEntries(
         rows.rows.map((row) => {
           const review = parseReviewText(row.review);
-          return [row.id, review ? checkCount(review.checklist) : null];
+          return [row.id, review ? reviewFactsOf(review) : null];
         }),
       );
     },

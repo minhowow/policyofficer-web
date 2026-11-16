@@ -4,10 +4,9 @@ import { dutyFeatureHref, dutyMap } from "@/lib/duties";
 import { hangulToQwerty } from "@/lib/service/keyboard";
 import { searchHref } from "@/lib/service/href";
 import { FAKE_GITHUB_NOTE, githubStatusLine } from "@/lib/service/suggest";
-import type { RepositoryActivity, SearchOutcome } from "@/lib/service/types";
-import { SITE } from "@/lib/site";
+import type { RepositoryActivity, ReviewFacts, SearchOutcome } from "@/lib/service/types";
 import { ActivityList } from "./activity";
-import { AnalyzedRow, RepoRow, shownZero } from "./parts";
+import { AnalyzedRow, RepoRow, zeroKind, zeroNotes } from "./parts";
 import { SearchForm } from "./SearchForm";
 
 /**
@@ -43,7 +42,7 @@ export type LoadedActivity =
       ok: true;
       rows: RepositoryActivity[];
       findings: Record<string, number | null>;
-      checks?: Record<string, number | null>;
+      reviews?: Record<string, ReviewFacts | null>;
       features?: Record<string, string[] | null>;
     }
   | { ok: false; message: string };
@@ -70,7 +69,7 @@ export function SearchHome({ recent, tagged }: { recent: LoadedActivity; tagged:
         ) : recent.rows.length === 0 ? (
           <p className="box-empty">아직 분석 없음</p>
         ) : (
-          <ActivityList rows={recent.rows} findings={recent.findings} checks={recent.checks} features={recent.features} variant="box" />
+          <ActivityList rows={recent.rows} findings={recent.findings} reviews={recent.reviews} features={recent.features} variant="box" />
         )}
       </section>
       <section className="box search-home-side" aria-labelledby="duties-title">
@@ -198,8 +197,10 @@ export function SearchResults({
 function Analyzed({ analyzed, tagged }: { analyzed: LoadedActivity; tagged: boolean }) {
   if (!analyzed.ok) return <p className="notice notice-warn">{analyzed.message}</p>;
   if (analyzed.rows.length === 0) return null;
-  const checks = analyzed.checks ?? {};
-  const zero = analyzed.rows.some(({ analysis }) => analysis.status === "succeeded" && shownZero(analyzed.findings[analysis.id], checks[analysis.id]));
+  const reviews = analyzed.reviews ?? {};
+  const notes = zeroNotes(
+    analyzed.rows.map(({ analysis }) => (analysis.status === "succeeded" ? zeroKind(analyzed.findings[analysis.id], reviews[analysis.id]) : null)),
+  );
   return (
     <section aria-labelledby="analyzed-title">
       <div className="sec-h">
@@ -208,10 +209,14 @@ function Analyzed({ analyzed, tagged }: { analyzed: LoadedActivity; tagged: bool
       </div>
       <ul className="box sr-list">
         {analyzed.rows.map((activity) => (
-          <AnalyzedRow key={activity.analysis.id} activity={activity} count={analyzed.findings[activity.analysis.id]} check={checks[activity.analysis.id]} />
+          <AnalyzedRow key={activity.analysis.id} activity={activity} count={analyzed.findings[activity.analysis.id]} review={reviews[activity.analysis.id]} />
         ))}
       </ul>
-      {zero && <p className="hint zero-note">{SITE.zeroIsNotClearance}</p>}
+      {notes.map((note) => (
+        <p key={note} className="hint zero-note">
+          {note}
+        </p>
+      ))}
     </section>
   );
 }

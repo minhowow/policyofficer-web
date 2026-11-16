@@ -4313,6 +4313,15 @@ body:has(main [data-page="home"]) ::selection {
   color: var(--muted);
 }
 
+/* 끝난 분석의 수 아래 줄의 덧붙임(검토 결과 받지 못함, 검토 안 함). 좁은 칸에서 줄을 길게 밀지 않게 따로 한 줄이다. */
+.done-note {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--muted);
+  white-space: normal;
+}
+
 /* 링크지만 단추 모양이라 밑줄 대신 바탕으로 가리킨 것을 보인다. */
 .gh-btn:hover {
   text-decoration: none;

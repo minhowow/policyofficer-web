@@ -65,7 +65,7 @@ export function ReviewView({
         </span>
       </p>
       {/* 확인할 것이 0건이어도 법적 문제가 없다는 뜻이 아니다(docs/commitments.md 의 1. 목록 줄도 같은 수에 이 말을 단다). */}
-      {check === 0 && <p className="hint zero-note">{SITE.zeroIsNotClearance}</p>}
+      {check === 0 && <p className="hint zero-note">{SITE.zeroCheckIsNotClearance}</p>}
       <ServiceTier review={review} code={code} />
       <Tier n={2} name="개인정보 흐름">
         {review.flow.nodes.length === 0 ? (

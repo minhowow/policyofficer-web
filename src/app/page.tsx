@@ -26,9 +26,9 @@ export default async function Home() {
       const rows = await store.recentActivity(HOME_ROWS);
       const done = rows.filter(({ analysis }) => analysis.status === "succeeded").map(({ analysis }) => analysis.id);
       const findings = await store.findingCounts(done);
-      const checks = await store.reviewCounts(done);
+      const reviews = await store.reviewFacts(done);
       const features = await store.featureNames(done);
-      return { rows, findings, checks, features };
+      return { rows, findings, reviews, features };
     })(),
   );
   const tagged = showsSyntheticTag();
@@ -57,7 +57,7 @@ export default async function Home() {
           <ActivityList
             rows={loaded.value.rows}
             findings={loaded.value.findings}
-            checks={loaded.value.checks}
+            reviews={loaded.value.reviews}
             features={loaded.value.features}
             variant="feed"
           />

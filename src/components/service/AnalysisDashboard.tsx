@@ -9,6 +9,7 @@ import { CHECKLIST_LABEL } from "@/lib/report/status";
 import type { ReportView } from "@/lib/report/view-model";
 import type { ReviewPlan } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
+import { NO_SIGNAL_LINE } from "./parts";
 
 export type { Statute } from "@/components/result/ReportSummary";
 
@@ -23,16 +24,22 @@ const placesIn = (view: ReportView, pick: "checks" | "unknowns") =>
 export function OverviewLine({ profile, check, unknown }: { profile: Profile | null; check: number; unknown: number }) {
   return (
     <p className="overview">
-      {profile && (
-        <>
-          <span>
-            감지된 기능 <b>{profile.features.length}가지</b>
-          </span>{" "}
-          <span>
-            걸릴 수 있는 의무 <b>{profile.totals.duties}개</b>
-          </span>{" "}
-        </>
-      )}
+      {profile &&
+        (profile.features.length === 0 ? (
+          // 신호만 본 프로필(AI 검토 없음)이 아무것도 찾지 못한 것은 기능이 없다는 뜻이 아니다(2026-11-16).
+          <>
+            <span>{NO_SIGNAL_LINE}</span>{" "}
+          </>
+        ) : (
+          <>
+            <span>
+              감지된 기능 <b>{profile.features.length}가지</b>
+            </span>{" "}
+            <span>
+              걸릴 수 있는 의무 <b>{profile.totals.duties}개</b>
+            </span>{" "}
+          </>
+        ))}
       <span>
         {CHECKLIST_LABEL.check} <b>{check}건</b>
       </span>

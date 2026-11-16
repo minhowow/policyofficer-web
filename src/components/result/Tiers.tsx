@@ -65,8 +65,11 @@ function Evidence({ evidence, total, code }: { evidence: ProfileEvidence[]; tota
   );
 }
 
-/** 프로필에 서비스 기능이 하나도 없을 때의 답(2026-11-11 오너 지시). */
-export const NO_FEATURES = "서비스 기능이 감지되지 않아 걸리는 의무가 없습니다.";
+/**
+ * 프로필(신호만 본다. AI 검토가 없는 분석의 1단)에 서비스 기능이 하나도 없을 때의 답(2026-11-11 오너 지시). 신호가 없다는 것은 기능이
+ * 없다는 뜻이 아니다(2026-11-16: AI 검토는 신호 없이도 언어와 상관없이 기능을 정한다).
+ */
+export const NO_FEATURES = "기능 신호가 없습니다(AI 검토 없이 신호만 본 결과입니다).";
 
 /**
  * 1단: 감지된 기능마다 이름과 근거. 서비스 기능이 하나도 없으면 그 답을 적는다(화면 파일만 있으면 화면 기능은 그대로 보인다).
@@ -180,7 +183,8 @@ export function ObligationTier({ profile }: { profile: Profile | null }) {
       {profile === null ? (
         <p className="tier-none">아직 없음</p>
       ) : groups.length === 0 ? (
-        <p className="tier-none">없음</p>
+        // 신호만 본 프로필에서 기능이 없으면 의무를 고르지 않은 것이다(의무가 없다는 뜻이 아니다. 2026-11-16).
+        <p className="tier-none">기능 신호가 없어 고르지 않았습니다.</p>
       ) : (
         <>
           <p className="hint tier-note">{NO_JUDGEMENT}</p>

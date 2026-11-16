@@ -378,14 +378,37 @@ describe("부품", () => {
     }
   });
 
-  it("분석 기록 표: 분석마다 그 쪽으로 가는 링크, 상태, 짧은 커밋, 요청 시각(KST). 끝난 분석에는 발견 수", () => {
+  it("분석 기록 표: 분석마다 그 쪽으로 가는 링크, 상태, 짧은 커밋, 요청 시각(KST). 끝난 분석의 결과 칸은 review 가 있으면 확인할 것 수, 없으면 정적 검사의 발견 수", () => {
     const running = find("running");
     const repository = repoOf(running);
     const list = analyses.filter((a) => a.name === repository.name);
     const html = renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} findings={{ "64y4jdtazh": 2 }} />);
     for (const analysis of list) expect(html).toContain(linked(analysisHref(repository.owner, repository.name, analysis.id)));
-    expect([...html.matchAll(/<th scope="col"[^>]*>([^<]*)<\/th>/g)].map((m) => m[1])).toEqual(["분석", "상태", "커밋", "요청 시각 (KST)", "발견"]);
-    expect(textOf(html)).toContain("2건");
+    expect([...html.matchAll(/<th scope="col"[^>]*>([^<]*)<\/th>/g)].map((m) => m[1])).toEqual(["분석", "상태", "커밋", "요청 시각 (KST)", "결과"]);
+    expect(textOf(html)).toContain("정적 검사 발견 2건");
+    // AI 검토가 본체(2026-11-16): review 가 있으면 확인할 것 수와 review 가 정한 기능. 맡겼는데 받지 못했으면, 한도로 하지 않았으면 그렇게.
+    const done = { ...find("succeeded"), id: "aaaaaaaaa1" };
+    const cell = (analysis: typeof done, reviews: Record<string, { check: number; features: string[]; removed: number } | null>, count = 0) =>
+      renderToStaticMarkup(<HistoryTable repository={repository} analyses={[analysis]} findings={{ [analysis.id]: count }} reviews={reviews} features={{ [analysis.id]: [] }} />);
+    const reviewed = cell(done, { [done.id]: { check: 11, features: ["회원 가입·개인정보 수집", "로그인·본인인증", "게시판·이용자 게시물"], removed: 0 } });
+    expect(textOf(reviewed)).toContain("확인할 것 11건");
+    expect(textOf(reviewed)).toContain("회원 가입·개인정보 수집, 로그인·본인인증 외 1");
+    // 확인할 것이 있으면 '0이어도'는 붙지 않는다(정적 검사의 0건이 보이지 않으므로).
+    expect(textOf(reviewed)).not.toContain(SITE.zeroIsNotClearance);
+    expect(textOf(reviewed)).not.toContain("감지된 기능 없음");
+    expect(textOf(cell(done, { [done.id]: { check: 0, features: [], removed: 0 } }))).toContain(`확인할 것 0건`);
+    expect(textOf(cell(done, { [done.id]: { check: 0, features: [], removed: 0 } }))).toContain(SITE.zeroCheckIsNotClearance);
+    expect(textOf(cell(done, { [done.id]: { check: 0, features: [], removed: 0 } }))).toContain("감지된 기능 없음");
+    // 덧붙임은 수 아래 줄(좁은 칸을 길게 밀지 않게).
+    expect(cell({ ...done, review: "run" }, {})).toContain('정적 검사 발견 0건<span class="done-note"><span class="visually-hidden">, </span>검토 결과 받지 못함</span>');
+    expect(textOf(cell({ ...done, review: "limit" }, {}))).toContain("정적 검사 발견 0건, 검토 안 함");
+    // AI 가 신호의 기능을 모두 뺐으면 기능이 없다고 하지 않는다.
+    expect(textOf(cell(done, { [done.id]: { check: 0, features: [], removed: 2 } }))).toContain("AI 가 뺀 기능 2가지");
+    // review 가 없으면 프로필의 신호만 본 것이라 기능이 없다고 하지 않는다.
+    const plain = textOf(cell(done, {}));
+    expect(plain).toContain("기능 신호 없음");
+    expect(plain).not.toContain("감지된 기능 없음");
+    expect(plain).toContain(SITE.zeroIsNotClearance);
     expect(textOf(html)).toContain("AI 검토 중");
     // 합성 저장소의 커밋은 링크가 아니다.
     expect(html).not.toContain("/commit/");
@@ -621,7 +644,10 @@ describe("대시보드", () => {
 
     const plain = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} profile={profileOf("plain.main")} />);
     expect(textOf(plain)).toContain(NO_FEATURES);
-    expect(elementsOf(plain, '<p class="tier-none">').map(textOf)).toEqual(["없음"]);
+    // 신호만 본 프로필이 아무것도 찾지 못한 것은 기능·의무가 없다는 뜻이 아니다(2026-11-16): 요약 줄과 2단도 신호의 말로.
+    expect(elementsOf(plain, '<p class="tier-none">').map(textOf)).toEqual(["기능 신호가 없어 고르지 않았습니다."]);
+    expect(textOf(elementsOf(plain, '<p class="overview">')[0])).toMatch(/^기능 신호 없음 /);
+    expect(textOf(plain)).not.toContain("감지된 기능 0가지");
 
     // 하루 review 상한에 닿은 분석(2026-11-12 오너 지시): 프로필과 의무 목록까지, 셋째 단에 그 사실, 정적 검사는 넷째 단.
     const limited = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} profile={push} reviewPlan="limit" />);
@@ -800,8 +826,10 @@ describe("첫 화면·검색 빈 상태의 최근 분석 줄", () => {
     const rows = await store.recentActivity(10);
     const ids = rows.map(({ analysis }) => analysis.id);
     const findings = await store.findingCounts(ids);
-    const checks = await store.reviewCounts(ids);
-    const html = renderToStaticMarkup(<ActivityList rows={rows} findings={findings} checks={checks} variant="feed" />);
+    const reviews = await store.reviewFacts(ids);
+    const features = await store.featureNames(ids);
+    const checks = Object.fromEntries(Object.entries(reviews).map(([id, facts]) => [id, facts?.check ?? null]));
+    const html = renderToStaticMarkup(<ActivityList rows={rows} findings={findings} reviews={reviews} features={features} variant="feed" />);
     for (const { repository: r, analysis } of rows) expect(html).toContain(linked(analysisHref(r.owner, r.name, analysis.id)));
     // AI 검토가 본체(2026-11-15): review 가 있는 저장소(생성형 AI 채팅 합성)는 체크리스트의 확인할 것 수, 없으면 정적 검사의 발견 수.
     const reviewed = rows.find(({ analysis }) => analysis.status === "succeeded" && typeof checks[analysis.id] === "number")!;
@@ -851,6 +879,28 @@ describe("첫 화면·검색 빈 상태의 최근 분석 줄", () => {
 
 describe("저장소 쪽의 최신 분석 상자", () => {
   const done = (id: string) => analyses.find((a) => a.id === id)!;
+
+  it("review 가 있으면(2026-11-16 오너 지시): 확인할 것 N건, 정적 검사는 '보조' 한 줄(0건인 AI 판정 줄은 없음), 0의 뜻은 둘 다 0일 때만, 기능은 review 가 정한 것", () => {
+    const zero = analyses.find((a) => a.status === "succeeded" && viewOf(a.id).findingCount === 0)!;
+    const view = viewOf(zero.id);
+    const render = (review: { check: number; features: string[]; removed?: number } | null, analysis = zero) =>
+      textOf(renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={view} features={[]} review={review && { removed: 0, ...review }} />));
+    const text = render({ check: 11, features: ["회원 가입·개인정보 수집", "로그인·본인인증"] });
+    expect(text).toContain("확인할 것 11건");
+    expect(text).toContain("보조: 정적 검사 발견 0건");
+    expect(text).not.toContain("사람이 볼 곳");
+    expect(text).not.toMatch(/AI 가 푼 경고 0건|빠진 판정 0건/);
+    expect(text).not.toContain(SITE.zeroIsNotClearance);
+    expect(text).not.toContain(SITE.zeroCheckIsNotClearance);
+    expect(text).toContain("회원 가입·개인정보 수집, 로그인·본인인증");
+    expect(text).not.toContain("감지된 기능 없음");
+    // 둘 다 0 이면 0의 뜻(확인할 것의 말).
+    expect(render({ check: 0, features: [] })).toContain(SITE.zeroCheckIsNotClearance);
+    // review 가 없으면 지금처럼 정적 검사의 수와 0의 뜻. 맡겼는데 받지 못했으면 그렇다고.
+    expect(render(null)).toContain("정적 검사 사람이 볼 곳 0건");
+    expect(render(null)).toContain(SITE.zeroIsNotClearance);
+    expect(render(null, { ...zero, review: "run" })).toContain("검토 결과 받지 못함");
+  });
 
   it("머리 줄: 배지, id, 커밋, 시각 KST, 걸린 시간(단계의 시각에서), 사람이 볼 곳 N건, 결과 보기. 정책 줄과 발견 줄(CLI 메시지 그대로, 경로:줄, 판정 범위)", () => {
     const analysis = done("64y4jdtazh");

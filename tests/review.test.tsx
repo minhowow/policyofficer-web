@@ -259,7 +259,7 @@ describe("review 결과 (2판)", () => {
     const zero = parseReview({ ...data, checklist: all })!;
     const html = renderToStaticMarkup(<ReviewView review={zero} />);
     expect(textOf(elementsOf(html, '<p class="overview">')[0])).toContain("확인할 것 0건");
-    expect(html).toContain(`<p class="hint zero-note">${SITE.zeroIsNotClearance}</p>`);
+    expect(html).toContain(`<p class="hint zero-note">${SITE.zeroCheckIsNotClearance}</p>`);
     expect(html.indexOf("zero-note")).toBeGreaterThan(html.indexOf('<p class="overview">'));
     // 0이 아니면 두지 않는다.
     expect(renderToStaticMarkup(<ReviewView review={parseReview(data)!} />)).not.toContain("zero-note");

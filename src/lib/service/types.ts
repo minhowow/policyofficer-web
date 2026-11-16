@@ -103,6 +103,16 @@ export interface ScanPart {
  */
 export type ReviewPlan = "run" | "stored" | "limit";
 
+/** 목록 줄에 싣는 review 의 것(`ServiceStore.reviewFacts`). */
+export interface ReviewFacts {
+  /** 체크리스트의 확인할 것 수. */
+  check: number;
+  /** review 가 정한 기능의 이름(AI 가 뺀 것은 빼고). 프로필의 신호가 없는 저장소(JS·TS 밖)도 AI 가 인용과 함께 정한다. */
+  features: string[];
+  /** 신호로 잡혔지만 AI 가 인용과 함께 뺀 기능의 수. */
+  removed: number;
+}
+
 /** 저장소 목록·검색 결과의 한 줄. 저장소와 그 분석의 요약. */
 export interface RepositoryHit {
   repository: Repository;
@@ -186,11 +196,11 @@ export interface ServiceStore {
    */
   findingCounts(ids: string[]): Promise<Record<string, number | null>>;
   /**
-   * 끝난 분석마다 그 저장소·커밋의 review 체크리스트에서 '확인할 것'(세 갈래, 묻지 않은 품목 의무는 빼고)의 수(`checkCount`). 어느
-   * 분석에서 받았든 `getReview` 와 같은 것을 센다. review 결과가 없거나 읽지 못하면 null. 목록 줄의 오른쪽에 정적 검사의 발견 수보다
-   * 먼저 싣는다(AI 검토가 본체, 2026-11-15 오너 결정).
+   * 끝난 분석마다 그 저장소·커밋의 review 에서 목록 줄에 싣는 것(`ReviewFacts`): 체크리스트의 '확인할 것' 수(`checkCount`)와 review 가
+   * 정한 기능(AI 가 인용과 함께 뺀 것은 빼고). 어느 분석에서 받았든 `getReview` 와 같은 것을 읽는다. review 결과가 없거나 읽지
+   * 못하면 null. 목록 줄은 정적 검사의 발견 수와 프로필의 기능보다 이것을 먼저 쓴다(AI 검토가 본체, 2026-11-15·16 오너 결정).
    */
-  reviewCounts(ids: string[]): Promise<Record<string, number | null>>;
+  reviewFacts(ids: string[]): Promise<Record<string, ReviewFacts | null>>;
   /**
    * 끝난 분석의 저장소 프로필(`policypack profile` 의 JSON, `lib/profile`). 실행기가 검사와 함께 돌려 보낸 것을 받은 그대로 두었다가
    * 읽는다. 끝나지 않았거나, 프로필을 받지 못했거나(그 기능이 생기기 전의 분석, 실행기에서 프로필이 실패), 읽지 못하면 null.

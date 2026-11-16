@@ -23,9 +23,9 @@ async function activity(store: ServiceStore, limit: number): Promise<LoadedActiv
       const rows = await store.recentActivity(limit);
       const done = rows.filter(({ analysis }) => analysis.status === "succeeded").map(({ analysis }) => analysis.id);
       const findings = await store.findingCounts(done);
-      const checks = await store.reviewCounts(done);
+      const reviews = await store.reviewFacts(done);
       const features = await store.featureNames(done);
-      return { rows, findings, checks, features };
+      return { rows, findings, reviews, features };
     })(),
   );
   return loaded.ok ? { ok: true, ...loaded.value } : loaded;

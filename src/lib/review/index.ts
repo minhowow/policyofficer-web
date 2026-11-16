@@ -8,6 +8,8 @@
  * `quote`(조문 인용)는 이 사이트가 조문 원문을 팩 메타데이터에서만 싣기로 했으므로 읽지 않는다(CLAUDE.md).
  */
 
+import { checkCount } from "./text";
+
 /** 체크리스트의 상태. 갈래 이름은 `src/lib/report/status.ts` 의 `REVIEW_STATUS_LABEL`. */
 export const REVIEW_STATUSES = [
   "seen-in-code",
@@ -282,6 +284,15 @@ export function parseReview(data: unknown): Review | null {
       masked: counts(run.masked),
       notAsked: counts(run.not_asked),
     },
+  };
+}
+
+/** 목록 줄에 싣는 것: 확인할 것 수와 review 가 정한 기능(AI 가 뺀 것은 빼고). */
+export function reviewFactsOf(review: Review): { check: number; features: string[]; removed: number } {
+  return {
+    check: checkCount(review.checklist),
+    features: review.profile.features.filter((feature) => feature.removed === null).map((feature) => feature.name),
+    removed: review.profile.features.filter((feature) => feature.removed !== null).length,
   };
 }
 

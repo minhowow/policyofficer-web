@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { featureNames, parseProfile } from "@/lib/profile";
-import { parseReview } from "@/lib/review";
+import { parseReview, reviewFactsOf } from "@/lib/review";
 import { checkCount } from "@/lib/review/text";
 import type { Analysis } from "@/lib/service/types";
 import { syntheticRepositories, syntheticStore } from "@/lib/service/synthetic";
@@ -462,15 +462,20 @@ describe("review 를 결과와 함께 받아 두고, 같은 커밋이면 다시 
     later(61);
     const waiting = (await requestAnalysis(deps, "example-org", "night-push")).body.analysis!.id;
     expect(waiting).not.toBe(other);
-    expect(await deps.store().reviewCounts([broken.analysis.id, stored.analysis.id, again.analysis.id, other, waiting, "not-an-id"])).toEqual({
-      [broken.analysis.id]: checks,
-      [stored.analysis.id]: checks,
-      [again.analysis.id]: checks,
+    // 목록 줄에 싣는 것(2026-11-16): 확인할 것 수와 review 가 정한 기능(AI 가 뺀 것은 빼고).
+    const features = parseReview(newer)!.profile.features.filter((feature) => feature.removed === null).map((feature) => feature.name);
+    expect(features.length).toBeGreaterThan(0);
+    const facts = { check: checks, features, removed: parseReview(newer)!.profile.features.filter((feature) => feature.removed !== null).length };
+    expect(await deps.store().reviewFacts([broken.analysis.id, stored.analysis.id, again.analysis.id, other, waiting, "not-an-id"])).toEqual({
+      [broken.analysis.id]: facts,
+      [stored.analysis.id]: facts,
+      [again.analysis.id]: facts,
       [other]: null,
     });
-    expect(await deps.store().reviewCounts([])).toEqual({});
-    const synthetic = await syntheticStore.reviewCounts(["4qqa6fdx2h", "wtk33e9zuf", "9f4gxaqj6s"]);
-    expect(synthetic).toEqual({ "4qqa6fdx2h": checkCount(parseReview(reviewCapture)!.checklist), wtk33e9zuf: null });
+    expect(await deps.store().reviewFacts([])).toEqual({});
+    const synthetic = await syntheticStore.reviewFacts(["4qqa6fdx2h", "wtk33e9zuf", "9f4gxaqj6s"]);
+    expect(synthetic).toEqual({ "4qqa6fdx2h": reviewFactsOf(parseReview(reviewCapture)!), wtk33e9zuf: null });
+    expect(reviewFactsOf(parseReview(reviewCapture)!).check).toBe(checkCount(parseReview(reviewCapture)!.checklist));
   });
 });
 

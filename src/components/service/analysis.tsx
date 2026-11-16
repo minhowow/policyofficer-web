@@ -19,11 +19,10 @@ import {
   stepState,
   stepStateLabel,
 } from "@/lib/service/steps";
-import type { Analysis, Repository } from "@/lib/service/types";
-import { STATUS_LABEL } from "@/lib/report/status";
+import type { Analysis, Repository, ReviewFacts } from "@/lib/service/types";
 import { Icon } from "@/components/Icon";
 import { SITE } from "@/lib/site";
-import { AnalysisBadge, FeatureLine, RepoName } from "./parts";
+import { AnalysisBadge, DoneCount, FeatureLine, RepoName, zeroKind, zeroNotes } from "./parts";
 
 export { findingCount } from "./parts";
 import { RequestButton } from "./RequestButton";
@@ -330,19 +329,22 @@ export function HistoryTable({
   repository,
   analyses,
   findings,
+  reviews = {},
   features = {},
   queue = null,
 }: {
   repository: Repository;
   analyses: Analysis[];
   findings: Record<string, number | null>;
+  /** 끝난 분석마다 review 의 확인할 것 수와 기능(`ServiceStore.reviewFacts`). 있으면 결과 칸과 기능 줄이 이것을 쓴다. */
+  reviews?: Record<string, ReviewFacts | null>;
   /** 끝난 분석마다 감지된 기능(`ServiceStore.featureNames`). 분석 칸의 id 아래에 짧게 적는다. */
   features?: Record<string, string[] | null>;
   /** 대기열(DB 에서 센 것). 없으면(합성) 대기열의 자리를 적지 않는다. */
   queue?: QueueSnapshot | null;
 }) {
-  // 발견 0건인 끝난 분석이 표에 있으면 0의 뜻을 표 바로 아래에 적는다(docs/commitments.md 의 1).
-  const zero = analyses.some((analysis) => analysis.status === "succeeded" && findings[analysis.id] === 0);
+  // 결과 칸에 0건이 보이면 그 갈래(review 의 확인할 것, 정적 검사의 발견)의 0의 뜻을 표 바로 아래에 적는다(docs/commitments.md 의 1).
+  const notes = zeroNotes(analyses.map((analysis) => (analysis.status === "succeeded" ? zeroKind(findings[analysis.id], reviews[analysis.id]) : null)));
   return (
     <>
       <div className="box box-scroll">
@@ -356,7 +358,7 @@ export function HistoryTable({
                 요청 시각 (KST)
               </th>
               <th scope="col" className="r">
-                발견
+                결과
               </th>
             </tr>
           </thead>
@@ -369,7 +371,7 @@ export function HistoryTable({
                     <Link href={analysisHref(repository.owner, repository.name, analysis.id)} className="an-row-id">
                       <code translate="no">{analysis.id}</code>
                     </Link>
-                    {analysis.status === "succeeded" && <FeatureLine names={features[analysis.id]} className="an-row-feat" />}
+                    {analysis.status === "succeeded" && <FeatureLine names={features[analysis.id]} review={reviews[analysis.id]} className="an-row-feat" />}
                   </td>
                   <td className="an-row-state">
                     <AnalysisBadge status={analysis.status} />
@@ -381,21 +383,22 @@ export function HistoryTable({
                   <td className="hide-sm">
                     <time dateTime={analysis.requestedAt}>{formatKst(analysis.requestedAt)}</time>
                   </td>
-                  <td className="r an-row-out">{analysis.status === "succeeded" ? findingCell(findings[analysis.id]) : ""}</td>
+                  <td className="r an-row-out">
+                    {analysis.status === "succeeded" && <DoneCount plan={analysis.review} count={findings[analysis.id]} review={reviews[analysis.id]} />}
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
-      {zero && <p className="hint zero-note">{SITE.zeroIsNotClearance}</p>}
+      {notes.map((note) => (
+        <p key={note} className="hint zero-note">
+          {note}
+        </p>
+      ))}
     </>
   );
-}
-
-/** 표의 발견 칸. 결과가 없거나 읽지 못했으면 0 이라고 적지 않고 모른다고 적는다. */
-function findingCell(count: number | null | undefined): string {
-  return typeof count === "number" ? `${count}건` : STATUS_LABEL["pack-unknown"];
 }
 
 /**

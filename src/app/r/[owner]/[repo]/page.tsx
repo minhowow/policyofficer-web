@@ -44,16 +44,16 @@ export default async function RepositoryPage({ params }: PageProps<"/r/[owner]/[
       const features = await store.featureNames(done);
       const latest = analyses.find((analysis) => analysis.status === "succeeded") ?? null;
       const result = latest ? await store.getResult(latest.id) : null;
-      // 최신 분석의 커밋에 review 가 있으면 체크리스트의 확인할 것 수(머리 줄에 정적 검사의 수보다 먼저).
-      const check = latest ? ((await store.reviewCounts([latest.id]))[latest.id] ?? null) : null;
+      // 끝난 분석마다 그 커밋의 review 의 확인할 것 수와 기능(있으면 정적 검사의 수와 프로필의 기능보다 먼저 쓴다).
+      const reviews = await store.reviewFacts(done);
       // 대기열(DB 에서 센 것). 대기 중인 분석이 몇 번째인지 적는다. 합성은 null.
       const queue = await store.queue();
-      return { repository, analyses, findings, features, latest, result, check, queue };
+      return { repository, analyses, findings, features, latest, result, reviews, queue };
     })(),
   );
   if (!found.ok) return <Unavailable owner={owner} repo={repo} message={found.message} />;
   if (!found.value) notFound();
-  const { repository, analyses, findings, features, latest, result, check, queue } = found.value;
+  const { repository, analyses, findings, features, latest, result, reviews, queue } = found.value;
   const parsed = latest ? parseReport(result) : null;
   const view = parsed?.ok ? buildReportView(parsed.report, parsed.contract, packMeta) : null;
 
@@ -82,7 +82,7 @@ export default async function RepositoryPage({ params }: PageProps<"/r/[owner]/[
         <RequestAction repository={repository} closed={store.requestsClosed()} />
       </header>
 
-      {latest && <LatestAnalysis repository={repository} analysis={latest} view={view} features={features[latest.id]} check={check} />}
+      {latest && <LatestAnalysis repository={repository} analysis={latest} view={view} features={features[latest.id]} review={reviews[latest.id] ?? null} />}
 
       <section aria-labelledby="history-title" className="repo-history">
         <div className="sec-h">
@@ -91,7 +91,7 @@ export default async function RepositoryPage({ params }: PageProps<"/r/[owner]/[
           </h2>
         </div>
         {analyses.length > 0 ? (
-          <HistoryTable repository={repository} analyses={analyses} findings={findings} features={features} queue={queue} />
+          <HistoryTable repository={repository} analyses={analyses} findings={findings} reviews={reviews} features={features} queue={queue} />
         ) : (
           <p className="box-empty box">아직 분석 없음</p>
         )}

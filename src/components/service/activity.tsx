@@ -2,9 +2,8 @@ import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import { analysisHref, shortCommit } from "@/lib/service/href";
 import { activeLabel, activeStep, ANALYSIS_STATUS_LABEL, formatKst, stepState } from "@/lib/service/steps";
-import type { Analysis, RepositoryActivity } from "@/lib/service/types";
-import { SITE } from "@/lib/site";
-import { doneCount, FeatureLine, RepoName, shownZero } from "./parts";
+import type { Analysis, RepositoryActivity, ReviewFacts } from "@/lib/service/types";
+import { DoneCount, FeatureLine, RepoName, zeroKind, zeroNotes } from "./parts";
 
 /**
  * 이 사이트의 최근 분석(저장소마다 한 줄, `ServiceStore.recentActivity`). 첫 화면(`feed`: 검색창 아래 같은 단)과 검색 쪽의 빈
@@ -19,20 +18,20 @@ import { doneCount, FeatureLine, RepoName, shownZero } from "./parts";
 export function ActivityList({
   rows,
   findings,
-  checks = {},
+  reviews = {},
   features = {},
   variant,
 }: {
   rows: RepositoryActivity[];
   /** 끝난 분석마다 결과에 실린 발견 수(`ServiceStore.findingCounts`). */
   findings: Record<string, number | null>;
-  /** 끝난 분석마다 review 체크리스트의 '확인할 것' 수(`ServiceStore.reviewCounts`). review 가 없으면 null. */
-  checks?: Record<string, number | null>;
+  /** 끝난 분석마다 review 의 확인할 것 수와 기능(`ServiceStore.reviewFacts`). review 가 없으면 null. */
+  reviews?: Record<string, ReviewFacts | null>;
   /** 끝난 분석마다 감지된 기능의 이름(`ServiceStore.featureNames`). */
   features?: Record<string, string[] | null>;
   variant: "feed" | "box";
 }) {
-  const zero = rows.some(({ analysis }) => analysis.status === "succeeded" && shownZero(findings[analysis.id], checks[analysis.id]));
+  const notes = zeroNotes(rows.map(({ analysis }) => (analysis.status === "succeeded" ? zeroKind(findings[analysis.id], reviews[analysis.id]) : null)));
   return (
     <>
       <ol className={`act act-${variant}`}>
@@ -44,7 +43,7 @@ export function ActivityList({
                 <RepoName owner={repository.owner} name={repository.name} />
               </span>
               <span className="act-state">
-                <ActivityState analysis={analysis} count={findings[analysis.id]} check={checks[analysis.id]} />
+                <ActivityState analysis={analysis} count={findings[analysis.id]} review={reviews[analysis.id]} />
               </span>
               <span className="act-sub">
                 <code translate="no">{analysis.id}</code>{" "}
@@ -53,7 +52,7 @@ export function ActivityList({
                 </span>{" "}
                 <time dateTime={analysis.requestedAt}>{formatKst(analysis.requestedAt)}</time>
               </span>
-              {analysis.status === "succeeded" && <FeatureLine names={features[analysis.id]} className="act-feat" />}
+              {analysis.status === "succeeded" && <FeatureLine names={features[analysis.id]} review={reviews[analysis.id]} className="act-feat" />}
               {analysis.status === "running" && <StepTrail analysis={analysis} />}
               {variant === "box" && <Icon name="chevron-right" />}
             </Link>
@@ -61,7 +60,11 @@ export function ActivityList({
         ))}
       </ol>
       {/* 0건이 보이면 그 수의 뜻을 바로 아래에 둔다(docs/commitments.md 의 1). */}
-      {zero && <p className="act-zero">{SITE.zeroIsNotClearance}</p>}
+      {notes.map((note) => (
+        <p key={note} className="act-zero">
+          {note}
+        </p>
+      ))}
     </>
   );
 }
@@ -70,12 +73,12 @@ export function ActivityList({
  * 오른쪽의 말. 끝난 분석은 review 의 '확인할 것' 수, review 가 없으면 정적 검사의 발견 수(화면 낭독기에는 "끝남, " 을 앞에),
  * 나머지는 분석의 상태(단계 사이면 "다음 단계 기다림").
  */
-function ActivityState({ analysis, count, check }: { analysis: Analysis; count: number | null | undefined; check: number | null | undefined }) {
+function ActivityState({ analysis, count, review }: { analysis: Analysis; count: number | null | undefined; review: ReviewFacts | null | undefined }) {
   if (analysis.status === "succeeded") {
     return (
       <>
         <span className="visually-hidden">{ANALYSIS_STATUS_LABEL.succeeded}, </span>
-        {doneCount(count, check)}
+        <DoneCount plan={analysis.review} count={count} review={review} />
       </>
     );
   }

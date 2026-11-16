@@ -8,17 +8,32 @@ import { CHECKLIST_LABEL, STATUS_LABEL } from "@/lib/report/status";
 import { aiReviewRan, type LocationView, type PolicyView, type ReportView } from "@/lib/report/view-model";
 import { analysisHref, shortCommit } from "@/lib/service/href";
 import { duration, finishedAt, formatKst } from "@/lib/service/steps";
-import type { Analysis, Repository } from "@/lib/service/types";
+import type { Analysis, Repository, ReviewFacts } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
-import { AnalysisBadge, FeatureLine, findingCount } from "./parts";
+import { AnalysisBadge, FeatureLine, findingCount, REVIEW_NOT_RECEIVED, REVIEW_NOT_RUN } from "./parts";
 
-/** 최신 분석 상자의 감지된 기능 한 줄(있을 때만). */
-const featureLineOf = (features: string[] | null) =>
-  features && features.length > 0 ? (
+/** 최신 분석 상자의 감지된 기능 한 줄(있을 때만). review 가 있으면 review 가 정한 기능이다. */
+const featureLineOf = (features: string[] | null, review: ReviewFacts | null) =>
+  (review ? review.features : features)?.length ? (
     <p className="box-in latest-feat">
-      <FeatureLine names={features} className="feat" />
+      <FeatureLine names={features} review={review} className="feat" />
     </p>
   ) : null;
+
+/**
+ * review 가 있는 분석의 정적 검사 한 줄: '보조: 정적 검사 발견 N건'에, AI 판정자가 푼 경고와 적용 질문으로 빠진 판정이 있으면 그 수를
+ * 덧붙인다(0건이면 적지 않는다. 분석 쪽의 넷째 단에는 모두 있다).
+ */
+function staticAux(view: ReportView | null): string[] {
+  if (!view) return [`보조: 정적 검사 ${findingCount(null)}`];
+  const parts = [`보조: 정적 검사 발견 ${view.findingCount}건`];
+  if (aiReviewRan(view)) {
+    if (view.aiCleared.length > 0) parts.push(`${AI_CLEARED} ${view.aiCleared.length}건`);
+    if (!view.aiDismissedKnown) parts.push(`${AI_DISMISSED} ${STATUS_LABEL["pack-unknown"]}`);
+    else if (view.aiDismissed.length > 0) parts.push(`${AI_DISMISSED} ${view.aiDismissed.length}건`);
+  }
+  return parts;
+}
 
 /** 최신 분석 상자에 보이는 발견 줄의 수. 나머지는 "결과 보기"의 분석 쪽에 있다. */
 export const LATEST_FINDINGS = 5;
@@ -40,13 +55,13 @@ export function LatestAnalysis({
   analysis,
   view,
   features = null,
-  check = null,
+  review = null,
 }: {
   repository: Repository;
   analysis: Analysis;
   view: ReportView | null;
-  /** 그 커밋의 review 체크리스트의 확인할 것 수(`ServiceStore.reviewCounts`). review 가 없으면 null. */
-  check?: number | null;
+  /** 그 커밋의 review 의 확인할 것 수와 기능(`ServiceStore.reviewFacts`). review 가 없으면 null. */
+  review?: ReviewFacts | null;
   /** 그 분석에서 감지된 기능(`ServiceStore.featureNames`). 머리 줄 아래에 짧게 적는다(발견 0건이어도 빈 상자가 아니게). */
   features?: string[] | null;
 }) {
@@ -76,19 +91,33 @@ export function LatestAnalysis({
               걸린 시간 <span className="v">{duration(started, ended)}</span>
             </span>
           )}
-          {typeof check === "number" && (
-            <span className="nw">
-              {CHECKLIST_LABEL.check} <span className="v">{check}건</span>
-            </span>
-          )}
-          {view ? (
-            <span className="nw">
-              정적 검사 사람이 볼 곳 <span className="v">{view.findingCount}건</span>
-            </span>
+          {review ? (
+            <>
+              <span className="nw">
+                {CHECKLIST_LABEL.check} <span className="v">{review.check}건</span>
+              </span>
+              {/* review 가 있으면 정적 검사는 보조 한 줄(2026-11-16 오너 지시). AI 가 푼 경고·빠진 판정은 있을 때만 덧붙인다(숨기지 않는다).
+                  조각마다 따로 묶어 좁은 화면에서 조각 사이로 줄이 바뀐다(잘리지 않게). */}
+              {staticAux(view).map((part) => (
+                <span key={part} className="nw latest-aux">
+                  {part}
+                </span>
+              ))}
+            </>
           ) : (
-            <span className="nw">{findingCount(null)}</span>
+            <>
+              {analysis.review === "run" && <span className="nw">{REVIEW_NOT_RECEIVED}</span>}
+              {analysis.review === "limit" && <span className="nw">{REVIEW_NOT_RUN}</span>}
+              {view ? (
+                <span className="nw">
+                  정적 검사 사람이 볼 곳 <span className="v">{view.findingCount}건</span>
+                </span>
+              ) : (
+                <span className="nw">{findingCount(null)}</span>
+              )}
+            </>
           )}
-          {view && aiReviewRan(view) && (
+          {!review && view && aiReviewRan(view) && (
             <>
               <span className="nw">
                 {AI_CLEARED} <span className="v">{view.aiCleared.length}건</span>
@@ -105,8 +134,12 @@ export function LatestAnalysis({
           결과 보기
         </Link>
       </div>
-      {featureLineOf(features)}
-      {!view ? (
+      {featureLineOf(features, review)}
+      {review ? (
+        // review 가 있으면 본문에 정적 검사의 발견 줄을 싣지 않는다(확인할 것으로 읽히지 않게. 결과 보기의 넷째 단에 있다). 0의 뜻은
+        // 확인할 것이 0일 때만(확인할 것이 있는데 '0이어도'가 붙으면 모순으로 읽힌다. 2026-11-16 오너 지시).
+        review.check === 0 && <p className="box-in zero-note">{SITE.zeroCheckIsNotClearance}</p>
+      ) : !view ? (
         <p className="box-in notice notice-warn">이 분석의 결과를 읽지 못했습니다.</p>
       ) : view.findingCount === 0 ? (
         <p className="box-in zero-note">{SITE.zeroIsNotClearance}</p>
