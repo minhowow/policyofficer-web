@@ -80,11 +80,41 @@ async function finish(id: string, at: Date, result: string | null = JSON.stringi
 
 describe("DB: 마이그레이션", () => {
   it("이름 차례로 한 번만 적용한다", async () => {
-    expect(readMigrations().map((m) => m.name)).toEqual(["001_init.sql", "002_finding_count.sql", "003_queue.sql", "004_runner_wake.sql", "005_profile.sql", "006_review.sql", "007_review_plan.sql", "008_scan_part.sql"]);
+    expect(readMigrations().map((m) => m.name)).toEqual(["001_init.sql", "002_finding_count.sql", "003_queue.sql", "004_runner_wake.sql", "005_profile.sql", "006_review.sql", "007_review_plan.sql", "008_scan_part.sql", "009_repo_rename.sql"]);
     // 이미 열 때 적용했다. 다시 돌려도 아무것도 하지 않는다.
     expect(await migrate(db)).toEqual([]);
     const applied = await db.query<{ name: string }>("SELECT name FROM schema_migrations ORDER BY name");
-    expect(applied.rows.map((row) => row.name)).toEqual(["001_init.sql", "002_finding_count.sql", "003_queue.sql", "004_runner_wake.sql", "005_profile.sql", "006_review.sql", "007_review_plan.sql", "008_scan_part.sql"]);
+    expect(applied.rows.map((row) => row.name)).toEqual(["001_init.sql", "002_finding_count.sql", "003_queue.sql", "004_runner_wake.sql", "005_profile.sql", "006_review.sql", "007_review_plan.sql", "008_scan_part.sql", "009_repo_rename.sql"]);
+  });
+
+  it("009: 이름이 바뀐 이 프로젝트의 두 저장소(2026-11-24)의 지난 기록만 새 이름으로 옮긴다", async () => {
+    const fresh = await openDatabase({ databaseUrl: null, pgliteDir: "memory://" }).then(async (other) => {
+      // 열 때 모두 적용되므로, 008 까지만 적용된 DB 를 흉내 내려고 표를 지우고 다시 만든다.
+      await other.query("DROP SCHEMA public CASCADE");
+      await other.query("CREATE SCHEMA public");
+      return other;
+    });
+    const before = readMigrations().filter((m) => m.name < "009");
+    await migrate(fresh, before);
+    const steps = JSON.stringify(STEP_ORDER.map((name) => ({ name, startedAt: null, endedAt: null })));
+    const row = (id: string, owner: string, repo: string, url: string | null) =>
+      fresh.query(
+        "INSERT INTO analyses (id, owner, repo, repo_key, commit_sha, branch, status, requested_at, steps, runner_run_url) VALUES ($1, $2, $3, lower($2) || '/' || lower($3), $4, 'main', 'succeeded', now(), $5::jsonb, $6)",
+        [id, owner, repo, "a".repeat(40), steps, url],
+      );
+    await row("aaaaaaaaaa", "minhowow", "Plitsoft-SDP", null);
+    await row("bbbbbbbbbb", "minhowow", "Plitsoft-SDP-Web", "https://github.com/minhowow/Plitsoft-SDP-Web/actions/runs/1");
+    await row("cccccccccc", "someone", "Plitsoft-SDP", null);
+    expect(await migrate(fresh)).toEqual(["009_repo_rename.sql"]);
+    const rows = await fresh.query<{ id: string; owner: string; repo: string; repo_key: string; runner_run_url: string | null }>(
+      "SELECT id, owner, repo, repo_key, runner_run_url FROM analyses ORDER BY id",
+    );
+    expect(rows.rows).toEqual([
+      { id: "aaaaaaaaaa", owner: "minhowow", repo: "policyofficer", repo_key: "minhowow/policyofficer", runner_run_url: null },
+      { id: "bbbbbbbbbb", owner: "minhowow", repo: "policyofficer-web", repo_key: "minhowow/policyofficer-web", runner_run_url: "https://github.com/minhowow/policyofficer-web/actions/runs/1" },
+      { id: "cccccccccc", owner: "someone", repo: "Plitsoft-SDP", repo_key: "someone/plitsoft-sdp", runner_run_url: null },
+    ]);
+    await fresh.close();
   });
 
   it("표에 저장하지 않기로 한 것(IP·사용자·코드)을 담을 열이 없다", async () => {
