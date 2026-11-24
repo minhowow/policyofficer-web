@@ -31,7 +31,8 @@ import { BANNED_WORDING } from "./wording";
  * (이 파일의 다른 시험이 그리는 HTML 은 같다).
  */
 vi.mock("@/components/result/ReportWithRecord", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/components/result/ReportWithRecord")>();
+  // `importOriginal<T>()` 는 .tsx 에서 semgrep 이 읽지 못해 파일 전체가 파싱되지 않았다. `as` 로 적는다.
+  const actual = (await importOriginal()) as typeof import("@/components/result/ReportWithRecord");
   return { ...actual, ReportWithRecord: vi.fn(actual.ReportWithRecord) };
 });
 
