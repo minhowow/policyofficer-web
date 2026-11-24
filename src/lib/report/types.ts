@@ -1,5 +1,5 @@
 /**
- * policypack CLI 결과 JSON 의 타입. contract/schema/ 의 두 결과 스키마(report.*)와 짝이다.
+ * policyofficer CLI 결과 JSON 의 타입. contract/schema/ 의 두 결과 스키마(report.*)와 짝이다.
  * 필드를 더하거나 뺄 때는 스키마와 tests/contract.test.ts 를 함께 고친다.
  *
  * SARIF 출력도 이 모양으로 옮겨 읽는다(`sarif.ts`). SARIF 에 실리지 않는 것은 채우지 않는다. 그래서 JSON 결과에는
@@ -122,7 +122,7 @@ export interface Run {
   ai_dismissed?: AiDismissed[];
   /** CLI 결과 판 1 부터. 없으면 정적 대안으로 풀린 단위가 결과에 실리지 않은 출력이다(없었다는 뜻이 아니다). */
   static_cleared?: StaticCleared[];
-  /** CLI 결과 판 1 부터. `findings[].fingerprint` 를 만든 방식의 이름(예: "policypack/v1"). */
+  /** CLI 결과 판 1 부터. `findings[].fingerprint` 를 만든 방식의 이름(예: "policyofficer/v1", handoff-w13-3 전은 "policypack/v1"). */
   fingerprint_version?: string;
   questions_asked?: number;
   ai_answered?: number;

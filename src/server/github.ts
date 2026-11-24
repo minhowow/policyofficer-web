@@ -265,7 +265,7 @@ export function createGitHub(options: GitHubOptions): GitHubClient {
     const headers: Record<string, string> = {
       accept: "application/vnd.github+json",
       "x-github-api-version": "2022-11-28",
-      "user-agent": "plitsoft-sdp-web",
+      "user-agent": "policyofficer-web",
     };
     if (options.token) headers.authorization = `Bearer ${options.token}`;
     const signal = AbortSignal.timeout(timeoutMs);

@@ -39,8 +39,16 @@ const NOT_SEEN: readonly NotSeenItem[] = [
   },
 ];
 
-/** CLI 의 이름. 가칭이라 바뀔 수 있다. 아래 `SITE` 의 여러 문구가 이 이름으로 만들어진다. */
-const CLI = "policypack";
+/** 제품(CLI)의 이름(2026-11-24 오너 결정, 그 전 가칭 policypack). 아래 `SITE` 의 여러 문구가 이 이름으로 만들어진다. */
+const CLI = "policyofficer";
+
+/** 앞선 이름. 그 이름의 CLI 가 낸 결과(저장된 분석, 사례 쪽, 연 파일)의 도구 이름도 화면에는 지금 이름으로 보인다(`toolName`). */
+const FORMER_CLI: readonly string[] = ["policypack"];
+
+/** 결과에 적힌 도구 이름을 화면에 적을 이름으로. 앞선 이름이면 지금 이름이다. */
+export function toolName(name: string): string {
+  return FORMER_CLI.includes(name) ? CLI : name;
+}
 
 /**
  * 면책(`SITE.disclaimer`)의 두 문장. 따로 떼어 둔 것은 조문별 검사 기록 때문이다. 기록의 맨 위에서는 첫 문장 바로 뒤에
@@ -50,8 +58,7 @@ const NOT_LEGAL_ADVICE = "법률 자문이 아닙니다.";
 const PEOPLE_DECIDE = "검토가 필요한 지점을 알려 줄 뿐이고, 조문 해석과 최종 판단은 사람이 합니다.";
 
 /**
- * 이름과 고정 문구를 한곳에 둔다. CLI 이름(policypack)은 가칭이라 바뀔 수 있다.
- * 화면 어디서도 이름을 직접 적지 말고 여기서 가져다 쓴다.
+ * 이름과 고정 문구를 한곳에 둔다. 화면 어디서도 이름을 직접 적지 말고 여기서 가져다 쓴다.
  */
 export const SITE = {
   name: `${CLI} 웹`,

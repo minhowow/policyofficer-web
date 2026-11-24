@@ -57,15 +57,15 @@ Postgres ── analyses(id, owner, repo, commit, status, step, 시각, 보낸 �
               github_budget(GitHub 을 부르는 수의 1분 창. 서버 인스턴스가 함께 쓴다),
               runner_wake(실행기를 깨우지 못한 마지막 때와 까닭. 한 행)
 GitHub Actions(실행기 저장소) ── 공개 저장소를 그 커밋으로 받음 → CLI 설치(고정 커밋) →
-              policypack scan --judge anthropic:<모델> --output-format json → profile → review(REVIEW 켜짐) → 단계마다 콜백 → 결과 콜백
+              policyofficer scan --judge anthropic:<모델> --output-format json → profile → review(REVIEW 켜짐) → 단계마다 콜백 → 결과 콜백
 (그림: /how 의 그림 1)
 ```
 
 - 분석 id 는 추측하기 어려운 짧은 id 로 하고, 같은 저장소를 여러 번 분석해도 분석마다 따로 남는다.
 - 진행 단계: 대기 → 저장소 받기·도구 설치 → 검사(정적 검사와 AI 판정) → 정리 → 완료(또는 실패와 그 까닭). 처음 안은 정적
-  검사와 AI 판정을 두 단계로 나눴지만, 실행기는 CLI 명령 하나(`policypack scan … --judge anthropic:<모델>`)를 부르고 CLI 는 둘의
+  검사와 AI 판정을 두 단계로 나눴지만, 실행기는 CLI 명령 하나(`policyofficer scan … --judge anthropic:<모델>`)를 부르고 CLI 는 둘의
   경계를 알려 주지 않는다(결과에는 걸린 초만 있다). 그래서 한 단계로 적는다(B2 차례 B, 2026-11-03). 판정자가 무엇이었는지는
-  결과의 `run.judge` 가 말한다. 검사 단계 안에서 실행기는 프로필(`policypack profile`)과 켰을 때 review 를 시작할 때 그것을
+  결과의 `run.judge` 가 말한다. 검사 단계 안에서 실행기는 프로필(`policyofficer profile`)과 켰을 때 review 를 시작할 때 그것을
   알린다(콜백 `part`, best-effort, 2026-11-13). review 안의 단계는 CLI 가 알리지 않아 적지 않는다.
 - 남용과 비용 막기(로그인이 없으므로 기본값으로 둔다. 값은 오너가 바꿀 수 있다): 같은 저장소·같은 커밋에 분석이
   진행 중이거나 최근(예: 1시간) 끝났으면 새로 만들지 않고 그 분석으로 보낸다, 하루 전체 분석 수 상한, 동시에 도는 분석
@@ -136,7 +136,7 @@ GitHub Actions(실행기 저장소) ── 공개 저장소를 그 커밋으로 
 | `GITHUB_CALLS_PER_MINUTE` | 60 | 이 사이트가 1분에 검색 밖의 GitHub API(저장소 정보·끝 커밋)를 부르는 수(GitHub 은 토큰으로 1시간 5000번) |
 | `RESULT_MAX_KB` | 4000 | 실행기가 보내는 결과 JSON 의 크기 상한(KB). 넘는 콜백은 받지 않는다(Vercel 함수의 본문 상한 4.5MB 보다 작게) |
 | `RUNNER` | none | `github`(workflow_dispatch), `local`(이 컴퓨터의 로컬 실행기가 집어 감), `none`(요청을 받지 않음) |
-| `REVIEW` | 끔 | `on` 일 때만 실행기가 검사 뒤에 `policypack review` 도 돌린다(모델 호출, 한 건의 금액·시간 상한은 워크플로의 `REVIEW_*`). 같은 커밋의 저장된 review 가 있으면 돌리지 않고 그것을 쓴다. 켜는 것은 오너가 비용을 정한 뒤다(2026-11-12 오너 승인, 배포에서 켬) |
+| `REVIEW` | 끔 | `on` 일 때만 실행기가 검사 뒤에 `policyofficer review` 도 돌린다(모델 호출, 한 건의 금액·시간 상한은 워크플로의 `REVIEW_*`). 같은 커밋의 저장된 review 가 있으면 돌리지 않고 그것을 쓴다. 켜는 것은 오너가 비용을 정한 뒤다(2026-11-12 오너 승인, 배포에서 켬) |
 | `REVIEW_DAILY_LIMIT` | 10 | 하루(한국 표준시 0시~) 실행기에 review 를 맡기는 수. 넘으면 그 분석은 프로필과 의무 목록까지만 보이고 '오늘 검토 한도가 찼습니다'라고 적는다. 같은 커밋의 저장된 review 를 쓰는 분석은 세지 않는다 |
 
 실행기 쪽 상한은 워크플로 파일(`.github/workflows/analyze.yml` 의 `env`)에 둔다(요청하는 쪽이 바꾸지 못한다).
@@ -150,7 +150,7 @@ GitHub Actions(실행기 저장소) ── 공개 저장소를 그 커밋으로 
 | `SCAN_TIMEOUT_MINUTES` | 15 | 검사 명령 하나의 시간 상한 |
 | `RESULT_MAX_KB` | 4000 | 보내는 결과 크기 상한(사이트와 같은 값) |
 | `JUDGE_MODEL` | claude-haiku-5-5 | AI 판정자 `anthropic:<모델>`(전체 id). 모델을 바꾸는 것은 오너가 정한다 |
-| `CLI_REPO`·`CLI_COMMIT` | `minhowow/Plitsoft-SDP`·`6f1b50c…`(태그 `handoff-w13-2`) | 설치하는 CLI 와 그 고정 커밋 |
+| `CLI_REPO`·`CLI_COMMIT` | `minhowow/policyofficer`·`7cf9758…`(태그 `handoff-w13-3`) | 설치하는 CLI 와 그 고정 커밋 |
 | `CLI_EXCLUDE_NEWER` | 2026-11-24T00:00:00Z | CLI 의 딸린 꾸러미를 이 날짜까지 나온 판에서만 고른다(`uv tool install --exclude-newer`. git 설치는 CLI 의 uv.lock 을 쓰지 않는다). CLI 커밋을 바꿀 때 함께 바꾼다 |
 | `SITE_ORIGIN` | Actions 변수 `SITE_URL` | 콜백을 받을 사이트. 워크플로 입력의 `callback_url` 출처가 이것과 다르면 멈춘다 |
 
@@ -164,7 +164,7 @@ B4 에서 고정된 출력에 맞춘다. 2026-11-05: CLI 는 에이전트 검토
 - Vercel 프로젝트와 Postgres(Vercel Marketplace 의 Neon 등), 도메인.
 - 실행기로 쓸 GitHub 저장소와 그 Actions, workflow_dispatch 를 부를 GitHub 토큰(최소 권한), 검색용 토큰.
 - Anthropic API 키와 월 지출 상한.
-- CLI 를 실행기에 설치할 길: CLI 저장소(`minhowow/Plitsoft-SDP`)가 비공개면 읽기 토큰이 필요하다.
+- CLI 를 실행기에 설치할 길: CLI 저장소(`minhowow/policyofficer`, 2026-11-24 까지 `minhowow/Plitsoft-SDP`)가 비공개면 읽기 토큰이 필요하다.
 - 발표에 미리 분석해 둘 저장소 목록.
 
 ## 남은 위험 (오너가 알고 정한 것)

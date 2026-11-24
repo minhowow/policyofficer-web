@@ -36,7 +36,7 @@ import type { AiCleared, AiDismissed, Finding, Outcome, Report, UnsatisfiedAlter
  * | 발견의 `file`, `line` | `locations[0].physicalLocation` 의 `artifactLocation.uri`, `region.startLine` |
  * | 발견의 `region` | `contextRegion`. 일부에만 실린다(아래) |
  * | 발견의 `top_level` | **없다** |
- * | 발견의 `fingerprint` | `partialFingerprints["policypack/v1"]` |
+ * | 발견의 `fingerprint` | `partialFingerprints["policyofficer/v1"]`(CLI handoff-w13-3 전은 `"policypack/v1"`) |
  * | 발견의 나머지(`outcome`, `law`, `scope`, 대안, 판정 경로, 이유) | `results[].properties` |
  *
  * JSON 과 같게 옮길 수 없는 곳(`docs/cli-requests.md` 의 R11):
@@ -52,19 +52,30 @@ import type { AiCleared, AiDismissed, Finding, Outcome, Report, UnsatisfiedAlter
 
 /**
  * 지문이 실린 열쇠. CLI 소스 `report/fingerprint.py` 의 VERSION 이다. 이 값과 아래 알림의 id 는 CLI 가 출력에 적는
- * 그대로다(화면에 보이는 이름이 아니다). CLI 의 이름이 들어 있어서, 이름이 바뀌면 스키마와 함께 고쳐야 할 수 있다.
+ * 그대로다(화면에 보이는 이름이 아니다). CLI 의 이름이 들어 있다. 제품 이름이 policyofficer 로 바뀐 판(handoff-w13-3) 앞의 SARIF
+ * 파일도 `/view` 에서 열리게, 앞선 이름(policypack)의 열쇠와 id 는 지금 이름의 것으로 읽는다(`protocolId`).
  */
-const FINGERPRINT_KEY = "policypack/v1";
+const FINGERPRINT_KEYS = ["policyofficer/v1", "policypack/v1"] as const;
+const FINGERPRINT_KEY = FINGERPRINT_KEYS[0];
+
+/** 결과의 지문 열쇠 가운데 실린 것(지금 이름 먼저). 없으면 undefined. */
+function fingerprintOf(fingerprints: Record<string, unknown>): string | undefined {
+  for (const key of FINGERPRINT_KEYS) if (isStr(fingerprints[key])) return fingerprints[key] as string;
+  return undefined;
+}
+
+/** 알림 id 의 앞선 이름(policypack/)을 지금 이름(policyofficer/)으로. */
+const protocolId = (id: string) => id.replace(/^policypack\//, "policyofficer/");
 
 /** 다 보지 못한 파일을 알리는 알림의 `descriptor.id` 와, 그 파일이 들어가는 결과 JSON 의 목록. */
 const GAP_LIST = new Map<string, "unparsed" | "skipped" | "incomplete">([
-  ["policypack/unparsed", "unparsed"],
-  ["policypack/skipped", "skipped"],
-  ["policypack/engine-incomplete", "incomplete"],
+  ["policyofficer/unparsed", "unparsed"],
+  ["policyofficer/skipped", "skipped"],
+  ["policyofficer/engine-incomplete", "incomplete"],
 ]);
 
 /** 어느 파일인지 모르는 엔진 오류를 알리는 알림. 위치 없이 문장만 실린다. */
-const ENGINE_ERROR = "policypack/engine-error";
+const ENGINE_ERROR = "policyofficer/engine-error";
 
 interface SarifPlace {
   artifactLocation: { uri: string };
@@ -212,8 +223,9 @@ function check(input: Obj): string[] {
   if (need(Array.isArray(notifications), `${inv}.toolExecutionNotifications 배열이 없습니다.`) && Array.isArray(notifications)) {
     notifications.forEach((n, i) => {
       const where = `${inv}.toolExecutionNotifications[${i}]`;
-      const id = isObj(n) && isObj(n.descriptor) ? n.descriptor.id : undefined;
-      if (!need(isStr(id), `${where}.descriptor.id 가 없습니다.`) || !isObj(n) || !isStr(id)) return;
+      const raw = isObj(n) && isObj(n.descriptor) ? n.descriptor.id : undefined;
+      if (!need(isStr(raw), `${where}.descriptor.id 가 없습니다.`) || !isObj(n) || !isStr(raw)) return;
+      const id = protocolId(raw);
       // 다 보지 못한 파일의 알림에는 파일이, 엔진 오류의 알림에는 문장이 있어야 한다. 그 밖의 알림은 읽지 않는다.
       if (GAP_LIST.has(id)) {
         need(Array.isArray(n.locations) && isStr(uriOf(n.locations[0])), `${where} 에 파일(locations[0])이 없습니다.`);
@@ -248,7 +260,7 @@ function check(input: Obj): string[] {
         );
       }
       need(
-        isObj(r.partialFingerprints) && isStr(r.partialFingerprints[FINGERPRINT_KEY]),
+        isObj(r.partialFingerprints) && fingerprintOf(r.partialFingerprints) !== undefined,
         `${where}.partialFingerprints 에 ${FINGERPRINT_KEY} 가 없습니다.`,
       );
       const p = r.properties;
@@ -287,7 +299,7 @@ function findingOf(result: SarifResult, rules: Map<string, SarifRule>): Finding 
     ask_developer: described.help.text === title ? "" : described.help.text,
     untested_reasons: p.untestedReasons,
     ai_pending: p.aiPending,
-    fingerprint: result.partialFingerprints[FINGERPRINT_KEY],
+    fingerprint: fingerprintOf(result.partialFingerprints)!,
     scope: p.scope,
     region: place.contextRegion
       ? { start_line: place.contextRegion.startLine, end_line: place.contextRegion.endLine }
@@ -307,7 +319,7 @@ function reportOf(log: SarifLog): Report {
   const gaps = { unparsed: [] as string[], skipped: [] as string[], incomplete: [] as string[] };
   const engineErrors: string[] = [];
   for (const notification of invocation.toolExecutionNotifications) {
-    const { id } = notification.descriptor;
+    const id = protocolId(notification.descriptor.id);
     const list = GAP_LIST.get(id);
     if (list) gaps[list].push(notification.locations![0].physicalLocation.artifactLocation.uri);
     else if (id === ENGINE_ERROR) engineErrors.push(notification.message!.text!);

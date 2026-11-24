@@ -155,7 +155,7 @@ export async function openDatabase(options: { databaseUrl: string | null; pglite
  * 서버가 함께 쓰는 DB. 처음 부를 때 연다. 개발 서버가 모듈을 다시 불러와도 연결을 새로 만들지 않게 globalThis 에 둔다
  * (PGlite 는 한 폴더를 두 번 열면 안 된다). 열다 실패하면 다음 부름에서 다시 연다.
  */
-const SHARED = Symbol.for("plitsoft.db");
+const SHARED = Symbol.for("policyofficer.db");
 type Holder = { [SHARED]?: Promise<Database> };
 
 export function getDatabase(): Promise<Database> {

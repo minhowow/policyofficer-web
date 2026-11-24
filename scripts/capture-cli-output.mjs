@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// 합성 데모 코드(contract/fixtures)를 설치된 policypack CLI 로 검사해 contract/cli-current/ 를 다시 만든다. 저장소 프로필
-// (`policypack profile`, CLI fe98fb7 부터)도 표본마다 contract/cli-current/profile/<표본>.json 에 함께 남긴다.
+// 합성 데모 코드(contract/fixtures)를 설치된 policyofficer CLI 로 검사해 contract/cli-current/ 를 다시 만든다. 저장소 프로필
+// (`policyofficer profile`, CLI fe98fb7 부터. handoff-w13-3 전의 이름은 policypack)도 표본마다 contract/cli-current/profile/<표본>.json 에 함께 남긴다.
 //
-// CLI 소스를 가져다 쓰지 않는다. 격리된 환경에 설치한 `policypack` 명령만 부른다.
-//   POLICYPACK_FROM  설치 출처. 기본값은 옆 폴더의 CLI 저장소(../Plitsoft-SDP).
-//                    PyPI 공개 뒤에는 "policypack==<판>" 처럼 판을 고정해 쓴다.
+// CLI 소스를 가져다 쓰지 않는다. 격리된 환경에 설치한 `policyofficer` 명령만 부른다.
+//   POLICYOFFICER_FROM  설치 출처. 기본값은 옆 폴더의 CLI 저장소(../Plitsoft-SDP). 앞선 이름 POLICYPACK_FROM 도 읽는다
+//                    (제품 이름이 policyofficer 로 바뀌었다. 2026-11-24 오너 결정).
+//                    PyPI 공개 뒤에는 "policyofficer==<판>" 처럼 판을 고정해 쓴다.
 //
 // 지키는 것
 //   - 출처가 폴더면 매번 휠을 새로 빌드해 그 휠로 실행한다. uvx 는 로컬 폴더를 pyproject.toml 이 바뀔 때만
@@ -27,17 +28,17 @@ const outDir = path.join(root, "contract", "cli-current");
 const stagingDir = path.join(root, "contract", ".cli-current.tmp");
 
 // 상대 경로로 받아도 어디서 부르든 같은 곳을 가리키게 절대 경로로 바꾼다.
-const rawFrom = process.env.POLICYPACK_FROM ?? path.resolve(root, "..", "Plitsoft-SDP");
+const rawFrom = process.env.POLICYOFFICER_FROM ?? process.env.POLICYPACK_FROM ?? path.resolve(root, "..", "Plitsoft-SDP");
 const fromIsDir = existsSync(rawFrom) && statSync(rawFrom).isDirectory();
 const from = existsSync(rawFrom) ? path.resolve(rawFrom) : rawFrom;
 
 // SARIF 도 함께 남길 표본. 뷰어가 SARIF 를 같은 검사의 JSON 과 같게 읽는지 견주는 기준 자료다(tests/sarif.test.tsx).
 const SARIF_SAMPLES = new Set(["kids-signup.main"]);
 
-const work = mkdtempSync(path.join(tmpdir(), "policypack-capture-"));
+const work = mkdtempSync(path.join(tmpdir(), "policyofficer-capture-"));
 
-// CLI 가 읽는 환경변수(POLICYPACK_PACK 등)가 새어 들어가 다른 팩으로 검사하지 않게 지운다.
-const childEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith("POLICYPACK_")));
+// CLI 가 읽는 환경변수(POLICYOFFICER_PACK 등, 앞선 이름 POLICYPACK_*)가 새어 들어가 다른 팩으로 검사하지 않게 지운다.
+const childEnv = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^POLICY(OFFICER|PACK)_/.test(key)));
 // 임시 폴더 위쪽의 git 저장소를 찾지 않게 한다.
 childEnv.GIT_CEILING_DIRECTORIES = work;
 
@@ -88,11 +89,11 @@ function parseOutput(result, name, what) {
 
 function main() {
   const source = resolveSource();
-  const policypack = (args, cwd) => run("uvx", ["--quiet", "--from", source, "policypack", ...args], cwd);
+  const policyofficer = (args, cwd) => run("uvx", ["--quiet", "--from", source, "policyofficer", ...args], cwd);
 
-  const version = policypack(["--version"], work);
+  const version = policyofficer(["--version"], work);
   if (version.status !== 0) {
-    throw new Error(`policypack --version 실패 (출처: ${from})\n${version.stderr}`);
+    throw new Error(`policyofficer --version 실패 (출처: ${from})\n${version.stderr}`);
   }
 
   // 표본을 git 저장소 밖으로 복사한다.
@@ -112,8 +113,8 @@ function main() {
       const name = `${app}.${variant}`;
       const cwd = path.join(fixtures, app, variant);
 
-      const scan = policypack(["scan", "src/", "--output-format", "json"], cwd);
-      const report = parseOutput(scan, name, "policypack scan");
+      const scan = policyofficer(["scan", "src/", "--output-format", "json"], cwd);
+      const report = parseOutput(scan, name, "policyofficer scan");
       // 실행할 때마다 달라지는 값은 0 으로 둔다. 다시 수집해도 차이가 판정 변화만 남게 한다.
       report.run.static_seconds = 0;
       report.run.ai_seconds = 0;
@@ -129,13 +130,13 @@ function main() {
       });
 
       if (SARIF_SAMPLES.has(name)) {
-        const sarif = parseOutput(policypack(["scan", "src/", "--output-format", "sarif"], cwd), name, "SARIF 출력");
+        const sarif = parseOutput(policyofficer(["scan", "src/", "--output-format", "sarif"], cwd), name, "SARIF 출력");
         writeFileSync(path.join(stagingDir, `${name}.sarif`), JSON.stringify(sarif, null, 2) + "\n");
       }
       // 저장소 프로필. 모델을 부르지 않는다. 검사와 달리 폴더 전체를 본다(package.json 등).
-      const profiled = policypack(["profile", "."], cwd);
-      if (profiled.status !== 0) throw new Error(`${name}: policypack profile 이 종료 코드 ${profiled.status} 로 끝났습니다.\n${profiled.stderr}`);
-      const profile = parseOutput(profiled, name, "policypack profile");
+      const profiled = policyofficer(["profile", "."], cwd);
+      if (profiled.status !== 0) throw new Error(`${name}: policyofficer profile 이 종료 코드 ${profiled.status} 로 끝났습니다.\n${profiled.stderr}`);
+      const profile = parseOutput(profiled, name, "policyofficer profile");
       writeFileSync(path.join(stagingDir, "profile", `${name}.json`), JSON.stringify(profile, null, 2) + "\n");
       profiles.push({ name, file: `profile/${name}.json`, features: profile.features.map((feature) => feature.id) });
       console.log(`${name}: 종료 코드 ${scan.status}, 판정 단위 ${report.run.units}, 발견 ${report.findings.length}, 기능 ${profile.features.length}`);
@@ -159,7 +160,7 @@ function main() {
     // 수집한 날(이 기계의 날짜). 시각은 적지 않는다.
     captured_on: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
     cli: {
-      version: version.stdout.trim().replace(/^policypack\s+/, ""),
+      version: version.stdout.trim().replace(/^policyofficer\s+/, ""),
       // 절대 경로는 적지 않는다. 옆 폴더면 상대 경로, 그 밖의 폴더면 이름만, 폴더가 아니면 준 값 그대로.
       from: !fromIsDir ? from : /^\.\.[\\/][^\\/]+$/.test(relative) ? relative : path.basename(from),
       commit: fromIsDir ? git(["rev-parse", "--short", "HEAD"]) : null,
@@ -170,10 +171,10 @@ function main() {
     },
     engine,
     pack_digest: packDigest,
-    command: "policypack scan src/ --output-format json   (판정자 없음, 기본값)",
+    command: "policyofficer scan src/ --output-format json   (판정자 없음, 기본값)",
     normalized: ["run.static_seconds", "run.ai_seconds"],
     files,
-    profile_command: "policypack profile .",
+    profile_command: "policyofficer profile .",
     profiles,
   };
   writeFileSync(path.join(stagingDir, "MANIFEST.json"), JSON.stringify(manifest, null, 2) + "\n");
@@ -181,7 +182,7 @@ function main() {
   // 여기까지 왔으면 전부 성공이다. 이제 바꾼다.
   rmSync(outDir, { recursive: true, force: true });
   renameSync(stagingDir, outDir);
-  console.log(`\ncontract/cli-current/ 에 ${files.length}개를 썼습니다. (policypack ${manifest.cli.version}, 커밋 ${manifest.cli.commit ?? "모름"})`);
+  console.log(`\ncontract/cli-current/ 에 ${files.length}개를 썼습니다. (policyofficer ${manifest.cli.version}, 커밋 ${manifest.cli.commit ?? "모름"})`);
   if (manifest.cli.dirty) {
     console.log("주의: CLI 저장소에 커밋되지 않은 변경이 있습니다. 이 수집본은 커밋하지 마세요(contract/README.md).");
   }

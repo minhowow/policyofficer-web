@@ -5,7 +5,7 @@
     {
       "tool": {
         "driver": {
-          "name": "policypack",
+          "name": "policyofficer",
           "version": "0.3.0.dev0",
           "rules": [
             {
@@ -27,7 +27,7 @@
               },
               "properties": {
                 "tags": [
-                  "policypack",
+                  "policyofficer",
                   "category:child-consent",
                   "law:개인정보 보호법-제22조의2"
                 ],
@@ -50,7 +50,7 @@
             {
               "level": "note",
               "descriptor": {
-                "id": "policypack/ai-pending"
+                "id": "policyofficer/ai-pending"
               },
               "message": {
                 "text": "AI 확인이 필요한 곳 1건 — 판정자가 꺼져 있습니다. 경고로 남았습니다(이름만 본 약한 근거로는 풀지 않습니다)."
@@ -65,7 +65,7 @@
             "aiPending": 1,
             "aiCleared": [],
             "aiDismissed": [],
-            "packDigest": "9f70938de41b6f3a",
+            "packDigest": "284a5b28911a0124",
             "coverageComplete": true
           }
         }
@@ -91,7 +91,7 @@
             }
           ],
           "partialFingerprints": {
-            "policypack/v1": "5ceb99b54225a7aad7f31895d5a756b5"
+            "policyofficer/v1": "3ab838a9552a910189f0b8b49e554768"
           },
           "properties": {
             "outcome": "needs-review",

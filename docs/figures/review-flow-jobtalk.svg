@@ -5,7 +5,7 @@
   </defs>
 <rect width="1404" height="975" fill="#ffffff"/>
 <text x="48" y="58" font-size="30" font-weight="700" fill="#1f2328">개인정보 흐름 · Vactor0911/jobtalk</text>
-<text x="48" y="94" font-size="17" fill="#59636e">policypack review 2판 실측 2026-11-12 · 커밋 bbfb3ab · 조사 claude-haiku-5-5 · 반박 claude-sonnet-5-5 · 마디마다 코드 줄 인용</text>
+<text x="48" y="94" font-size="17" fill="#59636e">policyofficer review 2판 실측 2026-11-12 · 커밋 bbfb3ab · 조사 claude-haiku-5-5 · 반박 claude-sonnet-5-5 · 마디마다 코드 줄 인용</text>
 <g transform="translate(48 120) scale(1.5)">
 <text x="8" y="20" font-size="13" font-weight="700" fill="#59636e">받는 것</text>
 <text x="328" y="20" font-size="13" font-weight="700" fill="#59636e">처리</text>

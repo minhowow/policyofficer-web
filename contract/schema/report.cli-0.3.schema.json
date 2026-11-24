@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "report.cli-0.3.schema.json",
-  "title": "policypack scan --output-format json (CLI 0.3: 판 번호 없는 출력과 결과 판 1)",
+  "title": "policyofficer scan --output-format json (CLI 0.3: 판 번호 없는 출력과 결과 판 1)",
   "description": "CLI 가 지금 내는 모양을 관찰해 적은 것이다. CLI 저장소의 공식 스키마가 아니다(CLI 는 결과 JSON 의 스키마 파일을 아직 내지 않는다). 웹이 읽는 필드만 required 로 두고 나머지는 허용한다. 판 번호(schema_version)가 없는 출력(CLI 8ae72d8 까지)과 schema_version 1 인 출력(CLI e1e46a9 부터. 실행기가 설치하는 7300205 도 같다)을 함께 받는다. 결과 판 1 은 판 번호 없는 출력에 키를 더한 것이다. 다만 판 1 안에서 판 번호를 그대로 둔 채 뜻이 넓어진 것이 하나 있다: CLI bb76618(e1e46a9 뒤, 7300205 의 조상)부터 run.incomplete 와 untested_reasons 의 engine-incomplete 에 함수 단위 규칙에 쓸 함수 경계를 얻지 못한 파일도 든다. contract/cli-current/ 의 수집본이 이 스키마를 통과해야 한다. 'report/1-draft' 는 웹이 만든 v1 초안 예시의 판이고 이 스키마가 아니다(report.v1-draft.schema.json).",
   "type": "object",
   "required": [
@@ -68,7 +68,7 @@
         },
         "fingerprint_version": {
           "type": "string",
-          "description": "결과 판 1 부터. findings[].fingerprint 를 만드는 방식의 이름(예: policypack/v1). 방식을 바꾸면 이 값이 바뀐다."
+          "description": "결과 판 1 부터. findings[].fingerprint 를 만드는 방식의 이름(예: policyofficer/v1, handoff-w13-3 전은 policypack/v1). 방식을 바꾸면 이 값이 바뀐다."
         },
         "questions_asked": {
           "type": "integer"

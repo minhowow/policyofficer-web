@@ -3,7 +3,7 @@
   "cli": {
     "version": "0.3.0.dev0",
     "from": "Plitsoft-SDP",
-    "commit": "6f1b50c",
+    "commit": "7cf9758",
     "committed_on": "2026-11-24",
     "dirty": false
   },
@@ -11,8 +11,8 @@
     "name": "semgrep",
     "version": "1.176.1"
   },
-  "pack_digest": "9f70938de41b6f3a",
-  "command": "policypack scan src/ --output-format json   (판정자 없음, 기본값)",
+  "pack_digest": "284a5b28911a0124",
+  "command": "policyofficer scan src/ --output-format json   (판정자 없음, 기본값)",
   "normalized": [
     "run.static_seconds",
     "run.ai_seconds"
@@ -68,7 +68,7 @@
       "findings": 0
     }
   ],
-  "profile_command": "policypack profile .",
+  "profile_command": "policyofficer profile .",
   "profiles": [
     {
       "name": "genai-chat.fixed",

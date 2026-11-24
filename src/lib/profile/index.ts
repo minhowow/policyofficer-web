@@ -1,5 +1,5 @@
 /**
- * 저장소 프로필: `policypack profile <폴더>` 의 JSON(CLI fe98fb7 부터, `profile_version: 1`). 결과 화면의 1단(감지된 기능과 그
+ * 저장소 프로필: `policyofficer profile <폴더>` 의 JSON(CLI fe98fb7 부터, `profile_version: 1`). 결과 화면의 1단(감지된 기능과 그
  * 근거)과 2단(기능마다 걸릴 수 있는 의무)이 이것을 그린다(2026-11-11 오너 지시). 모델 호출 없이 CLI 가 코드의 신호(패키지·import·
  * 호출·경로·화면 파일)로 고른 것이고, 판단은 하지 않는다(목록 층).
  *

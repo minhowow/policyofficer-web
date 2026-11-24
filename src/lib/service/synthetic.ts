@@ -67,7 +67,7 @@ const RESULTS: Record<string, Capture> = {
 };
 
 /**
- * 분석 id → 저장소 프로필. 결과와 같은 합성 데모 코드에 `policypack profile` 을 돌린 수집본이다
+ * 분석 id → 저장소 프로필. 결과와 같은 합성 데모 코드에 `policyofficer profile` 을 돌린 수집본이다
  * (contract/cli-current/profile/<표본>.json, `npm run capture` 가 함께 만든다).
  */
 const PROFILES: Record<string, unknown> = {
@@ -136,7 +136,7 @@ const ANALYSES: Analysis[] = [
     status: "running",
     steps: steps("2026-10-24T04:58:02Z", { queued: [0, 18], fetch: [18, 37], scan: [37, null] }),
     failure: null,
-    versions: { tool: "0.3.0.dev0", pack: "9f70938de41b6f3a" },
+    versions: { tool: "0.3.0.dev0", pack: "284a5b28911a0124" },
     // 검사 단계 안에서 실행기가 AI 검토를 시작했다고 알린 순간(검사 시작 86초 뒤).
     review: "run",
     scanPart: { name: "review", startedAt: "2026-10-24T05:00:05Z" },

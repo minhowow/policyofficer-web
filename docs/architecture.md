@@ -484,7 +484,7 @@ CLI 의 JSON 출력과 SARIF 출력을 연다. 파일 고르기, 끌어다 놓�
 | 발견의 `file`, `line` | `locations[0].physicalLocation` | 줄이 없는 발견도 1행으로 실린다(아래) |
 | 발견의 `region` | `contextRegion` | 일부에만 실린다(아래) |
 | 발견의 `top_level` | **없다** | |
-| 발견의 `fingerprint` | `partialFingerprints["policypack/v1"]` | |
+| 발견의 `fingerprint` | `partialFingerprints["policyofficer/v1"]`(CLI handoff-w13-3 전은 `"policypack/v1"`. 둘 다 읽는다) | |
 | 발견의 나머지(판정, 조문 이름, 판정 단위, 이유, 대안, 판정 경로) | `results[].properties` | |
 
 - **1행.** CLI 는 줄이 없는 발견(`line: null`)을 SARIF 에 `startLine: 1` 로 싣는다. 그래서 SARIF 의 1행은 실제 1행인지
@@ -510,7 +510,7 @@ CLI 의 JSON 출력과 SARIF 출력을 연다. 파일 고르기, 끌어다 놓�
   있고, 시행일은 규칙의 태그(`properties.tags` 의 `effective-from:…`)에도 있다. 모두 발견이 난 규칙에만 실린다(CLI 는
   판정을 낸 규칙만 `rules` 에 싣는다). 읽지 않는다. 메모는 화면에 싣지 않기로 한 글이고, 조문과 시행일은
   `data/pack-meta.json` 의 것만 쓴다(조문별 검사 기록도 그렇다. 발견이 없는 정책의 값은 SARIF 에 없다). 웹이 읽지 않는
-  알림(`policypack/ai-pending` 과 모르는 종류)도 옮기지 않는다. 결과 JSON 의 모르는 필드를 읽지 않는 것과 같다.
+  알림(`policyofficer/ai-pending` 과 모르는 종류. 앞선 이름 `policypack/…` 의 알림은 지금 이름의 것으로 읽는다)도 옮기지 않는다. 결과 JSON 의 모르는 필드를 읽지 않는 것과 같다.
 - **같게 만들려면** CLI 가 판정 단위 수·파일 수·`top_level`·줄이 없다는 표시를 SARIF 에 실어야 한다
   (`docs/cli-requests.md` 의 R11).
 
@@ -2308,11 +2308,11 @@ anthropic:<모델> --output-format json`, `../Plitsoft-SDP` 의 `cli.py` 의 `cm
   푼 크기 상한(400MB), 일반 파일과 폴더만(링크·장치는 만들지 않고 센다), 폴더 밖을 가리키는 경로(절대, `..`, 역빗금, pax·GNU 긴
   이름 포함)가 하나라도 있으면 압축 파일 전체를 받지 않는다. 파일은 0644 로 쓴다. 그 뒤 JS/TS 파일 수 상한(3000, CLI 가 보지 않는
   `node_modules`·`dist` 등과 링크는 세지 않는다).
-- 도구 설치: `pipx install uv==<고정 판>` 뒤 `uv tool install --exclude-newer <CLI_EXCLUDE_NEWER> "policypack[api] @ git+https://github.com/<CLI_REPO>@<CLI_COMMIT>"`.
+- 도구 설치: `pipx install uv==<고정 판>` 뒤 `uv tool install --exclude-newer <CLI_EXCLUDE_NEWER> "policyofficer @ git+https://github.com/<CLI_REPO>@<CLI_COMMIT>"`.
   git 설치는 CLI 의 `uv.lock` 을 쓰지 않아, 딸린 꾸러미를 고정한 날짜(기본 2026-10-08, CLI 고정 커밋의 날)까지 나온 판에서만 고른다
   (검토 1. 해시까지 묶는 것은 아니다. 더 묶으려면 CLI 의 `uv.lock` 에서 뽑은 제약 파일이 필요하다).
   CLI 저장소와 커밋은 워크플로 파일의 `env` 다(요청하는 쪽이 바꾸지 못한다). 비공개 CLI 저장소의 토큰은 git 설정 환경 변수로만 넘긴다.
-- 검사: 저장소 폴더에서 `policypack scan . --judge anthropic:<JUDGE_MODEL> --output-format json`. 자식 과정에는 정한 환경 변수만
+- 검사: 저장소 폴더에서 `policyofficer scan . --judge anthropic:<JUDGE_MODEL> --output-format json`. 자식 과정에는 정한 환경 변수만
   넘긴다(`GIT_CEILING_DIRECTORIES` 로 바깥 git 을 찾지 않는다). 종료 코드 0·1 은 결과, 2 는 검사 단계의 실패다. 대상 코드는
   설치·빌드·실행하지 않는다.
 - 정리: 결과 크기 상한(4000KB)을 넘으면 보내지 않고 정리 단계의 실패로 알린다. 서버가 알림을 받지 않으면(끝난 분석·차례

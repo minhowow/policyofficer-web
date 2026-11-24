@@ -1,5 +1,5 @@
 /**
- * `policypack review <저장소>` 의 결과(2판, CLI e12e6ba 부터. 스키마 contract/schema/review.cli-2.schema.json). 한 JSON 에 프로필(규칙
+ * `policyofficer review <저장소>` 의 결과(2판, CLI e12e6ba 부터. 스키마 contract/schema/review.cli-2.schema.json). 한 JSON 에 프로필(규칙
  * 신호와 AI 가 인용과 함께 보태거나 뺀 기능, 서비스 설명, 플랫폼), 개인정보 흐름(마디·화살표와 인용), 걸릴 수 있는 의무, 의무
  * 체크리스트, 실행 정보가 있다(2026-11-11 오너 지시로 화면을 만든다).
  *

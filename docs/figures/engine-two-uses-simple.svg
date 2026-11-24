@@ -43,7 +43,7 @@
   <rect class="hw-box t-keep" x="434" y="16" width="372" height="106" rx="8" data-id="engine"/>
   <text class="hw-title" x="448" y="47" font-size="21" font-weight="700" data-in="engine">같은 엔진 · 같은 정책</text>
   <text class="hw-line" x="448" y="74" font-size="16" data-in="engine">같은 규칙으로 코드를 검사</text>
-  <text class="hw-small" x="448" y="108" font-size="13" data-in="engine">policypack</text>
+  <text class="hw-small" x="448" y="108" font-size="13" data-in="engine">policyofficer</text>
   <rect class="hw-box t-plain" x="852" y="16" width="372" height="106" rx="8" data-id="web"/>
   <text class="hw-title" x="866" y="47" font-size="21" font-weight="700" data-in="web">웹에서</text>
   <text class="hw-line" x="866" y="74" font-size="16" data-in="web">남의 저장소를 AI 와 함께, 법 의무를 더 넓게</text>

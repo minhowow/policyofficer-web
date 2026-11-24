@@ -31,7 +31,7 @@ export function toSarif(report: Report): Record<string, unknown> {
 
   const gap = (kind: string, file: string) => ({
     level: "warning",
-    descriptor: { id: `policypack/${kind}` },
+    descriptor: { id: `policyofficer/${kind}` },
     locations: [{ physicalLocation: { artifactLocation: { uri: file } } }],
   });
   const notifications: Record<string, unknown>[] = [
@@ -39,10 +39,10 @@ export function toSarif(report: Report): Record<string, unknown> {
     ...run.skipped.map((file) => gap("skipped", file)),
     ...run.incomplete.map((file) => gap("engine-incomplete", file)),
   ];
-  if (run.ai_pending) notifications.push({ level: "note", descriptor: { id: "policypack/ai-pending" } });
+  if (run.ai_pending) notifications.push({ level: "note", descriptor: { id: "policyofficer/ai-pending" } });
   // 어느 파일인지 모르는 엔진 오류. 위치 없이 문장만 실린다.
   for (const text of run.engine_errors) {
-    notifications.push({ level: "warning", descriptor: { id: "policypack/engine-error" }, message: { text } });
+    notifications.push({ level: "warning", descriptor: { id: "policyofficer/engine-error" }, message: { text } });
   }
 
   const results = findings.map((f) => {
@@ -59,7 +59,7 @@ export function toSarif(report: Report): Record<string, unknown> {
       ruleIndex: ruleIndex.get(id),
       level: f.outcome === "needs-review" ? "warning" : "note",
       locations: [{ physicalLocation: place }],
-      partialFingerprints: { "policypack/v1": f.fingerprint },
+      partialFingerprints: { "policyofficer/v1": f.fingerprint },
       properties: {
         outcome: f.outcome,
         law: f.law,

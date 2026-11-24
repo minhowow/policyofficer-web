@@ -2,8 +2,8 @@
 // 분석 실행기. GitHub Actions 의 워크플로(.github/workflows/analyze.yml)가 단계마다 이 파일을 부르고, 로컬 실행기
 // (scripts/local-runner.mjs)는 같은 함수를 가져다 쓴다. Node 내장 모듈만 쓴다.
 //
-// 하는 일(설계 8): 저장소 받기·도구 설치 → 검사(정적 검사와 AI 판정 `policypack scan`, 그 뒤 저장소 프로필 `policypack profile`,
-// 모델 호출 없음. 입력 REVIEW 가 "true" 일 때만 그다음 `policypack review`, 모델 호출) → 정리(결과와 프로필·review 보내기).
+// 하는 일(설계 8): 저장소 받기·도구 설치 → 검사(정적 검사와 AI 판정 `policyofficer scan`, 그 뒤 저장소 프로필 `policyofficer profile`,
+// 모델 호출 없음. 입력 REVIEW 가 "true" 일 때만 그다음 `policyofficer review`, 모델 호출) → 정리(결과와 프로필·review 보내기).
 // 단계를 시작할 때마다 사이트에 서명한 콜백을 보내고, 멈추면 그 단계와 까닭을 보낸다. 검사 단계 안에서는 프로필과 review 를
 // 시작할 때 그것도 알린다(part. 알리지 못해도 멈추지 않는다). 대상 코드는 읽기만 한다(설치·빌드·실행하지 않는다).
 //
@@ -12,10 +12,10 @@
 //   node runner/run.mjs notify <단계>      단계 시작 콜백 (RUNNER_SECRET)
 //   node runner/run.mjs fetch              tarball 받기·풀기, JS/TS 파일 수 상한 (GITHUB_TOKEN: 이 워크플로의 읽기 토큰)
 //   node runner/run.mjs install            uv 와 CLI 설치(고정 커밋) (CLI_REPO_TOKEN: CLI 저장소가 비공개일 때만)
-//   node runner/run.mjs scan               policypack scan (ANTHROPIC_API_KEY)
+//   node runner/run.mjs scan               policyofficer scan (ANTHROPIC_API_KEY)
 //   node runner/run.mjs part <일>          검사 단계 안의 일(profile | review) 시작 알림 (RUNNER_SECRET). 알리지 못해도 성공으로 끝난다
-//   node runner/run.mjs profile            policypack profile (비밀값 없이). 실패해도 결과만 보낸다
-//   node runner/run.mjs review             REVIEW="true" 면 policypack review (ANTHROPIC_API_KEY, REVIEW_* 상한). 실패해도 결과만 보낸다
+//   node runner/run.mjs profile            policyofficer profile (비밀값 없이). 실패해도 결과만 보낸다
+//   node runner/run.mjs review             REVIEW="true" 면 policyofficer review (ANTHROPIC_API_KEY, REVIEW_* 상한). 실패해도 결과만 보낸다
 //   node runner/run.mjs finish             정리 단계 시작 콜백과 결과 콜백 (RUNNER_SECRET)
 //   node runner/run.mjs fail               멈춘 단계와 까닭 콜백 (RUNNER_SECRET). 워크플로가 실패·취소됐을 때만 돈다
 //
@@ -237,7 +237,7 @@ async function download(url, headers, maxBytes, fetcher) {
 
 /** GitHub 의 tarball 을 그 커밋으로 받아 dest 에 푼다. */
 export async function fetchRepository({ apiBase = "https://api.github.com", owner, repo, commit, token, dest, maxTarballBytes, maxExtractBytes, fetcher = fetch }) {
-  const headers = { accept: "application/vnd.github+json", "user-agent": "plitsoft-sdp-runner", "x-github-api-version": "2022-11-28" };
+  const headers = { accept: "application/vnd.github+json", "user-agent": "policyofficer-runner", "x-github-api-version": "2022-11-28" };
   if (token) headers.authorization = `Bearer ${token}`;
   const gz = await download(`${apiBase}/repos/${owner}/${repo}/tarball/${commit}`, headers, maxTarballBytes, fetcher);
   try {
@@ -254,7 +254,7 @@ export function copyRepository(source, dest) {
   cpSync(source, dest, { recursive: true, filter: (from) => !lstatSync(from).isSymbolicLink() });
 }
 
-/** CLI 가 검사하지 않는 폴더(policypack 의 discover.SKIP_DIRS 와 같은 이름). 상한을 셀 때 뺀다. */
+/** CLI 가 검사하지 않는 폴더(CLI 의 discover.SKIP_DIRS 와 같은 이름). 상한을 셀 때 뺀다. */
 const SKIP_DIRS = new Set([".git", ".hg", ".svn", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", ".next", ".nuxt", ".output", "coverage", ".pytest_cache", ".ruff_cache", ".mypy_cache", "vendor", ".yarn"]);
 const JS_TS = /\.(js|jsx|mjs|cjs|ts|tsx)$/;
 
@@ -322,7 +322,7 @@ export function installCli(env, { run = spawnSync } = {}) {
   const git = env.CLI_REPO_TOKEN
     ? { GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: `url.https://x-access-token:${env.CLI_REPO_TOKEN}@github.com/.insteadOf`, GIT_CONFIG_VALUE_0: "https://github.com/" }
     : {};
-  const spec = `policypack @ git+https://github.com/${cliRepo}@${cliCommit}`;
+  const spec = `policyofficer @ git+https://github.com/${cliRepo}@${cliCommit}`;
   // git 의 CLI 를 설치하면 CLI 의 uv.lock 이 쓰이지 않는다. 딸린 꾸러미(pydantic, ruamel.yaml, semgrep 등)가 PyPI 의 가장 새 판으로
   // 풀리지 않게, 고정한 날짜(CLI_EXCLUDE_NEWER) 뒤에 나온 판은 고르지 않는다(이 단계와 검사 단계에서 돌 코드를 그날까지로 묶는다).
   const cli = run("uv", ["tool", "install", "--quiet", "--python", "3.12", "--exclude-newer", excludeNewer, spec], { env: childEnv(env, git), encoding: "utf8", timeout: 10 * 60_000 });
@@ -333,10 +333,10 @@ export function installCli(env, { run = spawnSync } = {}) {
 }
 
 /**
- * 검사: `policypack scan . --judge <판정자> --output-format json` 을 저장소 폴더에서 돌린다. 종료 코드 0(검토할 것 없음)과
+ * 검사: `policyofficer scan . --judge <판정자> --output-format json` 을 저장소 폴더에서 돌린다. 종료 코드 0(검토할 것 없음)과
  * 1(검토 필요)은 결과다. 2 는 도구 오류다. 표준 출력(결과 JSON)을 그대로 돌려준다. 읽어 보는 것은 사이트가 한다.
  */
-export function runScan({ dir, judge, command = ["policypack"], env, timeoutMs, run = spawnSync }) {
+export function runScan({ dir, judge, command = ["policyofficer"], env, timeoutMs, run = spawnSync }) {
   const [bin, ...pre] = command;
   const result = run(bin, [...pre, "scan", ".", "--judge", judge, "--output-format", "json"], {
     cwd: dir,
@@ -358,11 +358,11 @@ export function runScan({ dir, judge, command = ["policypack"], env, timeoutMs, 
 }
 
 /**
- * 저장소 프로필: `policypack profile .` 을 저장소 폴더에서 돌린다(모델 호출 없음). 기능과 걸릴 수 있는 의무의 목록이다. 이것이
+ * 저장소 프로필: `policyofficer profile .` 을 저장소 폴더에서 돌린다(모델 호출 없음). 기능과 걸릴 수 있는 의무의 목록이다. 이것이
  * 실패해도 분석은 실패로 적지 않는다: 까닭을 로그에 남기고(비밀값은 가린다) null 을 돌려준다. 읽어 보는 것은 사이트가 한다
  * (여기서는 JSON 인지만 본다).
  */
-export function runProfile({ dir, command = ["policypack"], env, timeoutMs, run = spawnSync, log = console.error }) {
+export function runProfile({ dir, command = ["policyofficer"], env, timeoutMs, run = spawnSync, log = console.error }) {
   const [bin, ...pre] = command;
   const result = run(bin, [...pre, "profile", "."], {
     cwd: dir,
@@ -408,7 +408,7 @@ export function reviewOptions(env) {
 const REBUT_SCOPES = ["all", "found"];
 
 /**
- * `policypack review` 의 인자(저장소 폴더는 지금 폴더). 모델 id 의 모양이나 반박 범위가 맞지 않으면 null. 묶음(--batch)은 CLI 기본(duty)이다.
+ * `policyofficer review` 의 인자(저장소 폴더는 지금 폴더). 모델 id 의 모양이나 반박 범위가 맞지 않으면 null. 묶음(--batch)은 CLI 기본(duty)이다.
  * 진행 표시는 plain 으로 못 박는다(handoff-w13-1 부터. 터미널이 아니면 원래 plain 이라 결과는 같다: stderr 에 제어 문자 없는 [mm:ss]
  * 한 줄씩, stdout 은 JSON 그대로. 2026-11-24 오너 승인 web14).
  */
@@ -421,11 +421,11 @@ export function reviewArgs({ model, checker, maxUsd, timeLimitSeconds, rebutScop
 }
 
 /**
- * review: `policypack review .` 을 저장소 폴더에서 돌린다(모델 호출. API 키를 받는다). 한 건의 금액·시간 상한은 CLI 옵션으로
+ * review: `policyofficer review .` 을 저장소 폴더에서 돌린다(모델 호출. API 키를 받는다). 한 건의 금액·시간 상한은 CLI 옵션으로
  * 넘기고, 과정은 그 시간 상한에 틈(`reviewMarginSeconds`)을 더한 만큼만 기다린다. 실패해도 분석은 실패로 적지 않는다: 까닭을
  * 로그에 남기고(비밀값은 가린다) null 을 돌려준다. 읽어 보는 것은 사이트가 한다(여기서는 JSON 인지만 본다).
  */
-export function runReview({ dir, command = ["policypack"], env, options, run = spawnSync, log = console.error }) {
+export function runReview({ dir, command = ["policyofficer"], env, options, run = spawnSync, log = console.error }) {
   const args = reviewArgs(options);
   if (!args) {
     log("review 의 모델 설정이 맞지 않아 review 를 돌리지 않았습니다. 결과만 보냅니다.");

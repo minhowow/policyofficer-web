@@ -15,7 +15,7 @@ import { createDbStore } from "./db";
  * GitHub 클라이언트는 짧은 캐시를 지니므로 설정(바탕 주소·토큰·캐시 시간)이 같으면 하나를 다시 쓴다. GitHub 을 부르는 수의
  * 예산은 DB 의 카운터라 서버 인스턴스가 함께 쓴다(`../budget.ts`). 캐시는 인스턴스마다다.
  */
-const CLIENT = Symbol.for("plitsoft.github");
+const CLIENT = Symbol.for("policyofficer.github");
 type Holder = { [CLIENT]?: { key: string; client: GitHubClient } };
 
 function github(config: ReturnType<typeof readConfig>["github"]): GitHubClient {

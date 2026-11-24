@@ -22,7 +22,7 @@ import { SITE } from "../site.ts";
 import { BIG, boxHeight, Canvas, SIZE, wrap, type Figure, type Tone } from "./draw.ts";
 
 /** 실행기가 고정한 CLI(analyze.yml 의 CLI_COMMIT 앞 7자리, contract/cli-current/MANIFEST.json 과 같다)와 그 커밋을 가리키는 태그. */
-export const CLI_PIN = { commit: "6f1b50c", tag: "handoff-w13-2" } as const;
+export const CLI_PIN = { commit: "7cf9758", tag: "handoff-w13-3" } as const;
 
 /** 따라가 보기의 사례와 의무(jobtalk: 상담 메시지를 OpenAI 로 보내는데 가입 동의문에 국외 이전이 없다). */
 export const TRACE = { slug: "jobtalk", duty: "pipa-28-8-1" } as const;
@@ -240,7 +240,7 @@ function usesSimple(): Figure {
   const h = boxHeight(1, BIG) + 30;
   const parts: { id: string; title: string; line: string; small: string; tone: Tone; out: string }[] = [
     { id: "dev", title: "개발할 때", line: "내 컴퓨터와 CI 에서, AI 없이도 돎", small: "scan · Claude Code 훅 · pre-commit · CI", tone: "plain", out: "AI 를 켜면 코드가 바깥으로 나감" },
-    { id: "engine", title: "같은 엔진 · 같은 정책", line: "같은 규칙으로 코드를 검사", small: "policypack", tone: "keep", out: "" },
+    { id: "engine", title: "같은 엔진 · 같은 정책", line: "같은 규칙으로 코드를 검사", small: SITE.cli, tone: "keep", out: "" },
     { id: "web", title: "웹에서", line: "남의 저장소를 AI 와 함께, 법 의무를 더 넓게", small: "scan · profile · review", tone: "plain", out: "읽는 코드가 AI(바깥)로 나감" },
   ];
   const boxes = parts.map((p, i) => {

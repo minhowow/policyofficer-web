@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="904" viewBox="0 0 1920 904" font-family="'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif">
 <rect width="1920" height="904" fill="#ffffff"/>
 <text x="48" y="58" font-size="30" font-weight="700" fill="#1f2328">공개 저장소 12곳의 review 결과 · 의무 갈래별 건수</text>
-<text x="48" y="94" font-size="17" fill="#59636e">policypack review 2판 실측 2026-11-12 · 사례 4곳 CLI f4967db, 나머지 8곳 e12e6ba · 조사 claude-haiku-5-5 · 반박 claude-sonnet-5-5 · 비용(공식 단가) 합계 $14.32 · 합계 40분</text>
+<text x="48" y="94" font-size="17" fill="#59636e">policyofficer review 2판 실측 2026-11-12 · 사례 4곳 CLI f4967db, 나머지 8곳 e12e6ba · 조사 claude-haiku-5-5 · 반박 claude-sonnet-5-5 · 비용(공식 단가) 합계 $14.32 · 합계 40분</text>
 <rect x="48" y="125" width="20" height="20" rx="3" fill="#bc4c00"/>
 <text x="76" y="141" font-size="17" fill="#1f2328">확인할 것 · 코드에서 본 것</text>
 <rect x="358" y="125" width="20" height="20" rx="3" fill="#e16f24"/>

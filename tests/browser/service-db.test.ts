@@ -45,7 +45,7 @@ const QUEUED = "dbk7wq2zhq";
 
 beforeAll(async () => {
   stub = await startGitHubStub();
-  dataDir = mkdtempSync(path.join(tmpdir(), "policypack-pglite-"));
+  dataDir = mkdtempSync(path.join(tmpdir(), "policyofficer-pglite-"));
   const db = await openDatabase({ databaseUrl: null, pgliteDir: dataDir });
   const commit = stub.head("example-org", "kids-signup");
   const at = (minutes: number) => new Date(Date.parse("2026-11-03T01:00:00Z") + minutes * 60_000).toISOString();

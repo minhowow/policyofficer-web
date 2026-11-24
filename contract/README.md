@@ -1,6 +1,6 @@
 # contract — CLI 와 웹의 이음매
 
-웹은 CLI 의 소스를 가져다 쓰지 않는다. 설치된 `policypack` 명령이 낸 **출력**과 팩의 **데이터**만 본다.
+웹은 CLI 의 소스를 가져다 쓰지 않는다. 설치된 `policyofficer` 명령(handoff-w13-3 전의 이름은 `policypack`)이 낸 **출력**과 팩의 **데이터**만 본다.
 이 폴더가 그 경계다.
 
 ```
@@ -9,7 +9,7 @@ contract/
 │   └── <앱>/<판>/src/…  판은 main(고치기 전), fixed(고친 뒤)
 ├── cli-current/         지금 CLI 가 실제로 낸 출력. `npm run capture` 가 통째로 다시 만든다
 │   ├── MANIFEST.json    CLI 판·커밋·커밋 날짜·팩 판·수집한 날
-│   ├── <앱>.<판>.json   policypack scan src/ --output-format json
+│   ├── <앱>.<판>.json   policyofficer scan src/ --output-format json
 │   └── kids-signup.main.sarif
 ├── schema/
 │   ├── report.cli-0.3.schema.json     지금 JSON 출력의 모양 (관찰해서 적은 것. 판 번호 없는 출력과 결과 판 1)
@@ -52,11 +52,11 @@ npm run capture && npm run pack-meta && npm test
 
 - `uv` 가 있어야 한다. 기본으로 옆 폴더 `../Plitsoft-SDP` 를 쓴다.
 - 수집 스크립트가 하는 일: 출처 폴더에서 휠을 새로 빌드한다 → 표본을 임시 폴더(git 저장소 밖)로 복사한다 → 격리된
-  환경에서 `policypack scan` 을 돌린다 → 전부 성공하면 `cli-current/` 를 바꾼다. 도중에 실패하면 기존 수집본은 그대로다.
+  환경에서 `policyofficer scan` 을 돌린다 → 전부 성공하면 `cli-current/` 를 바꾼다. 도중에 실패하면 기존 수집본은 그대로다.
   CLI 저장소에는 아무것도 쓰지 않는다.
-- 다른 출처를 쓰려면 `POLICYPACK_FROM` 을 준다(폴더 경로, 또는 PyPI 공개 뒤 `"policypack==<판>"`).
-  `pack-meta` 는 `POLICYPACK_FROM` 이 폴더면 그 아래 `policies/kr-core` 를 읽는다. 팩 폴더를 따로 가리키려면
-  `POLICYPACK_PACK_DIR` 을 준다. PyPI 판으로 수집하면 팩 폴더를 가리킬 방법이 없다. CLI 가 팩 메타데이터를 직접
+- 다른 출처를 쓰려면 `POLICYOFFICER_FROM` 을 준다(폴더 경로, 또는 PyPI 공개 뒤 `"policyofficer==<판>"`. 앞선 이름 `POLICYPACK_FROM` 도 읽는다).
+  `pack-meta` 는 `POLICYOFFICER_FROM` 이 폴더면 그 아래 `policies/kr-core` 를 읽는다. 팩 폴더를 따로 가리키려면
+  `POLICYOFFICER_PACK_DIR` 을 준다. PyPI 판으로 수집하면 팩 폴더를 가리킬 방법이 없다. CLI 가 팩 메타데이터를 직접
   내보낼 때(R5)까지의 한계다.
 - 수집한 뒤 `git diff contract/ data/` 를 읽는다. 판정이 바뀌었으면 화면 구조 시험(`tests/view-model.test.ts`)의
   기대값도 그에 맞게 고치고, 왜 바뀌었는지 커밋 메시지에 적는다.
@@ -71,7 +71,7 @@ npm run capture && npm run pack-meta && npm test
 단계는 그대로 남았다.
 
 2026-11-10: CLI 가 웹이 고정할 판 `handoff-w11`(`50c70bc`)에서 공식 스키마 `schemas/report-1.json` 과 계약 문서
-`docs/output.md` 를 냈다(R2). 같은 날 고정 판을 `50c70bc` 로 옮겼다(판정 변화 없음. 팩 판·지문이 바뀌고 정책 `kr.pipa.28-8` 이 더해짐). 2026-11-11 에 `handoff-w11-2`(`54e048a`)로 옮겼다(수집본의 판정 변화 없음. 발견마다 `role`, `run.finding_counts` 가 더해짐). 같은 날 `handoff-w11-3`(`fe98fb7`)로 옮겼다(판정·팩 판 그대로. `policypack profile` 이 더해짐). 이어 `handoff-w11-5`(`e12e6ba`)로 옮겼다(시험·예제 파일은 판정자에게 묻지 않음 `test-file`, 프로필에 `platforms`, `policypack review` 2판). 2026-11-12 에 `handoff-w11-6`(`f4967db`)로 옮겼다(판정·팩 판 그대로. 프로필에 `goods`, review 2판에 키 덧붙임, `contract/schema/review.cli-2.schema.json` 은 그 판의 사본). 같은 날 `handoff-w11-7`(`2a24d94`)로 옮겼다(판정·프로필·팩 판 그대로. review 의 금액을 공식 단가로 세고, 답의 `basis`·관문 까닭 셋이 더해짐. 스키마 사본도 그 판의 것). 이어 `handoff-w11-8`(`b5888e5`)로 옮겼다(조사 답의 `basis` 를 `first` 에도 싣는 고침뿐. 판정·프로필·팩 판·스키마 그대로). 2026-11-15 에 `handoff-w11-13`(`122de1d`)으로 옮겼다(검사 수집본의 판정·팩 판 그대로, 프로필은 기능 이름 하나(생성형 AI)만 바뀜. review 2판에 키 덧붙임: `profile.platforms_from`·`platform_evidence`, 답의 `remaining`·`trigger`, 관문 까닭 다섯, `run.rebut`·`rebut_scope`·`lacks`, 반박 `why` rebut-scope. 스키마 사본도 그 판의 것. 실행기는 `--rebut-scope found` 를 넘긴다). 2026-11-24 에 `handoff-w13-1`(`784d45f`)로 옮겼다(검사 수집본의 판정·팩 판·프로필 그대로. 의무별 제재 표 `profile/sanctions.jsonl` 이 더해져 의무 지도에 싣고, review 2판 체크리스트 항목에 선택 필드 `sanction` 이 붙음. 스키마 사본도 그 판의 것. 실행기는 `--progress plain` 을 넘긴다). 같은 날 `handoff-w13-2`(`6f1b50c`)로 옮겼다(제재 표지 말 26개의 '시정명령을 어기면'을 '시정명령 불이행 시'로, 시행령 의무 15개의 조문 앞 '시행령 '을 뗌. 프로필 수집본 두 곳의 조문만 바뀜. 그 전 판으로 만든 결과의 겹친 '시행령'은 화면이 `lawArticle` 로 한 번만 적는다). 그 스키마는 닫혀 있다(그 판이 내는 키 밖은 막는다). CLI 도 받는 쪽은
+`docs/output.md` 를 냈다(R2). 같은 날 고정 판을 `50c70bc` 로 옮겼다(판정 변화 없음. 팩 판·지문이 바뀌고 정책 `kr.pipa.28-8` 이 더해짐). 2026-11-11 에 `handoff-w11-2`(`54e048a`)로 옮겼다(수집본의 판정 변화 없음. 발견마다 `role`, `run.finding_counts` 가 더해짐). 같은 날 `handoff-w11-3`(`fe98fb7`)로 옮겼다(판정·팩 판 그대로. `policypack profile` 이 더해짐). 이어 `handoff-w11-5`(`e12e6ba`)로 옮겼다(시험·예제 파일은 판정자에게 묻지 않음 `test-file`, 프로필에 `platforms`, `policypack review` 2판). 2026-11-12 에 `handoff-w11-6`(`f4967db`)로 옮겼다(판정·팩 판 그대로. 프로필에 `goods`, review 2판에 키 덧붙임, `contract/schema/review.cli-2.schema.json` 은 그 판의 사본). 같은 날 `handoff-w11-7`(`2a24d94`)로 옮겼다(판정·프로필·팩 판 그대로. review 의 금액을 공식 단가로 세고, 답의 `basis`·관문 까닭 셋이 더해짐. 스키마 사본도 그 판의 것). 이어 `handoff-w11-8`(`b5888e5`)로 옮겼다(조사 답의 `basis` 를 `first` 에도 싣는 고침뿐. 판정·프로필·팩 판·스키마 그대로). 2026-11-15 에 `handoff-w11-13`(`122de1d`)으로 옮겼다(검사 수집본의 판정·팩 판 그대로, 프로필은 기능 이름 하나(생성형 AI)만 바뀜. review 2판에 키 덧붙임: `profile.platforms_from`·`platform_evidence`, 답의 `remaining`·`trigger`, 관문 까닭 다섯, `run.rebut`·`rebut_scope`·`lacks`, 반박 `why` rebut-scope. 스키마 사본도 그 판의 것. 실행기는 `--rebut-scope found` 를 넘긴다). 2026-11-24 에 `handoff-w13-1`(`784d45f`)로 옮겼다(검사 수집본의 판정·팩 판·프로필 그대로. 의무별 제재 표 `profile/sanctions.jsonl` 이 더해져 의무 지도에 싣고, review 2판 체크리스트 항목에 선택 필드 `sanction` 이 붙음. 스키마 사본도 그 판의 것. 실행기는 `--progress plain` 을 넘긴다). 같은 날 `handoff-w13-2`(`6f1b50c`)로 옮겼다(제재 표지 말 26개의 '시정명령을 어기면'을 '시정명령 불이행 시'로, 시행령 의무 15개의 조문 앞 '시행령 '을 뗌. 프로필 수집본 두 곳의 조문만 바뀜. 그 전 판으로 만든 결과의 겹친 '시행령'은 화면이 `lawArticle` 로 한 번만 적는다) 같은 날 `handoff-w13-3`(`7cf9758`)으로 옮겼다(제품 이름 policyofficer: CLI 저장소 `minhowow/policyofficer`, 설치 이름·명령, JSON `tool.name`, `run.fingerprint_version` `policyofficer/v1`, SARIF 의 도구 이름·지문 열쇠·알림 id, 팩 `apiVersion` `policyofficer/v0.4`. 키·구조와 판정은 그대로이고, 팩 판이 `284a5b28911a0124` 로 바뀌어 지문 값이 모두 바뀌었다. 웹은 앞선 이름의 결과도 읽는다: SARIF 의 옛 지문 열쇠·알림 id, 도구 이름은 화면에 지금 이름으로). 그 스키마는 닫혀 있다(그 판이 내는 키 밖은 막는다). CLI 도 받는 쪽은
 모르는 키를 무시하고, 이 스키마로 엄격하게 검사하면 키가 더해질 때 깨진다고 적는다. 손 자료(`tests/fixtures`, `samples-v1-draft`)와
 SARIF 에서 옮긴 결과도 통과하지 않는다. 그래서 아래 1 은 그대로 하지 않는 것이 G1 의 계획이다(오너가 G1 에서 정한다): 사본을 두면
 수집본을 견주는 시험에만 쓰고, 웹 스키마와 손으로 보는 파서는 열어 둔다. 지금 사본은 없다. 정책별 요약(R1)과 결과에 실린 커밋(R7)은 아직 없어 2·3 도 기다린다.

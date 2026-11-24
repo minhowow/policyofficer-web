@@ -55,7 +55,7 @@ beforeAll(async () => {
     await site.close();
     throw error;
   }
-  scratch = mkdtempSync(path.join(tmpdir(), "policypack-view-test-"));
+  scratch = mkdtempSync(path.join(tmpdir(), "policyofficer-view-test-"));
 });
 
 afterEach(async () => {

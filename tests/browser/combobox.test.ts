@@ -29,7 +29,7 @@ const problems: string[] = [];
 beforeAll(async () => {
   // 시험이 여러 번 치므로 가짜 GitHub 과 사이트의 1분 예산을 넉넉히 둔다(상한은 아래 시험이 따로 만든다).
   stub = await startGitHubStub({ searchPerMinute: 1_000 });
-  dataDir = mkdtempSync(path.join(tmpdir(), "policypack-pglite-cbx-"));
+  dataDir = mkdtempSync(path.join(tmpdir(), "policyofficer-pglite-cbx-"));
   const db = await openDatabase({ databaseUrl: null, pgliteDir: dataDir });
   const at = (minutes: number) => new Date(Date.parse("2026-11-03T01:00:00Z") + minutes * 60_000).toISOString();
   const steps = (start: number) => JSON.stringify(STEP_ORDER.map((name, i) => ({ name, startedAt: at(start + i), endedAt: at(start + i + 1) })));

@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "tool": {
-    "name": "policypack",
+    "name": "policyofficer",
     "version": "0.3.0.dev0"
   },
   "run": {
     "judge": null,
-    "pack_digest": "9f70938de41b6f3a",
-    "fingerprint_version": "policypack/v1",
+    "pack_digest": "284a5b28911a0124",
+    "fingerprint_version": "policyofficer/v1",
     "questions_asked": 0,
     "ai_answered": 0,
     "questions_sent": 0,
@@ -58,7 +58,7 @@
         "ai-label",
         "ai-machine-mark"
       ],
-      "fingerprint": "f80b1da911e3607baa6667cfbc2b3d2e",
+      "fingerprint": "facbf72857451c91f767c49135f5b487",
       "scope": "file",
       "region": null,
       "top_level": false,
@@ -91,7 +91,7 @@
       "ai_pending": [
         "ai-prior-notice"
       ],
-      "fingerprint": "6d129b3097c9af9964f007633d8e02f6",
+      "fingerprint": "9c3d7146d136e6fe92b244dd5bc9fc78",
       "scope": "file",
       "region": null,
       "top_level": false,

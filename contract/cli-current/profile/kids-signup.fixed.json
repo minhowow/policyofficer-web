@@ -1,7 +1,7 @@
 {
   "profile_version": 1,
   "tool": {
-    "name": "policypack",
+    "name": "policyofficer",
     "version": "0.3.0.dev0"
   },
   "files": {

@@ -46,7 +46,7 @@
   <rect class="run" x="664" y="200" width="272" height="250" rx="12"/>
   <circle class="num" cx="698" cy="236" r="17"/><text class="numtext" x="698" y="243" text-anchor="middle">3</text>
   <text class="title" x="726" y="247">실행기</text>
-  <text class="line" x="688" y="300">policypack CLI</text>
+  <text class="line" x="688" y="300">policyofficer CLI</text>
   <text class="line" x="688" y="328">정적 검사 + AI 판정</text>
   <text class="line" x="688" y="356">대상 코드는 실행 안 함</text>
   <text class="mono" x="688" y="400">GitHub Actions</text>

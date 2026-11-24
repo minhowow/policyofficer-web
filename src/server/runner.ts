@@ -18,7 +18,7 @@ export interface WakeInput {
   /** 실행기가 진행과 결과를 알릴 이 사이트의 주소(끝에 빗금 없음). */
   callbackBase: string | null;
   /**
-   * 이 실행에서 `policypack review` 도 돌릴지. 사이트의 REVIEW 스위치가 켜져 있고, 같은 저장소·커밋의 저장된 review 가 없고, 오늘의
+   * 이 실행에서 `policyofficer review` 도 돌릴지. 사이트의 REVIEW 스위치가 켜져 있고, 같은 저장소·커밋의 저장된 review 가 없고, 오늘의
    * review 실행 수가 상한 아래일 때만 참이다(`src/server/queue.ts` 의 `planReview`). 워크플로 입력 `review`("true" | "false")로 보낸다.
    */
   review: boolean;
@@ -55,7 +55,7 @@ export async function wakeRunner(
         headers: {
           accept: "application/vnd.github+json",
           "x-github-api-version": "2022-11-28",
-          "user-agent": "plitsoft-sdp-web",
+          "user-agent": "policyofficer-web",
           authorization: `Bearer ${runner.token}`,
           "content-type": "application/json",
         },

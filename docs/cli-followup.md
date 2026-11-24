@@ -2,19 +2,27 @@
 
 웹은 CLI(`../Plitsoft-SDP`)의 출력만 계약으로 받는다(`contract/README.md`). CLI 는 2026-11-10 에 웹이 고정할 판으로 태그
 `handoff-w11`(`50c70bc`)을 원격에 올렸고, 13주(11/24~11/30)에 도구 판 태그 `v0.4.0` 을 따로 단다. 그 전까지 웹은 `handoff-w11` 을
-고정하라고 적는다(CLI `docs/output.md`. 아래 "`a228856` → `handoff-w11`"). 웹의 고정 판은 지금 `handoff-w13-2`(`6f1b50c`)이다
+고정하라고 적는다(CLI `docs/output.md`. 아래 "`a228856` → `handoff-w11`"). 웹의 고정 판은 지금 `handoff-w13-3`(`7cf9758`)이다
 (판 이력은 `contract/README.md`). 이 문서는
 CLI 가 바뀐 것을 언제, 어떻게 보고 어떤 순서로 받아들이는지 적는다. 요청은 `docs/cli-requests.md`, 사람이 정할 것은
 `docs/ROADMAP.md` 의 "사람 결정이 필요한 것"에 둔다.
 
-## 지금 맞춘 판 (2026-11-24, `handoff-w13-2`)
+## 지금 맞춘 판 (2026-11-24, `handoff-w13-3`)
 
 | 자리 | CLI 커밋 | 팩 판(`pack.yaml` sha256 앞 16자) |
 |---|---|---|
-| 수집본 `contract/cli-current/` (`MANIFEST.json`) | `6f1b50c` (2026-11-24, `dirty: false`) | `9f70938de41b6f3a` |
-| 팩 메타데이터 `data/pack-meta.json` | `6f1b50c` 의 `policies/kr-core` | `9f70938de41b6f3a` |
-| 실행기 `.github/workflows/analyze.yml` | `CLI_COMMIT` `6f1b50c912…`, `CLI_EXCLUDE_NEWER` 2026-11-24, `REVIEW_REBUT_SCOPE` found, review 에 `--progress plain` | 같다 |
-| 의무 지도 `data/duty-map.json` | `6f1b50c` 의 기능–의무 표와 제재 표(`profile/sanctions.jsonl`) | — |
+| 수집본 `contract/cli-current/` (`MANIFEST.json`) | `7cf9758` (2026-11-24, `dirty: false`) | `284a5b28911a0124` |
+| 팩 메타데이터 `data/pack-meta.json` | `7cf9758` 의 `policies/kr-core` | `284a5b28911a0124` |
+| 실행기 `.github/workflows/analyze.yml` | `CLI_REPO` `minhowow/policyofficer`, `CLI_COMMIT` `7cf9758f6f…`, `CLI_EXCLUDE_NEWER` 2026-11-24, `REVIEW_REBUT_SCOPE` found, review 에 `--progress plain` | 같다 |
+| 의무 지도 `data/duty-map.json` | `7cf9758` 의 기능–의무 표와 제재 표(`src/policyofficer/profile/`) | — |
+
+`6f1b50c` → `7cf9758`(2026-11-24, `handoff-w13-3`): 제품 이름을 policyofficer 로 바꾼 판이다(CLI `docs/output.md` 의 '이름 바꾸기').
+저장소 `minhowow/policyofficer`, 설치 이름 `policyofficer @ git+…`, 명령 `policyofficer <명령>`, JSON `tool.name`, `run.fingerprint_version`
+`policyofficer/v1`, SARIF 의 도구 이름·지문 열쇠·알림 id, 환경 변수 `POLICYOFFICER_*`(옛 이름은 CLI 가 읽지 않는다), 팩 `apiVersion`
+`policyofficer/v0.4`, 소스의 표 경로 `src/policyofficer/profile/`. 키·구조와 수집본의 판정·종료 코드는 그대로다. 팩 파일이 바뀌어 팩 판이
+`9f70938de41b6f3a` 에서 `284a5b28911a0124` 로 바뀌고 지문 값이 모두 바뀌었다. 그래서 이 판 전에 저장된 분석은 정적 검사 부분이 '다른 판의
+팩'으로 보인다(정책의 '알 수 없음', 조문별 기록 없음. AI 검토 화면은 그대로). 웹은 앞선 이름의 SARIF(지문 열쇠·알림 id)도 읽고, 결과의
+도구 이름 policypack 은 화면에 policyofficer 로 적는다.
 
 `784d45f` → `6f1b50c`(2026-11-24, `handoff-w13-2`): 제재 표지 말 26개('시정명령을 어기면' → '시정명령 불이행 시', 표지 앞머리 '어기면 · '와
 겹치지 않게)와 시행령 의무 15개 조문 앞의 '시행령 '을 뗀 것뿐이다(키·구조 그대로. 프로필 수집본 두 곳의 조문이 바뀜). 그 전 판으로 만든
@@ -270,11 +278,12 @@ CLI 쪽이 웹의 요청(`docs/cli-requests.md` 의 2026-11-05 표)에 답해 �
 1. **본다.** 13주(11/24~11/30) 뒤, 그 뒤 주 1회. 오너가 CLI 쪽 소식을 알려 주면 그때도.
    - `git -C <CLI> log <고정>..<볼 커밋>` (옆 폴더의 HEAD 는 웹이 고정할 판과 다를 수 있다. 2026-11-10 의 HEAD 는 `main` = `7300205`)
    - `git -C <CLI> ls-remote origin` (가지와 태그. 원격에 없는 커밋은 고정하지 않는다)
-   - `git -C <CLI> diff <고정>..<볼 커밋> -- src/policypack/report/ src/policypack/cli.py pyproject.toml policies/ schemas/ docs/output.md docs/roadmap.md`
+   - `git -C <CLI> diff <고정>..<볼 커밋> -- src/policyofficer/report/ src/policyofficer/cli.py pyproject.toml policies/ schemas/ docs/output.md docs/roadmap.md`
+     (CLI 소스 폴더는 `handoff-w13-3` 부터 `src/policyofficer/`, 그 전은 `src/policypack/`)
    - 읽기만 한다. CLI 저장소에 아무것도 쓰지 않는다(checkout·fetch 도 하지 않는다).
 2. **사본에서 먼저 돌린다.** 이 저장소의 `contract/` 와 `data/` 를 바꾸기 전에 저장소 밖(scratchpad)에서 한다.
    - `git -C <CLI> archive <커밋>` 으로 꺼내 `contract/fixtures` 의 표본 7개를 `--judge none` 으로 돌리고 종료 코드를 적는다.
-     웹 저장소의 작업 사본(`git worktree add`)에서 `POLICYPACK_FROM=<꺼낸 사본>` 으로 `capture`·`pack-meta` 를 돌려도 된다.
+     웹 저장소의 작업 사본(`git worktree add`)에서 `POLICYOFFICER_FROM=<꺼낸 사본>` 으로 `capture`·`pack-meta` 를 돌려도 된다.
    - 결과를 웹 파서(`parseReport`)로 읽어 본다. CLI 의 `schemas/report-1.json` 으로도 검사해 본다(수집본만).
    - 팩 판을 셈한다(`pack.yaml` sha256 앞 16자).
    - 판정·키·종료 코드를 지금 수집본과 견주고, 단위 시험을 돌려 실패를 까닭별로 적는다.
@@ -284,7 +293,8 @@ CLI 쪽이 웹의 요청(`docs/cli-requests.md` 의 2026-11-05 표)에 답해 �
      태그가 옆 폴더에 없거나 다르면 옆 폴더에서 fetch 하지 말고 원격 주소(`git -C <CLI> remote get-url origin`)에서 같은 명령으로
      복제한다 (폴더 이름을 `Plitsoft-SDP` 로 두면 `MANIFEST.json` 의 `from` 이
      지금과 같다). `git archive` 사본은 git 저장소가 아니라 `MANIFEST.json` 의 커밋·날짜·`dirty` 가 비므로 쓰지 않는다.
-   - `POLICYPACK_FROM=<CLI 폴더> POLICYPACK_PACK_DIR=<CLI 폴더>/policies/kr-core npm run capture && npm run pack-meta`
+   - `POLICYOFFICER_FROM=<CLI 폴더> POLICYOFFICER_PACK_DIR=<CLI 폴더>/policies/kr-core npm run capture && npm run pack-meta`
+     (앞선 이름 `POLICYPACK_FROM`·`POLICYPACK_PACK_DIR` 도 읽는다. 의무 지도는 `POLICYOFFICER_FROM=<CLI 폴더> node scripts/export-duty-map.mjs`)
      (늘 함께 돌린다. 작업 사본에서 돌릴 때는 두 변수로 CLI 폴더를 가리킨다)
    - `MANIFEST.json` 의 `cli.commit` 이 그 커밋이고 `cli.dirty` 가 `false` 인지 본다. 아니면 되돌린다.
    - `git diff contract/ data/` 를 읽고 판정이 바뀐 까닭을 커밋 메시지에 적는다. v1 초안 예시(`contract/samples-v1-draft/`)와

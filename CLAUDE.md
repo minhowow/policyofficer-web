@@ -1,10 +1,12 @@
 @AGENTS.md
 
-# Plitsoft-SDP-Web — 작업 안내
+# policyofficer-web — 작업 안내
 
-policypack CLI(가칭)로 GitHub 공개 저장소를 분석하고, 그 결과를 조문과 함께 누구나 보게 하는 웹 서비스다(방향 B,
+policyofficer CLI 로 GitHub 공개 저장소를 분석하고, 그 결과를 조문과 함께 누구나 보게 하는 웹 서비스다(방향 B,
 `docs/direction.md`). 오너의 개인 개발 프로젝트로 진행한다. 아주대 2026-2 자기주도프로젝트, 플리트소프트 연계.
-CLI 는 옆 폴더 `../Plitsoft-SDP` 에 따로 있고, 다른 사람(에이전트)이 개발한다.
+CLI 는 옆 폴더 `../Plitsoft-SDP` 에 따로 있고, 다른 사람(에이전트)이 개발한다. 제품 이름은 2026-11-24 오너 결정으로
+policyofficer 다(전 가칭 policypack. GitHub 저장소는 `minhowow/policyofficer-web`, CLI 는 `minhowow/policyofficer`. 로컬 폴더 이름은
+그대로 둔다). 앞선 이름으로 만든 결과의 도구 이름은 화면에 지금 이름으로 보인다(`src/lib/site.ts` 의 `toolName`).
 
 일을 시작하기 전에 이 순서로 읽는다.
 
@@ -16,10 +18,10 @@ CLI 는 옆 폴더 `../Plitsoft-SDP` 에 따로 있고, 다른 사람(에이전�
 
 ## 절대 규칙
 
-- **`../Plitsoft-SDP` 는 읽기만 한다.** 고치지 않는다. 그 소스(`src/policypack`)를 가져다 쓰지도 않는다.
+- **`../Plitsoft-SDP` 는 읽기만 한다.** 고치지 않는다. 그 소스(`src/policyofficer`, handoff-w13-3 전은 `src/policypack`)를 가져다 쓰지도 않는다.
   CLI 와는 설치된 명령의 출력(`contract/`)과 팩 메타데이터(`data/pack-meta.json`), 의무 지도(`data/duty-map.json`: 실행기의 고정
   커밋에서 기능–의무 표를 `git show` 로 옮긴 것. 2026-11-15 오너 결정. 의무 지도의 조문 인용은 싣지 않는다. 같은 커밋의 제재 표
-  `src/policypack/profile/sanctions.jsonl` 도 의무마다 `sanction` 으로 옮긴다. 2026-11-24 오너 승인)로만 이어진다.
+  `src/policyofficer/profile/sanctions.jsonl` 도 의무마다 `sanction` 으로 옮긴다. 2026-11-24 오너 승인)로만 이어진다.
 - **CLI 출력에 없는 정보를 꾸며 내지 않는다.** `decision_path` 같은 자유 문장을 해석해 구조를 만들지 않는다.
   필요한 것이 출력에 없으면 `docs/cli-requests.md` 에 요청으로 적고, 화면에는 "아직 알 수 없음"으로 정직하게 보인다.
 - **서버는 `docs/direction.md` 의 구조 안에서만 넣는다.** route handler, DB, GitHub API 호출, 실행기(GitHub Actions)
@@ -76,7 +78,7 @@ npm run pack-meta   # 팩에서 data/pack-meta.json 다시 만들기
 - 새 수집본이 계약 시험을 깨면(예: CLI 출력 모양이 바뀜) 파서를 서둘러 고치지 말고 수집본을 되돌린 뒤
   `docs/ROADMAP.md` 의 "사람 결정이 필요한 것"에 적는다. 출력 계약을 바꾸는 것(새 결과 판, `--agent` 처럼 뜻이 다른 출력을
   받기)은 관문 G1 의 일이다. 2026-11-03 에 고정 CLI(`7300205`)의 결과 판 1(`schema_version: 1`)은 받았고,
-  2026-11-10 에 고정 판을 `handoff-w11`(`50c70bc`)로, 2026-11-11 에 `handoff-w11-2`(`54e048a`, 발견마다 파일 역할), 같은 날 `handoff-w11-3`(`fe98fb7`, 저장소 프로필), `handoff-w11-5`(`e12e6ba`, review 2판)로, 2026-11-12 에 `handoff-w11-6`(`f4967db`, review 2판에 키 덧붙임), 같은 날 `handoff-w11-7`(`2a24d94`, review 금액을 공식 단가로, 갈래 고침), `handoff-w11-8`(`b5888e5`, 조사 답의 basis 누락 고침)로, 2026-11-15 에 `handoff-w11-13`(`122de1d`, 기능 파악이 언어를 가리지 않음, 답의 remaining, 반박 범위 `--rebut-scope found` 를 실행기가 넘김)으로, 2026-11-24 에 `handoff-w13-1`(`784d45f`, 의무별 제재 표 `profile/sanctions.jsonl`, review 의 진행 표시. 실행기가 `--progress plain` 을 넘김)으로, 같은 날 `handoff-w13-2`(`6f1b50c`, 제재 표지 말 26개와 시행령 조문 앞 '시행령 ' 15개 고침)로 옮겼다.
+  2026-11-10 에 고정 판을 `handoff-w11`(`50c70bc`)로, 2026-11-11 에 `handoff-w11-2`(`54e048a`, 발견마다 파일 역할), 같은 날 `handoff-w11-3`(`fe98fb7`, 저장소 프로필), `handoff-w11-5`(`e12e6ba`, review 2판)로, 2026-11-12 에 `handoff-w11-6`(`f4967db`, review 2판에 키 덧붙임), 같은 날 `handoff-w11-7`(`2a24d94`, review 금액을 공식 단가로, 갈래 고침), `handoff-w11-8`(`b5888e5`, 조사 답의 basis 누락 고침)로, 2026-11-15 에 `handoff-w11-13`(`122de1d`, 기능 파악이 언어를 가리지 않음, 답의 remaining, 반박 범위 `--rebut-scope found` 를 실행기가 넘김)으로, 2026-11-24 에 `handoff-w13-1`(`784d45f`, 의무별 제재 표 `profile/sanctions.jsonl`, review 의 진행 표시. 실행기가 `--progress plain` 을 넘김)으로, 같은 날 `handoff-w13-2`(`6f1b50c`, 제재 표지 말 26개와 시행령 조문 앞 '시행령 ' 15개 고침)로, 이어 `handoff-w13-3`(`7cf9758`, 제품 이름 policyofficer: 저장소 `minhowow/policyofficer`, 설치 이름·명령·JSON `tool.name`·지문 방식 이름·팩 `apiVersion`. 팩 판이 `284a5b28911a0124` 로 바뀌어 지문 값이 모두 바뀜)으로 옮겼다.
 - 수집본, `data/pack-meta.json`, 실행기의 `CLI_COMMIT`·`CLI_EXCLUDE_NEWER` 는 같은 CLI 커밋이어야 한다(시험이 본다).
   CLI 를 따라가는 때와 순서는 `docs/cli-followup.md` 에 있다. 원격에 없는 CLI 커밋은 고정하지 않는다.
 - `scripts/export-pack-meta.mjs` 는 팩의 필드를 그대로 옮기기만 한다. 읽는 필드를 더하는 것은 된다. Semgrep 패턴이나

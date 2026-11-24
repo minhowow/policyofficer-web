@@ -1,5 +1,5 @@
 /**
- * 의무마다 법에 적힌 제재(2026-11-24 오너 승인). CLI 의 제재 표(`src/policypack/profile/sanctions.jsonl`, 실행기의 고정 커밋)를
+ * 의무마다 법에 적힌 제재(2026-11-24 오너 승인). CLI 의 제재 표(`src/policyofficer/profile/sanctions.jsonl`, 실행기의 고정 커밋)를
  * `scripts/export-duty-map.mjs` 가 의무 지도(data/duty-map.json)의 의무마다 `sanction` 으로 옮긴다. 무게(class)는 AI 가 정하지
  * 않는다. 법령 원문의 벌칙·과징금·과태료 조문으로 CLI 쪽 표가 정했고, 화면은 그 조문과 원문 인용을 함께 싣는다.
  *

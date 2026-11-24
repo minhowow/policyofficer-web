@@ -12,7 +12,7 @@ import { unmatchedLines } from "./diff";
 // 읽는 곳은 둘뿐이다: 합성 코드(contract/fixtures)와, 그 코드를 CLI 로 검사한 실제 출력(contract/cli-current).
 // v1 초안 예시와 손으로 만든 시험용 자료는 쓰지 않는다(docs/ROADMAP.md 의 관문 G1).
 
-/** 수집 스크립트가 판마다 검사하는 폴더(`policypack scan src/`. scripts/capture-cli-output.mjs). */
+/** 수집 스크립트가 판마다 검사하는 폴더(`policyofficer scan src/`. scripts/capture-cli-output.mjs). */
 const SCANNED = "src";
 
 /** 폴더 아래 모든 파일. `base` 에서 본 경로이고 "/" 로 나눈다(결과에 실린 경로와 같은 모양). 글자 코드 순서다. */

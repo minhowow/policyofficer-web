@@ -24,7 +24,7 @@ const expectNoBanned = (html: string) => {
   for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(rest), why).toBe(false);
 };
 
-// review 2판(policypack review, CLI e12e6ba)의 결과를 읽는 부품과 화면(2026-11-11 오너 지시). 자료는 손으로 만든 합성 예시다.
+// review 2판(policyofficer review, CLI e12e6ba)의 결과를 읽는 부품과 화면(2026-11-11 오너 지시). 자료는 손으로 만든 합성 예시다.
 const sample = () => readJson("contract", "review", "genai-chat.review.json") as Record<string, unknown>;
 
 describe("review 결과 (2판)", () => {

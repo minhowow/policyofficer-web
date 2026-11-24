@@ -50,7 +50,7 @@ export interface CaseData {
   rechecker: string;
   ruleOnly: RuleOnlyFinding[];
   final: FinalFinding[];
-  /** 저장소 프로필(`policypack profile` 의 JSON 그대로. 의무 항목은 화면이 쓰는 필드만). 읽는 것은 `lib/profile` 이 한다. */
+  /** 저장소 프로필(`policyofficer profile` 의 JSON 그대로. 의무 항목은 화면이 쓰는 필드만). 읽는 것은 `lib/profile` 이 한다. */
   profile: unknown;
   /** review 2판의 실측 결과(화면이 읽는 필드만). 읽는 것은 `lib/review` 가 한다. */
   review: unknown;

@@ -1,4 +1,5 @@
 import type { PackIndex } from "@/lib/pack/types";
+import { toolName } from "@/lib/site";
 import { judgedScope, type JudgedScope } from "./scope";
 import { findingStatus, STATUS_ORDER, worst, type Status } from "./status";
 import { isNonServiceRole, serviceFindingCount, type AiCleared, type AiDismissed, type Contract, type Finding, type PolicySummary, type Report, type StaticCleared } from "./types";
@@ -434,7 +435,7 @@ export function buildReportView(report: Report, contract: Contract, pack?: PackI
 
   return {
     contract,
-    tool: `${report.tool.name} ${report.tool.version}`,
+    tool: `${toolName(report.tool.name)} ${report.tool.version}`,
     engine: engine ? [engine.name, engine.version].filter(Boolean).join(" ") : null,
     judge: report.run.judge,
     packDigest: report.run.pack_digest,

@@ -86,7 +86,7 @@ export interface ServerConfig {
      */
     secret: string | null;
     /**
-     * 실시간 분석에서 `policypack review` 를 함께 돌릴지(REVIEW=on 일 때만. 기본은 끔, 2026-11-11 오너 지시). 모델을 부르므로 비용이
+     * 실시간 분석에서 `policyofficer review` 를 함께 돌릴지(REVIEW=on 일 때만. 기본은 끔, 2026-11-11 오너 지시). 모델을 부르므로 비용이
      * 든다. 켜는 것은 오너가 비용을 정한 뒤다. 켜져 있어도 같은 저장소·커밋의 저장된 review 가 있으면 다시 돌리지 않는다
      * (`src/server/queue.ts`). 한 건의 금액·시간 상한은 실행기 워크플로의 env 가 CLI 옵션으로 넘긴다.
      */

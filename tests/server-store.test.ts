@@ -123,9 +123,9 @@ describe("DB: 마이그레이션", () => {
       "github_budget.used",
       "results.analysis_id",
       "results.json",
-      // 저장소 프로필(policypack profile 의 JSON): 기능과 근거 파일·줄, 걸릴 수 있는 의무 목록. 코드 전체는 담지 않는다.
+      // 저장소 프로필(policyofficer profile 의 JSON): 기능과 근거 파일·줄, 걸릴 수 있는 의무 목록. 코드 전체는 담지 않는다.
       "results.profile",
-      // review(policypack review 의 JSON): 확인한 기능·질문과 근거 파일·줄. 코드 전체는 담지 않는다. 같은 커밋이면 다시 돌리지 않고 읽는다.
+      // review(policyofficer review 의 JSON): 확인한 기능·질문과 근거 파일·줄. 코드 전체는 담지 않는다. 같은 커밋이면 다시 돌리지 않고 읽는다.
       "results.review",
       "runner_wake.id",
       "runner_wake.failed_at",

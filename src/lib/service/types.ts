@@ -82,7 +82,7 @@ export interface Analysis {
   review?: ReviewPlan;
   /**
    * 검사 단계 안에서 실행기가 마지막으로 알린 일과 그 알림을 받은 때(2026-11-13). 검사 단계는 실행기가 CLI 명령을 차례로 부른다:
-   * 정적 검사와 AI 판정(`policypack scan`) → 저장소 프로필(`profile`) → `review` 가 `run` 일 때 review(`review`). 실행기는 명령
+   * 정적 검사와 AI 판정(`policyofficer scan`) → 저장소 프로필(`profile`) → `review` 가 `run` 일 때 review(`review`). 실행기는 명령
    * 사이마다 다음 명령을 알린다(best-effort. 알림이 빠질 수 있다). 없으면(null 포함) 아직 정적 검사와 AI 판정 중이거나, 알림이
    * 오지 않았거나, 검사 단계에 이르지 않았다. 검사 단계가 끝난 뒤에도 마지막 값이 남는다(그 뒤의 단계에서는 뜻이 없다).
    * review 안의 단계(의무 고르기·의무별 조사·반박)는 CLI 가 알리지 않아 여기에 없다.
@@ -202,7 +202,7 @@ export interface ServiceStore {
    */
   reviewFacts(ids: string[]): Promise<Record<string, ReviewFacts | null>>;
   /**
-   * 끝난 분석의 저장소 프로필(`policypack profile` 의 JSON, `lib/profile`). 실행기가 검사와 함께 돌려 보낸 것을 받은 그대로 두었다가
+   * 끝난 분석의 저장소 프로필(`policyofficer profile` 의 JSON, `lib/profile`). 실행기가 검사와 함께 돌려 보낸 것을 받은 그대로 두었다가
    * 읽는다. 끝나지 않았거나, 프로필을 받지 못했거나(그 기능이 생기기 전의 분석, 실행기에서 프로필이 실패), 읽지 못하면 null.
    */
   getProfile(id: string): Promise<Profile | null>;
@@ -212,7 +212,7 @@ export interface ServiceStore {
    */
   featureNames(ids: string[]): Promise<Record<string, string[] | null>>;
   /**
-   * 그 저장소·커밋의 review 결과(`policypack review` 2판, `lib/review`). 어느 분석에서 받았든 가장 나중에 받은 것이다(같은 커밋은
+   * 그 저장소·커밋의 review 결과(`policyofficer review` 2판, `lib/review`). 어느 분석에서 받았든 가장 나중에 받은 것이다(같은 커밋은
    * 다시 돌리지 않고 저장된 것을 보인다. 2026-11-11 오너 지시). 이름은 대소문자를 가리지 않는다. 없거나 읽지 못하면 null.
    */
   getReview(owner: string, name: string, commit: string): Promise<Review | null>;

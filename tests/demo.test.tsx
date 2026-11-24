@@ -240,7 +240,7 @@ describe("데모가 읽는 것: 합성 코드와 그 실제 결과", () => {
 
   it("결과를 읽지 못하면 멈춘다. 빈 화면이나 다른 자료로 바꿔 보이지 않는다", () => {
     // 저장소 밖의 임시 폴더에 합성 코드와 수집본을 옮겨 놓고, 수집본 하나를 결과가 아닌 JSON 으로 바꿔 본다.
-    const copy = mkdtempSync(path.join(tmpdir(), "policypack-demo-test-"));
+    const copy = mkdtempSync(path.join(tmpdir(), "policyofficer-demo-test-"));
     try {
       for (const dir of ["fixtures", "cli-current"]) {
         cpSync(path.join(root, "contract", dir), path.join(copy, "contract", dir), { recursive: true });
@@ -1113,7 +1113,7 @@ describe("고르는 단추와 쪽의 머리말", () => {
   it("판정자를 켠 결과가 실리면 그 판에는 판정자를 켜 보라는 권고가 없다 (쪽이 읽는 수집본을 바꿔 본다)", () => {
     // 쪽은 빌드할 때 현재 폴더의 contract/ 를 읽는다. 저장소 밖의 임시 폴더에 합성 코드와 수집본을 옮겨 놓고, 수집본
     // 하나를 판정자를 켠 결과(손으로 만든 시험용 자료)로 바꾼 뒤 그 폴더에서 읽어 그려 본다.
-    const copy = mkdtempSync(path.join(tmpdir(), "policypack-demo-test-"));
+    const copy = mkdtempSync(path.join(tmpdir(), "policyofficer-demo-test-"));
     const cwd = vi.spyOn(process, "cwd");
     try {
       for (const dir of ["fixtures", "cli-current"]) {

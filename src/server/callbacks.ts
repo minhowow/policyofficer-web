@@ -20,8 +20,8 @@ import { COLUMNS, readSteps, rowToAnalysis, type Row } from "./store/rows";
  * 실행의 결과를 이 분석에 붙이지 못하게).
  *
  * - `{ "event": "step", "step": "fetch" | "scan" | "finish", "run"?: { "id", "url" } }`: 그 단계를 시작했다.
- * - `{ "event": "result", "output": "<CLI 가 낸 JSON 글 그대로>", "profile"?: { …policypack profile 의 JSON… },
- *   "review"?: { …policypack review 의 JSON… } }`: 정리 단계에서 결과를 보낸다. 저장소 프로필과 review 결과는 있을 때만 싣는다
+ * - `{ "event": "result", "output": "<CLI 가 낸 JSON 글 그대로>", "profile"?: { …policyofficer profile 의 JSON… },
+ *   "review"?: { …policyofficer review 의 JSON… } }`: 정리 단계에서 결과를 보낸다. 저장소 프로필과 review 결과는 있을 때만 싣는다
  *   (2026-11-11). 읽히지 않거나 없으면 비워 두고, 그 때문에 분석을 실패로 적지 않는다.
  * - `{ "event": "fail", "step": …, "reason": "…" }`: 그 단계에서 멈췄다.
  * - `{ "event": "part", "part": "profile" | "review" }`: 검사 단계 안에서 다음 CLI 명령(저장소 프로필, review)을 시작했다

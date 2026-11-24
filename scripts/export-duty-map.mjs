@@ -1,18 +1,19 @@
 #!/usr/bin/env node
-// 조문 도감(/policy/)의 의무 지도 데이터를 만든다(2026-11-15 오너 결정): CLI 의 기능–의무 표(src/policypack/profile/duties.jsonl)와
-// 검토 후보 표(lawmap/review-candidates.csv), 기능 이름(src/policypack/profile/features.yaml), 정책 팩의 정책–의무 연결
+// 조문 도감(/policy/)의 의무 지도 데이터를 만든다(2026-11-15 오너 결정): CLI 의 기능–의무 표(src/policyofficer/profile/duties.jsonl,
+// handoff-w13-3 전의 판은 src/policypack/profile/)와
+// 검토 후보 표(lawmap/review-candidates.csv), 기능 이름(src/policyofficer/profile/features.yaml), 정책 팩의 정책–의무 연결
 // (policies/kr-core/pack.yaml 의 duties)을 실행기가 설치하는 CLI 커밋(.github/workflows/analyze.yml 의 CLI_COMMIT)에서 읽어
 // data/duty-map.json 에 쓴다. 옆 폴더의 CLI 저장소는 `git show <커밋>:<경로>` 로 읽기만 한다(작업 폴더를 바꾸지 않는다).
 // 모델을 부르지 않는다.
 //
-//   node scripts/export-duty-map.mjs   (CLI 저장소: POLICYPACK_FROM 이 폴더면 그것, 아니면 ../Plitsoft-SDP)
+//   node scripts/export-duty-map.mjs   (CLI 저장소: POLICYOFFICER_FROM(앞선 이름 POLICYPACK_FROM)이 폴더면 그것, 아니면 ../Plitsoft-SDP)
 //
 // 옮기는 것은 AI 검토(review)가 묻는 의무(검토 후보와 kr-core 의무)의 법·조문·제목·의무 한 줄·걸리는 때·법제처 주소·기능이고,
 // 나머지는 갈래별 수만 옮긴다. 조문 인용(quote)과 어긴·지킨 코드의 예, 의무를 지는 자는 옮기지 않는다(조문은 팩 메타데이터의 원문만
 // 싣는다. docs/commitments.md). 제목 끝의 [ … ] 는 처분·액수를 적은 조사자 메모라 떼고(의무 한 줄 끝의 벌칙 메모도), 떼고도 화면에 쓰지 않는 말(tests/wording.ts)이
 // 든 글은 null 로 둔다(화면은 법·조문만 적는다). 검토 후보 표의 의무·기능 이름이 기능–의무 표와 맞는지 본다.
 //
-// 의무마다 법에 적힌 제재(2026-11-24 오너 승인)는 같은 커밋의 제재 표(src/policypack/profile/sanctions.jsonl)에서 옮긴다. 표의
+// 의무마다 법에 적힌 제재(2026-11-24 오너 승인)는 같은 커밋의 제재 표(src/policyofficer/profile/sanctions.jsonl)에서 옮긴다. 표의
 // 갈래·표지·조문·원문 인용을 그대로 옮기고, 무게(class)가 표에 적힌 규칙(README: direct 가운데 징역 > 과징금 > 벌금 > 과태료, direct 가
 // 없고 order 만 있으면 명령, 조문이 없으면 없음. 조건이 붙은 direct 항목은 결과·대상을 말하면 세고 더 무거운 사정(거짓·악의 등)을 요구하면
 // 세지 않는다)과 맞는지, AI 검토가 묻는 의무마다 한 줄씩 빠짐없이 있는지 본다. 그 판에 표가 없으면
@@ -26,7 +27,7 @@ import { parse } from "yaml";
 import { BANNED_WORDING } from "../tests/wording.ts";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const fromEnv = process.env.POLICYPACK_FROM;
+const fromEnv = process.env.POLICYOFFICER_FROM ?? process.env.POLICYPACK_FROM;
 const cliDir = fromEnv && existsSync(fromEnv) && statSync(fromEnv).isDirectory() ? path.resolve(fromEnv) : path.resolve(root, "..", "Plitsoft-SDP");
 
 const workflow = readFileSync(path.join(root, ".github/workflows/analyze.yml"), "utf8");
@@ -34,11 +35,11 @@ const commit = /\n {6}CLI_COMMIT: ([0-9a-f]{40})\n/.exec(workflow)?.[1];
 if (!commit) throw new Error("analyze.yml 에서 CLI_COMMIT 을 찾지 못했습니다");
 const show = (file) => execFileSync("git", ["-C", cliDir, "show", `${commit}:${file}`], { encoding: "utf8", maxBuffer: 64 << 20 });
 
-const rows = show("src/policypack/profile/duties.jsonl")
+const rows = show("src/policyofficer/profile/duties.jsonl")
   .split("\n")
   .filter((line) => line.trim())
   .map((line) => JSON.parse(line));
-const spec = parse(show("src/policypack/profile/features.yaml"));
+const spec = parse(show("src/policyofficer/profile/features.yaml"));
 const pack = parse(show("policies/kr-core/pack.yaml"), { maxAliasCount: -1 });
 
 /** RFC 4180 CSV(따옴표 안의 쉼표·따옴표 두 개). 첫 줄은 머리다. */
@@ -84,7 +85,7 @@ function readSanctions() {
     from = "file";
   } else {
     try {
-      text = execFileSync("git", ["-C", cliDir, "show", `${commit}:src/policypack/profile/sanctions.jsonl`], {
+      text = execFileSync("git", ["-C", cliDir, "show", `${commit}:src/policyofficer/profile/sanctions.jsonl`], {
         encoding: "utf8",
         maxBuffer: 64 << 20,
         stdio: ["ignore", "pipe", "ignore"],
@@ -263,6 +264,6 @@ console.log(
 if (table) {
   const count = (cls) => duties.filter((d) => d.sanction.class === cls).length;
   console.log(`제재(${table.from === "file" ? `파일 ${process.env.SANCTIONS_FILE}, 미리 보기용` : "고정 커밋"}): ${CLASSES.map((cls) => `${cls} ${count(cls)}`).join(" · ")}`);
-} else console.log("제재 표 없음(고정 커밋에 src/policypack/profile/sanctions.jsonl 이 없습니다)");
+} else console.log("제재 표 없음(고정 커밋에 src/policyofficer/profile/sanctions.jsonl 이 없습니다)");
 const held = duties.filter((d) => d.title === null || d.duty === null || d.trigger === null).map((d) => d.id);
 if (held.length) console.log(`화면에 쓰지 않는 말이 들어 글을 뺀 의무: ${held.join(", ")}`);

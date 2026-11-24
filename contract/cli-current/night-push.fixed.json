@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "tool": {
-    "name": "policypack",
+    "name": "policyofficer",
     "version": "0.3.0.dev0"
   },
   "run": {
     "judge": null,
-    "pack_digest": "9f70938de41b6f3a",
-    "fingerprint_version": "policypack/v1",
+    "pack_digest": "284a5b28911a0124",
+    "fingerprint_version": "policyofficer/v1",
     "questions_asked": 0,
     "ai_answered": 0,
     "questions_sent": 0,
@@ -57,7 +57,7 @@
       "ai_pending": [
         "ai-night-guard"
       ],
-      "fingerprint": "158e4293f383c30df3d485b2d84a0635",
+      "fingerprint": "9d0825420ab98478b5dc245910ad66ff",
       "scope": "anchor",
       "region": {
         "start_line": 9,
@@ -111,7 +111,7 @@
       "ai_pending": [
         "ai-start-block"
       ],
-      "fingerprint": "d91483e9cadb9c64587fb588ba20d184",
+      "fingerprint": "ed88814e939448458c7d63f40d877b5d",
       "scope": "file",
       "region": null,
       "top_level": false,
@@ -150,7 +150,7 @@
       "ai_pending": [
         "ai-optout-free"
       ],
-      "fingerprint": "f8bd663ad9e32696291712fc2badfa05",
+      "fingerprint": "eab45b77a2243e43cdd13c3f51794ed0",
       "scope": "file",
       "region": null,
       "top_level": false,

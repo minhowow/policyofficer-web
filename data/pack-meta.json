@@ -4,8 +4,8 @@
   "pack": {
     "id": "kr-core",
     "title": "국내 법·정책 검토 팩",
-    "api_version": "policypack/v0.4",
-    "digest": "9f70938de41b6f3a"
+    "api_version": "policyofficer/v0.4",
+    "digest": "284a5b28911a0124"
   },
   "policies": [
     {

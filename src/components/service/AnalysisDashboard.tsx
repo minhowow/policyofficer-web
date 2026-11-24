@@ -84,7 +84,7 @@ export function AnalysisDashboard({
   /** 저장소 프로필. 없으면 1·2단에 "아직 없음"이라고 적는다. */
   profile?: Profile | null;
   /**
-   * 같은 커밋의 review 결과(policypack review 2판, 실행기에서 켰을 때만 있다). 있으면 맨 위가 review 화면(하는 일, 개인정보 흐름,
+   * 같은 커밋의 review 결과(policyofficer review 2판, 실행기에서 켰을 때만 있다). 있으면 맨 위가 review 화면(하는 일, 개인정보 흐름,
    * 의무 체크리스트, 검증 정보)이고, 정적 검사의 결과는 그 아래 넷째 단이다.
    */
   review?: Review | null;

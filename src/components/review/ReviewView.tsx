@@ -21,7 +21,7 @@ import { HeavyFilter } from "./HeavyFilter";
 export { checkCount };
 
 /**
- * review 결과(policypack review 2판)의 화면(2026-11-11 오너 지시). 위에서부터:
+ * review 결과(policyofficer review 2판)의 화면(2026-11-11 오너 지시). 위에서부터:
  *
  * 1. 이 저장소가 하는 일: 서비스 설명(AI 가 쓴 두세 문장, 결과에 실린 그대로), 플랫폼, 감지된 기능(AI 가 인용과 함께 더한 것과
  *    뺀 것을 밝힌다).

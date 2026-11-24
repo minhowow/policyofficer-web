@@ -1,9 +1,11 @@
-# Plitsoft-SDP-Web
+# policyofficer-web
 
-policypack CLI(가칭)의 결과를 조문과 함께 보여 주는 웹. 아주대학교 2026-2 자기주도프로젝트 · 플리트소프트 연계. (개발 중)
+policyofficer CLI 의 결과를 조문과 함께 보여 주는 웹(2026-11-24 이름 확정, 전 가칭 policypack). 아주대학교 2026-2 자기주도프로젝트 ·
+플리트소프트 연계. (개발 중) GitHub: [minhowow/policyofficer-web](https://github.com/minhowow/policyofficer-web), CLI 는
+[minhowow/policyofficer](https://github.com/minhowow/policyofficer).
 
 CLI 는 JS/TS 코드(누가 썼든)에서 국내 법·정책상 검토가 필요한 지점을 찾는다. 이 저장소는 그 결과를 사람이 읽기 좋게
-보여 준다. CLI 저장소는 옆 폴더 `../Plitsoft-SDP` 에 따로 있다.
+보여 준다. CLI 저장소는 옆 폴더 `../Plitsoft-SDP` 에 따로 있다(로컬 폴더 이름은 그대로 둔다).
 
 출력은 "검토 필요 + 근거 조문 + 확인 질문"이다. 법률 자문이 아니다.
 

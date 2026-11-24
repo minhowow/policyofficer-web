@@ -277,7 +277,7 @@ describe("입력·파일 수·결과 크기", () => {
 });
 
 describe("도구 설치와 검사", () => {
-  it("검사 명령: policypack scan . --judge <판정자> --output-format json 을 저장소 폴더에서, 넘긴 환경만으로 돌린다", () => {
+  it("검사 명령: policyofficer scan . --judge <판정자> --output-format json 을 저장소 폴더에서, 넘긴 환경만으로 돌린다", () => {
     const calls: { bin: string; args: string[]; cwd: string; env: Record<string, string> }[] = [];
     const fake = ((bin: string, args: string[], options: { cwd: string; env: Record<string, string> }) => {
       calls.push({ bin, args, cwd: options.cwd, env: options.env });
@@ -286,7 +286,7 @@ describe("도구 설치와 검사", () => {
     const env = childEnv({ PATH: "/bin", HOME: "/h", RUNNER_SECRET: "s", GITHUB_TOKEN: "g" }, { ANTHROPIC_API_KEY: "k" });
     expect(runScan({ dir: "/w/src", judge: "anthropic:haiku", env, timeoutMs: 1000, run: fake })).toBe('{"ok":1}');
     expect(calls).toEqual([
-      { bin: "policypack", args: ["scan", ".", "--judge", "anthropic:haiku", "--output-format", "json"], cwd: "/w/src", env: { PATH: "/bin", HOME: "/h", ANTHROPIC_API_KEY: "k" } },
+      { bin: "policyofficer", args: ["scan", ".", "--judge", "anthropic:haiku", "--output-format", "json"], cwd: "/w/src", env: { PATH: "/bin", HOME: "/h", ANTHROPIC_API_KEY: "k" } },
     ]);
   });
 
@@ -298,7 +298,7 @@ describe("도구 설치와 검사", () => {
     expect(with_({ status: null, error: Object.assign(new Error("t"), { code: "ETIMEDOUT" }) })).toThrow("1분 안에 끝나지 않아");
   });
 
-  it("저장소 프로필: policypack profile . 을 저장소 폴더에서 돌린다. 실패해도 던지지 않고 null 이며, 까닭의 비밀값은 가린다", () => {
+  it("저장소 프로필: policyofficer profile . 을 저장소 폴더에서 돌린다. 실패해도 던지지 않고 null 이며, 까닭의 비밀값은 가린다", () => {
     const calls: { args: string[]; cwd: string }[] = [];
     const ok = ((_bin: string, args: string[], options: { cwd: string }) => {
       calls.push({ args, cwd: options.cwd });
@@ -373,11 +373,11 @@ describe("도구 설치와 검사", () => {
       calls.push({ bin, args, env: options.env });
       return { status: 0 };
     }) as never;
-    const env = { PATH: "/bin", UV_VERSION: "0.13.0", CLI_REPO: "minhowow/Plitsoft-SDP", CLI_COMMIT: "7300205b7e0db18e171aa2d730120416f2136d3c", CLI_EXCLUDE_NEWER: "2026-10-08T00:00:00Z", CLI_REPO_TOKEN: "tok" };
+    const env = { PATH: "/bin", UV_VERSION: "0.13.0", CLI_REPO: "minhowow/policyofficer", CLI_COMMIT: "7300205b7e0db18e171aa2d730120416f2136d3c", CLI_EXCLUDE_NEWER: "2026-10-08T00:00:00Z", CLI_REPO_TOKEN: "tok" };
     installCli(env, { run: fake });
     expect(calls.map((c) => [c.bin, ...c.args])).toEqual([
       ["pipx", "install", "uv==0.13.0"],
-      ["uv", "tool", "install", "--quiet", "--python", "3.12", "--exclude-newer", "2026-10-08T00:00:00Z", "policypack @ git+https://github.com/minhowow/Plitsoft-SDP@7300205b7e0db18e171aa2d730120416f2136d3c"],
+      ["uv", "tool", "install", "--quiet", "--python", "3.12", "--exclude-newer", "2026-10-08T00:00:00Z", "policyofficer @ git+https://github.com/minhowow/policyofficer@7300205b7e0db18e171aa2d730120416f2136d3c"],
     ]);
     expect(JSON.stringify(calls.map((c) => c.args))).not.toContain("tok");
     expect(calls[0].env.GIT_CONFIG_COUNT).toBeUndefined();
@@ -508,7 +508,7 @@ describe("워크플로 (.github/workflows/analyze.yml)", () => {
     // 반박은 '코드에서 본 것'·'충족 근거 있음'에만(2026-11-15 오너 지시). 묶음(--batch)은 정하지 않는다(CLI 기본).
     expect(workflow).toMatch(/\n {6}REVIEW_REBUT_SCOPE: found\n/);
     expect(workflow).not.toContain("REVIEW_BATCH");
-    expect(workflow).toMatch(/CLI_REPO: minhowow\/Plitsoft-SDP\n/);
+    expect(workflow).toMatch(/CLI_REPO: minhowow\/policyofficer\n/);
     expect(workflow).toMatch(/CLI_COMMIT: [0-9a-f]{40}\n/);
     expect(workflow).toMatch(/UV_VERSION: \d+\.\d+\.\d+\n/);
     // 딸린 꾸러미의 판을 고정한 날짜까지로 묶는다. 그 날짜는 고정 커밋의 날짜이고(계약 시험), 오늘보다 앞이다.

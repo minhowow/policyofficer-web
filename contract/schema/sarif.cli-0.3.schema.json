@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "sarif.cli-0.3.schema.json",
-  "title": "policypack scan --output-format sarif (CLI 0.3) 가운데 웹이 읽는 것",
-  "description": "CLI 가 지금 내는 SARIF 2.1.0 출력을 관찰해 적은 것이다. SARIF 의 공식 스키마도, CLI 저장소의 스키마도 아니다. 웹이 읽는 필드만 required 로 두고 나머지는 허용한다. contract/cli-current/ 의 .sarif 수집본이 이 스키마를 통과해야 한다. 웹은 이것을 결과 JSON 의 모양으로 옮겨 읽는다(src/lib/report/sarif.ts). 판정 단위 수와 검사한 파일 수는 SARIF 에 없다. 스키마로 적을 수 없어 파서만 보는 것: results[].ruleId 와 id 가 같은 규칙이 tool.driver.rules 에 있어야 하고, 다 보지 못한 파일의 알림(descriptor.id 가 policypack/unparsed, policypack/skipped, policypack/engine-incomplete)에는 파일(locations[0])이, 엔진 오류의 알림(policypack/engine-error)에는 문장(message.text)이 있어야 한다.",
+  "title": "policyofficer scan --output-format sarif (CLI 0.3) 가운데 웹이 읽는 것",
+  "description": "CLI 가 지금 내는 SARIF 2.1.0 출력을 관찰해 적은 것이다. SARIF 의 공식 스키마도, CLI 저장소의 스키마도 아니다. 웹이 읽는 필드만 required 로 두고 나머지는 허용한다. contract/cli-current/ 의 .sarif 수집본이 이 스키마를 통과해야 한다. 웹은 이것을 결과 JSON 의 모양으로 옮겨 읽는다(src/lib/report/sarif.ts). 판정 단위 수와 검사한 파일 수는 SARIF 에 없다. 스키마로 적을 수 없어 파서만 보는 것: results[].ruleId 와 id 가 같은 규칙이 tool.driver.rules 에 있어야 하고, 다 보지 못한 파일의 알림(descriptor.id 가 policyofficer/unparsed, policyofficer/skipped, policyofficer/engine-incomplete)에는 파일(locations[0])이, 엔진 오류의 알림(policyofficer/engine-error)에는 문장(message.text)이 있어야 한다. 앞선 이름(policypack/…)의 id 는 지금 이름의 것으로 읽는다.",
   "type": "object",
   "required": [
     "version",
@@ -165,7 +165,7 @@
                 "properties": {
                   "id": {
                     "type": "string",
-                    "description": "policypack/unparsed · policypack/skipped · policypack/engine-incomplete · policypack/engine-error · policypack/ai-pending. 웹은 앞의 넷만 읽는다."
+                    "description": "policyofficer/unparsed · policyofficer/skipped · policyofficer/engine-incomplete · policyofficer/engine-error · policyofficer/ai-pending(handoff-w13-3 전은 앞이 policypack/). 웹은 앞의 넷만 읽는다."
                   }
                 }
               },
@@ -389,13 +389,28 @@
         },
         "partialFingerprints": {
           "type": "object",
-          "required": [
-            "policypack/v1"
+          "description": "열쇠는 지문 방식의 이름이다. CLI handoff-w13-3 부터 policyofficer/v1, 그 전은 policypack/v1.",
+          "anyOf": [
+            {
+              "required": [
+                "policyofficer/v1"
+              ]
+            },
+            {
+              "required": [
+                "policypack/v1"
+              ]
+            }
           ],
           "properties": {
-            "policypack/v1": {
+            "policyofficer/v1": {
               "type": "string",
               "description": "결과 JSON 의 findings[].fingerprint 와 같다.",
+              "pattern": "^[0-9a-f]{32}$"
+            },
+            "policypack/v1": {
+              "type": "string",
+              "description": "앞선 이름의 열쇠(handoff-w13-3 전).",
               "pattern": "^[0-9a-f]{32}$"
             }
           }

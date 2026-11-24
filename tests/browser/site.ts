@@ -209,7 +209,7 @@ const CLOSE_MS = 5_000;
  * 임시 폴더를 준다). 시험 파일이 끝나면 `closeChrome` 이 이 폴더를 통째로 지운다. 그 전에 프로세스가 죽으면 다음에 Chrome 을
  * 띄울 때 지운다(`sweepChromeTmp`).
  */
-const CHROME_TMP = "policypack-chrome-";
+const CHROME_TMP = "policyofficer-chrome-";
 
 /** 이 프로세스의 그 폴더. 처음 띄울 때 만든다. */
 let chromeTmp: string | null = null;

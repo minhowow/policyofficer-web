@@ -3,7 +3,7 @@ import type { Analysis, AnalysisStatus, AnalysisStep, StepName } from "./types";
 /**
  * 단계의 차례. 대기 → 저장소 받기·도구 설치 → 검사 → 정리. 끝나면 분석의 상태가 succeeded 다.
  *
- * 정적 검사와 AI 판정은 한 단계(`scan`)다. 실행기는 CLI 명령 하나(`policypack scan … --judge anthropic:…`)를 부르고, CLI 는
+ * 정적 검사와 AI 판정은 한 단계(`scan`)다. 실행기는 CLI 명령 하나(`policyofficer scan … --judge anthropic:…`)를 부르고, CLI 는
  * 정적 검사가 끝나고 AI 판정이 시작한 때를 알려 주지 않는다(결과에는 걸린 초만 있다). 알 수 없는 경계를 꾸며 두 단계로 적지
  * 않는다. AI 판정자가 무엇이었는지는 끝난 분석의 결과(`run.judge`)가 말한다.
  *

@@ -813,10 +813,10 @@ describe("기록에 싣는 것", () => {
       expect(page.facts.slice(0, 5).map((fact) => [fact.label, meta.get(fact.label)])).toEqual(
         page.facts.slice(0, 5).map((fact) => [fact.label, fact.value]),
       );
-      // 결과에 실린 값이기도 하다.
+      // 결과에 실린 값이기도 하다. 도구 이름은 앞선 이름(policypack)이면 지금 이름(policyofficer)으로 적는다(2026-11-24 오너 결정).
       const report = reportOf(parts);
       expect(page.facts.slice(0, 5).map((fact) => fact.value)).toEqual([
-        `${report.tool.name} ${report.tool.version}`,
+        `${report.tool.name === "policypack" ? "policyofficer" : report.tool.name} ${report.tool.version}`,
         report.run.engine ? [report.run.engine.name, report.run.engine.version].filter(Boolean).join(" ") : "실행 안 함",
         report.run.judge ?? "꺼짐",
         report.run.pack_digest,

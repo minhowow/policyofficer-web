@@ -109,7 +109,7 @@ function cliCommand(work) {
   const build = spawnSync("uv", ["build", "--quiet", "--wheel", "--out-dir", wheels, from], { encoding: "utf8" });
   if (build.error || build.status !== 0) throw new StepError("scan", "CLI 를 빌드하지 못했습니다(uv 가 있는지 보세요). --fixture 로 돌릴 수 있습니다.");
   const wheel = readdirSync(wheels).find((name) => name.endsWith(".whl"));
-  return ["uvx", "--quiet", "--from", path.join(wheels, wheel), "policypack"];
+  return ["uvx", "--quiet", "--from", path.join(wheels, wheel), "policyofficer"];
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -173,14 +173,14 @@ export async function runOne(claimed, options, secret) {
       ? readFileSync(capture, "utf8")
       : runScan({ dir: src, judge: "none", command, env, timeoutMs: DEFAULTS.scanTimeoutMinutes * 60_000 });
     await sleep(options.stepDelay);
-    // 저장소 프로필(모델 호출 없음): 수집본이면 같은 표본의 프로필 수집본, CLI 면 policypack profile 을 검사 다음에 돌린다(역시
+    // 저장소 프로필(모델 호출 없음): 수집본이면 같은 표본의 프로필 수집본, CLI 면 policyofficer profile 을 검사 다음에 돌린다(역시
     // spawnSync 로 하나씩). 없거나 실패하면 결과만 보낸다. 시작을 알린다(GitHub Actions 의 실행기와 같이 best-effort).
     await notifyPart(ctx, "profile");
     const profile = options.fixture
       ? profileCaptureFor(capture)
       : runProfile({ dir: src, command, env, timeoutMs: DEFAULTS.profileTimeoutMinutes * 60_000 });
     // review: 사이트가 이 분석에서 돌리라고 했을 때만(REVIEW 스위치가 켜져 있고 같은 커밋의 저장된 review 가 없을 때). 수집본이면
-    // 같은 표본의 합성 예시, CLI 면 policypack review 를 차례로(spawnSync). API 키가 없거나 실패하면 결과만 보낸다.
+    // 같은 표본의 합성 예시, CLI 면 policyofficer review 를 차례로(spawnSync). API 키가 없거나 실패하면 결과만 보낸다.
     let review = null;
     if (claimed.review === true) {
       await sleep(options.stepDelay);
