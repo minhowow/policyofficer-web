@@ -38,7 +38,7 @@ import { BANNED_WORDING } from "./wording";
 // 브라우저 부품(요청 단추, 진행 다시 읽기)은 Next 의 라우터를 쓴다. 부품 시험에는 라우터가 없어 빈 것으로 바꿔 끼운다
 // (누르고 다시 읽는 것은 브라우저 시험이 본다: tests/browser/service-db.test.ts).
 vi.mock("next/navigation", async (original) => ({
-  ...(await original<typeof import("next/navigation")>()),
+  ...((await original()) as typeof import("next/navigation")),
   useRouter: () => ({ push: () => {}, replace: () => {}, refresh: () => {}, prefetch: () => {}, back: () => {}, forward: () => {} }),
 }));
 
