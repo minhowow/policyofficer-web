@@ -11,6 +11,12 @@
 // 나머지는 갈래별 수만 옮긴다. 조문 인용(quote)과 어긴·지킨 코드의 예, 의무를 지는 자는 옮기지 않는다(조문은 팩 메타데이터의 원문만
 // 싣는다. docs/commitments.md). 제목 끝의 [ … ] 는 처분·액수를 적은 조사자 메모라 떼고(의무 한 줄 끝의 벌칙 메모도), 떼고도 화면에 쓰지 않는 말(tests/wording.ts)이
 // 든 글은 null 로 둔다(화면은 법·조문만 적는다). 검토 후보 표의 의무·기능 이름이 기능–의무 표와 맞는지 본다.
+//
+// 의무마다 법에 적힌 제재(2026-11-24 오너 승인)는 같은 커밋의 제재 표(src/policypack/profile/sanctions.jsonl)에서 옮긴다. 표의
+// 갈래·표지·조문·원문 인용을 그대로 옮기고, 무게(class)가 표에 적힌 규칙(README: direct 가운데 징역 > 과징금 > 벌금 > 과태료, direct 가
+// 없고 order 만 있으면 명령, 조문이 없으면 없음. 조건이 붙은 direct 항목은 결과·대상을 말하면 세고 더 무거운 사정(거짓·악의 등)을 요구하면
+// 세지 않는다)과 맞는지, AI 검토가 묻는 의무마다 한 줄씩 빠짐없이 있는지 본다. 그 판에 표가 없으면
+// 제재 없이 내보낸다. SANCTIONS_FILE 에 파일을 주면 그 파일을 읽는다(디렉터의 초안으로 화면을 미리 보는 데만. 커밋하지 않는다).
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
@@ -68,6 +74,33 @@ function readCsv(text) {
 }
 const candidates = readCsv(show("lawmap/review-candidates.csv"));
 
+/** 제재 표. 고정 커밋에 없으면 null. */
+function readSanctions() {
+  const file = process.env.SANCTIONS_FILE;
+  let text;
+  let from;
+  if (file) {
+    text = readFileSync(path.resolve(file), "utf8");
+    from = "file";
+  } else {
+    try {
+      text = execFileSync("git", ["-C", cliDir, "show", `${commit}:src/policypack/profile/sanctions.jsonl`], {
+        encoding: "utf8",
+        maxBuffer: 64 << 20,
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+      from = "git";
+    } catch {
+      return null;
+    }
+  }
+  const records = text
+    .split("\n")
+    .filter((line) => line.trim())
+    .map((line) => JSON.parse(line));
+  return { from, records };
+}
+
 // 기능 이름. 'common'(거의 모든 서비스)이 맨 앞, 'status'(지위)는 묻지 않으므로 이름만.
 const features = [{ id: "common", name: spec.common.name }, ...spec.features.map((f) => ({ id: f.id, name: f.name }))];
 const featureName = Object.fromEntries([...features.map((f) => [f.id, f.name]), ["status", spec.status.name]]);
@@ -110,6 +143,77 @@ const dutyOf = (duty) => clean(String(duty ?? "").replace(/\s*\([^()]*벌칙[^()
 
 // AI 검토가 묻는 의무: 검토 후보, 그리고 kr-core 의무(기능이 있거나 정적 규칙이 걸리면 묻는다. CLI review 의 의무 고르기).
 const asked = rows.filter((r) => r.review_candidate || r.krcore);
+
+// 제재 표: 갈래·표지·조문을 그대로 옮긴다. 화면이 쓰는 모양(camelCase)으로 바꾸기만 한다.
+const CLASSES = ["징역", "과징금", "벌금", "과태료", "명령", "없음"];
+const KINDS = ["징역", "벌금", "과징금", "과태료"];
+const LAW_URL = /^https:\/\/www\.law\.go\.kr\//;
+// 제재 표의 글은 법령의 말을 옮긴 것이라(제재의 말, '위반행위와 관련한 매출액' 같은 법령의 낱말) 조문 원문처럼 그 두 줄은 보지 않는다
+// (docs/commitments.md 1장). 그 밖의 화면에 쓰지 않는 말(적법 단정, 점수 등)이 표지·문구·조건·보충에 들면 멈춘다.
+const unsaid = (text) => BANNED_WORDING.filter(([pattern]) => !pattern.test("과징금") && !pattern.test("위반")).find(([pattern]) => pattern.test(text));
+/** 표에 적힌 규칙으로 정한 무게(센 항목만으로). */
+function classOf(items) {
+  const direct = items.filter((item) => item.via === "direct");
+  for (const kind of ["징역", "과징금", "벌금", "과태료"]) if (direct.some((item) => item.kind === kind)) return kind;
+  if (items.some((item) => item.via === "order")) return "명령";
+  return "없음";
+}
+/**
+ * 무게가 조문으로 정해질 수 있는지: 조건이 없는 항목은 늘 세고, 조건이 붙은 direct 항목은 세거나 세지 않은(표의 규칙이 조건의 뜻으로
+ * 가른다) 어느 경우로든 그 갈래가 나오면 맞다.
+ */
+function classFits(items, cls) {
+  const conditioned = items.filter((item) => item.via === "direct" && item.condition);
+  const always = items.filter((item) => !conditioned.includes(item));
+  for (let mask = 0; mask < 1 << conditioned.length; mask++) {
+    if (classOf([...always, ...conditioned.filter((_, i) => mask & (1 << i))]) === cls) return true;
+  }
+  return false;
+}
+const table = readSanctions();
+const sanctions = new Map();
+if (table) {
+  const askedIds = new Set(asked.map((r) => r.id));
+  for (const record of table.records) {
+    const id = record.duty;
+    if (!askedIds.has(id)) throw new Error(`제재 표의 ${id} 는 AI 검토가 묻는 의무가 아닙니다`);
+    if (sanctions.has(id)) throw new Error(`제재 표에 ${id} 가 두 번 있습니다`);
+    if (!CLASSES.includes(record.class)) throw new Error(`${id}: 모르는 갈래 ${record.class}`);
+    if (typeof record.label !== "string" || !record.label.trim()) throw new Error(`${id}: 표지가 없습니다`);
+    if ([...record.label.trim()].length > 32) throw new Error(`${id}: 표지가 32자를 넘습니다(${record.label})`);
+    if (!Array.isArray(record.items)) throw new Error(`${id}: items 가 목록이 아닙니다`);
+    if (record.max_won !== null && !(Number.isInteger(record.max_won) && record.max_won > 0)) throw new Error(`${id}: max_won 이 정수가 아닙니다`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(record.as_of ?? "")) throw new Error(`${id}: as_of 가 날짜가 아닙니다`);
+    const items = record.items.map((item, i) => {
+      const where = `${id} 의 ${i + 1}번째 조문`;
+      if (!KINDS.includes(item.kind)) throw new Error(`${where}: 모르는 kind ${item.kind}`);
+      if (item.via !== "direct" && item.via !== "order") throw new Error(`${where}: 모르는 via ${item.via}`);
+      for (const key of ["penalty", "law", "clause", "quote"]) {
+        if (typeof item[key] !== "string" || !item[key].trim()) throw new Error(`${where}: ${key} 가 없습니다`);
+      }
+      if (item.url !== null && !LAW_URL.test(item.url ?? "")) throw new Error(`${where}: 법제처 주소가 아닙니다(${item.url})`);
+      return {
+        kind: item.kind,
+        via: item.via,
+        condition: typeof item.condition === "string" && item.condition.trim() ? item.condition.trim() : null,
+        penalty: item.penalty.trim(),
+        law: item.law.trim(),
+        clause: item.clause.trim(),
+        url: item.url ?? null,
+        quote: item.quote.trim(),
+      };
+    });
+    if (!classFits(items, record.class)) throw new Error(`${id}: 갈래 ${record.class} 가 조문으로 정해지지 않습니다(모두 세면 ${classOf(items)})`);
+    const note = typeof record.note === "string" && record.note.trim() ? record.note.trim() : null;
+    for (const text of [record.label, note, ...items.flatMap((item) => [item.penalty, item.condition])]) {
+      const hit = text && unsaid(text);
+      if (hit) throw new Error(`${id}: "${text}" — ${hit[1]}`);
+    }
+    sanctions.set(id, { class: record.class, label: record.label.trim(), maxWon: record.max_won, items, note, asOf: record.as_of });
+  }
+  const missing = asked.filter((r) => !sanctions.has(r.id)).map((r) => r.id);
+  if (missing.length) throw new Error(`제재 표에 없는 의무 ${missing.length}개: ${missing.slice(0, 10).join(", ")}`);
+}
 const duties = asked.map((r) => ({
   id: r.id,
   feature: r.feature,
@@ -126,12 +230,13 @@ const duties = asked.map((r) => ({
   whenever: whenever.has(r.id),
   audience: audience.has(r.id),
   goods: goodsOf[r.id] ?? null,
+  ...(table ? { sanction: sanctions.get(r.id) } : {}),
 }));
 
 const rest = rows.filter((r) => !r.review_candidate && !r.krcore);
 const out = {
   generated_by: "scripts/export-duty-map.mjs",
-  cli: { commit },
+  cli: { commit, sanctions: table?.from ?? null },
   total: rows.length,
   candidates: candidateCount,
   asked: duties.length,
@@ -155,5 +260,9 @@ writeFileSync(path.join(root, "data/duty-map.json"), `${JSON.stringify(out, null
 console.log(
   `의무 ${out.total} · 검토 후보 ${out.candidates} · AI 검토가 묻는 의무 ${out.asked} (kr-core ${duties.filter((d) => !d.candidate).length} 더함) · 묻지 않음 ${out.notAsked.total} (지위 ${out.notAsked.status}, 그 밖 ${out.notAsked.other}) → data/duty-map.json`,
 );
+if (table) {
+  const count = (cls) => duties.filter((d) => d.sanction.class === cls).length;
+  console.log(`제재(${table.from === "file" ? `파일 ${process.env.SANCTIONS_FILE}, 미리 보기용` : "고정 커밋"}): ${CLASSES.map((cls) => `${cls} ${count(cls)}`).join(" · ")}`);
+} else console.log("제재 표 없음(고정 커밋에 src/policypack/profile/sanctions.jsonl 이 없습니다)");
 const held = duties.filter((d) => d.title === null || d.duty === null || d.trigger === null).map((d) => d.id);
 if (held.length) console.log(`화면에 쓰지 않는 말이 들어 글을 뺀 의무: ${held.join(", ")}`);

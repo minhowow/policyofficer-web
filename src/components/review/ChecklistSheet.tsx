@@ -1,13 +1,16 @@
 import Link from "next/link";
+import { SanctionBadge } from "@/components/result/Sanction";
 import { keepParticles } from "@/components/text";
-import { verificationRows, type ChecklistDoc, type ChecklistSource } from "@/lib/review/checklist";
+import { SANCTION_TEXT } from "@/lib/duties/sanction";
+import { overviewLine, sanctionLine, verificationRows, type ChecklistDoc, type ChecklistSource } from "@/lib/review/checklist";
 import { SITE } from "@/lib/site";
 import { PrintButton } from "./PrintButton";
 
 /**
  * 의무 체크리스트의 인쇄용 보기(2026-11-13 오너 지시). 마크다운 파일과 같은 모양(`lib/review/checklist.ts` 의 `checklistDoc`)을
  * 종이에 맞게 늘어놓는다. 접는 곳·링크·색 칩을 두지 않는다(종이에서는 펼칠 수도 누를 수도 없다). 인쇄하면 이 종이만 나온다
- * (globals.css 의 @media print). 위의 도구 줄(돌아가기, 마크다운으로 받기, 인쇄)은 인쇄되지 않는다.
+ * (globals.css 의 @media print). 위의 도구 줄(돌아가기, 마크다운으로 받기, 인쇄)은 인쇄되지 않는다. 제재 표지는 색 없이 굵기·
+ * 테두리·기호로 가르므로 흑백으로 찍어도 읽힌다(2026-11-24).
  */
 export function ChecklistSheet({ doc, source, back, markdown }: { doc: ChecklistDoc; source: ChecklistSource; back: string; markdown: string }) {
   return (
@@ -33,9 +36,8 @@ export function ChecklistSheet({ doc, source, back, markdown }: { doc: Checklist
           {source.facts.map((fact) => (
             <li key={fact}>{fact}</li>
           ))}
-          <li>
-            감지된 기능 {doc.overview.features}가지 · 걸릴 수 있는 의무 {doc.overview.obligations}개 · 확인할 것 {doc.overview.check}건
-          </li>
+          <li>{overviewLine(doc)}</li>
+          {doc.overview.heavy !== null && <li>{SANCTION_TEXT.note}</li>}
           <li>인용은 도구가 그 파일에서 글자 그대로 확인한 줄만 실었습니다.</li>
         </ul>
         {doc.groups.map((group) => (
@@ -50,6 +52,8 @@ export function ChecklistSheet({ doc, source, back, markdown }: { doc: Checklist
                     {group.todo && <span className="ck-box" aria-hidden="true" />}
                     <b>{entry.law}</b>
                     {entry.overturned && <span className="ck-tag">반박이 바꿈</span>}
+                    {entry.sanction && " "}
+                    {entry.sanction && <SanctionBadge sanction={entry.sanction} />}
                   </p>
                   {entry.dutyText && <p className="ck-duty">{keepParticles(entry.dutyText)}</p>}
                   {entry.seen && <p>{keepParticles(entry.seen)}</p>}
@@ -95,6 +99,15 @@ export function ChecklistSheet({ doc, source, back, markdown }: { doc: Checklist
                     </p>
                   ))}
                   {entry.rest && <p className="ck-rest">{keepParticles(entry.rest)}</p>}
+                  {entry.sanction?.items.map((item, i) => (
+                    <div key={i} className="ck-sanc">
+                      <p>
+                        <span className="ck-k">{SANCTION_TEXT.head}</span> {sanctionLine(item)}
+                      </p>
+                      <p className="ck-quote">{item.quote}</p>
+                    </div>
+                  ))}
+                  {entry.sanction?.note && <p className="ck-rest">{entry.sanction.note}</p>}
                 </li>
               ))}
             </ol>

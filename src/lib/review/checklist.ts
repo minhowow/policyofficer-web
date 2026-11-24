@@ -1,3 +1,5 @@
+import { sanctionOf } from "@/lib/duties";
+import { byWeight, SANCTION_TEXT, sanctionTier, sanctionWhen, type Sanction, type SanctionItem } from "@/lib/duties/sanction";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { SITE } from "@/lib/site";
 import { REVIEW_STATUSES, type Review, type ReviewItem, type ReviewStatus } from "./index";
@@ -9,6 +11,9 @@ import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, rebutLine
  * 결과의 요약이 고른 것 먼저), 묻지 않은 품목 의무는 '해당 여부부터' 뒤에 한 묶음, 다시 검토 중인 의무는 맨 끝에 이름만. 인용은
  * 도구가 코드에서 확인한 것(`ok`)만, 처분의 말이 든 의무 한 줄은 싣지 않는다(docs/commitments.md 1장). 종이·파일에는 접을 곳이
  * 없으므로 화면에서 접어 둔 것(나머지 갈래, 찾아본 말, 자세히)도 모두 펼쳐 싣는다.
+ *
+ * 의무마다 법에 적힌 제재(2026-11-24 오너 승인)도 화면과 같다: 갈래 안은 무거운 제재 먼저, 항목마다 표지와 제재 조문(원문까지),
+ * 요약에 확인할 것 가운데 강조 무게의 제재가 걸리는 항목의 수와 주의 문구.
  */
 
 export interface ChecklistCite {
@@ -37,6 +42,8 @@ export interface ChecklistEntry {
   /** 모델의 말 가운데 첫 문장 뒤의 것. */
   rest: string;
   overturned: boolean;
+  /** 법에 적힌 제재(의무 지도에서 의무 id 로). 없으면 null. */
+  sanction: Sanction | null;
 }
 
 export interface ChecklistGroup {
@@ -48,7 +55,8 @@ export interface ChecklistGroup {
 }
 
 export interface ChecklistDoc {
-  overview: { features: number; obligations: number; check: number };
+  /** `heavy`: 확인할 것 가운데 강조 무게의 제재가 걸리는 항목의 수. 제재가 붙은 의무가 없으면 null. */
+  overview: { features: number; obligations: number; check: number; heavy: number | null };
   groups: ChecklistGroup[];
   run: Review["run"];
 }
@@ -85,6 +93,7 @@ function entryOf(item: ReviewItem, held = false): ChecklistEntry {
     searches: held ? [] : item.searches.map(({ pattern, path, found, claimed }) => ({ pattern, path, found, claimed })),
     rest,
     overturned: !held && item.verification === "overturned",
+    sanction: sanctionOf(item.duty),
   };
 }
 
@@ -92,24 +101,31 @@ function entryOf(item: ReviewItem, held = false): ChecklistEntry {
 export function checklistDoc(review: Review, recheck: readonly string[] = []): ChecklistDoc {
   const items = review.checklist.filter((item) => !recheck.includes(item.duty));
   const held = review.checklist.filter((item) => recheck.includes(item.duty));
-  const goods = items.filter((item) => item.group === "goods");
+  const weigh = (list: ReviewItem[]) => byWeight(list, (item) => sanctionOf(item.duty));
+  const goods = weigh(items.filter((item) => item.group === "goods"));
   const by = (status: ReviewStatus) => items.filter((item) => item.status === status && item.group !== "goods");
   const seen = by("seen-in-code");
   const top = review.summary.top.flatMap((duty) => seen.filter((item) => item.duty === duty));
   const groups: ChecklistGroup[] = [];
   for (const status of REVIEW_STATUSES) {
-    const list = status === "seen-in-code" ? [...top, ...seen.filter((item) => !top.includes(item))] : by(status);
+    const list = weigh(status === "seen-in-code" ? [...top, ...seen.filter((item) => !top.includes(item))] : by(status));
     if (list.length > 0) groups.push({ key: status, label: REVIEW_STATUS_LABEL[status], todo: CHECKS.includes(status), entries: list.map((item) => entryOf(item)) });
     if (status === "check-applicability" && goods.length > 0) {
       groups.push({ key: "goods", label: REVIEW_GOODS_LABEL, todo: true, entries: goods.map((item) => ({ ...entryOf(item, true), question: item.question })) });
     }
   }
-  if (held.length > 0) groups.push({ key: "recheck", label: REVIEW_RECHECK_LABEL, todo: false, entries: held.map((item) => entryOf(item, true)) });
+  if (held.length > 0) groups.push({ key: "recheck", label: REVIEW_RECHECK_LABEL, todo: false, entries: weigh(held).map((item) => entryOf(item, true)) });
+  const sanctioned = review.checklist.some((item) => sanctionOf(item.duty) !== null);
+  const heavy = items.filter((item) => {
+    const sanction = sanctionOf(item.duty);
+    return sanction !== null && sanctionTier(sanction) === 0 && CHECKS.includes(item.status) && item.group !== "goods";
+  }).length;
   return {
     overview: {
       features: review.profile.features.filter((feature) => feature.removed === null).length,
       obligations: review.obligations.listed,
       check: checkCount(items),
+      heavy: sanctioned ? heavy : null,
     },
     groups,
     run: review.run,
@@ -132,6 +148,20 @@ export function verificationRows(run: Review["run"]): [string, string][] {
   ];
 }
 
+/** 요약 한 줄: 감지된 기능 · 걸릴 수 있는 의무 · 확인할 것(제재가 붙었으면 강조 무게의 제재가 걸리는 항목의 수까지). */
+export function overviewLine(doc: ChecklistDoc): string {
+  const { features, obligations, check, heavy } = doc.overview;
+  const parts = [`감지된 기능 ${features}가지`, `걸릴 수 있는 의무 ${obligations}개`, `확인할 것 ${check}건`];
+  if (heavy !== null) parts.push(`${SANCTION_TEXT.heavy} ${heavy}건`);
+  return parts.join(" · ");
+}
+
+/** 제재 조문 한 줄: 걸리는 때, 제재 문구, 법과 조항(화면의 항목 상세와 같은 차례). */
+export function sanctionLine(item: SanctionItem): string {
+  const when = sanctionWhen(item);
+  return `${when ? `${when} ` : ""}${item.penalty} · ${item.law} ${item.clause}`;
+}
+
 /** 마크다운 글로 옮길 때 서식으로 읽히는 글자를 막는다. */
 const md = (text: string) => text.replace(/([\\`*_[\]<>#|])/g, "\\$1").replace(/\s*\n\s*/g, " ");
 /** 코드 조각. 글에 역따옴표가 있으면 두 개로 감싼다. */
@@ -150,12 +180,14 @@ export function checklistMarkdown(doc: ChecklistDoc, source: ChecklistSource): s
   out.push(`- 저장소: ${source.htmlUrl ?? md(source.repo)} · 커밋 ${code(source.commit.slice(0, 7))}`);
   for (const fact of source.facts) out.push(`- ${md(fact)}`);
   out.push(`- 만든 곳: ${md(SITE.name)}`);
-  out.push(`- 요약: 감지된 기능 ${doc.overview.features}가지 · 걸릴 수 있는 의무 ${doc.overview.obligations}개 · 확인할 것 ${doc.overview.check}건`);
+  out.push(`- 요약: ${overviewLine(doc)}`);
+  if (doc.overview.heavy !== null) out.push(`- ${md(SANCTION_TEXT.note)}`);
   out.push("- 인용은 도구가 그 파일에서 글자 그대로 확인한 줄만 실었습니다.", "");
   for (const group of doc.groups) {
     out.push(`## ${md(group.label)} ${group.entries.length}건`, "");
     for (const entry of group.entries) {
-      out.push(`${group.todo ? "- [ ]" : "-"} **${md(entry.law)}**${entry.overturned ? " (반박이 바꿈)" : ""}`);
+      const badge = entry.sanction ? ` · ${md(SANCTION_TEXT.badge(entry.sanction.label))}` : "";
+      out.push(`${group.todo ? "- [ ]" : "-"} **${md(entry.law)}**${badge}${entry.overturned ? " (반박이 바꿈)" : ""}`);
       const sub = (line: string) => out.push(`  - ${line}`);
       if (entry.dutyText) sub(`의무: ${md(entry.dutyText)}`);
       if (entry.seen) sub(`본 것: ${md(entry.seen)}`);
@@ -170,6 +202,11 @@ export function checklistMarkdown(doc: ChecklistDoc, source: ChecklistSource): s
         sub(`찾아본 말: ${code(s.pattern)} (${md(s.path || ".")}) 다시 센 줄 ${found}${claimed}`);
       }
       if (entry.rest) sub(`자세히: ${md(entry.rest)}`);
+      for (const item of entry.sanction?.items ?? []) {
+        sub(`${SANCTION_TEXT.head}: ${md(sanctionLine(item))}${item.url ? ` (법제처: ${item.url})` : ""}`);
+        out.push(`    > ${md(item.quote)}`);
+      }
+      if (entry.sanction?.note) sub(md(entry.sanction.note));
       if (entry.url) sub(`법제처: ${entry.url}`);
     }
     out.push("");

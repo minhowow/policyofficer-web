@@ -7,6 +7,7 @@ import { PolicyDetail } from "@/components/policy/PolicyDetail";
 import { RuleId } from "@/components/result/RuleId";
 import { packMeta, policyHref, ruleAnchor, ruleHref } from "@/lib/pack";
 import { sameTextNote } from "@/lib/pack/guide";
+import type { Sanction } from "@/lib/duties/sanction";
 import type { Alternative, LegalRef, PolicyMeta, Rule } from "@/lib/pack/types";
 import { SCOPE_LEGEND, scopeLabel, scopeNote } from "@/lib/report/scope";
 import { STATUS_LABEL, STATUS_LEGEND, STATUS_ORDER } from "@/lib/report/status";
@@ -34,6 +35,7 @@ import {
   WEAK,
   wholeText,
 } from "./policy-page";
+import { withoutSanctions } from "./sanctions";
 import { BANNED_WORDING } from "./wording";
 
 // 조문 도감(`/policy`)을 그려서 본다. 정책 쪽(src/app/policy/[id]/page.tsx)은 async 라 여기서 그리지 않고, 쪽이 그리는
@@ -1013,9 +1015,10 @@ describe("조문 도감 (/policy): 의무 지도", () => {
     url: string | null;
     candidate: boolean;
     policies: string[];
+    sanction?: Sanction | null;
   };
   const map = readJson("data", "duty-map.json") as {
-    cli: { commit: string };
+    cli: { commit: string; sanctions?: string | null };
     total: number;
     candidates: number;
     asked: number;
@@ -1127,11 +1130,42 @@ describe("조문 도감 (/policy): 의무 지도", () => {
     expect(statutes.sort()).toEqual(policies.flatMap((policy) => policy.legal.flatMap((legal) => (legal.text ? [legal.text] : []))).sort());
   });
 
-  it("걸러 보기: 기능(의무 지도의 기능 차례, 수)과 법령(묶음 차례, 수). 첫 보기는 모두", () => {
+  // 제재의 무게(2026-11-24 오너 승인): 징역·과징금 / 벌금·과태료 / 명령·없음. 의무 지도에 제재가 있을 때만 걸러 보기와 표지가 있다.
+  const TIERS: [string, string[]][] = [
+    ["징역·과징금", ["징역", "과징금"]],
+    ["벌금·과태료", ["벌금", "과태료"]],
+    ["명령·없음", ["명령", "없음"]],
+  ];
+  const tierOf = (duty: Duty) => (duty.sanction ? TIERS.findIndex(([, classes]) => classes.includes(duty.sanction!.class)) : -1);
+  const sanctioned = map.duties.some((duty) => duty.sanction);
+
+  it("걸러 보기: 기능(의무 지도의 기능 차례, 수)과 법령(묶음 차례, 수), 제재가 있으면 제재의 무게(수). 첫 보기는 모두", () => {
     expect(index.filters).toEqual([
       { label: "기능", options: ["모든 기능", ...map.features.map((feature) => `${feature.name} (${map.duties.filter((duty) => duty.feature === feature.id).length})`)] },
       { label: "법령", options: ["모든 법령", ...index.groups.map((group) => `${group.name} (${group.rows.length})`)] },
+      ...(sanctioned
+        ? [{ label: "제재", options: ["모든 제재", ...TIERS.map(([name], s) => `${name} (${map.duties.filter((duty) => tierOf(duty) === s).length})`)] }]
+        : []),
     ]);
+  });
+
+  it("제재(있으면): 의무 줄마다 '어기면 · 표지 말', 줄의 무게(data-s), 펼치면 제재 조문마다 걸리는 때·문구·법과 조항·법제처 링크와 원문", () => {
+    for (const row of rows) {
+      const duty = dutyOf(row);
+      expect(row.s, duty.id).toBe(String(tierOf(duty)));
+      if (!duty.sanction) {
+        expect(row.sanction, duty.id).toBeNull();
+        continue;
+      }
+      expect(row.sanction?.badge, duty.id).toBe(`어기면 · ${duty.sanction.label}`);
+      expect(row.sanction?.lines.length, duty.id).toBe(duty.sanction.items.length);
+      duty.sanction.items.forEach((item, i) => {
+        const when = [item.via === "order" ? "시정명령 등을 따르지 않았을 때" : null, item.condition].filter(Boolean).join(", ");
+        expect(row.sanction!.lines[i].startsWith(`${when ? `${when} ` : ""}${item.penalty} ${item.law} ${item.clause}`), duty.id).toBe(true);
+        expect(row.sanction!.quotes[i], duty.id).toBe(item.quote);
+      });
+      expect(row.sanction?.links, duty.id).toEqual(duty.sanction.items.flatMap((item) => (item.url ? [item.url] : [])));
+    }
   });
 
   it("#status 상태의 뜻: 상태 7개와 판정 범위. 글은 STATUS_LEGEND 와 판정 범위의 이름표·설명(scopeLabel, scopeNote) 그대로다", () => {
@@ -1178,9 +1212,12 @@ describe("조문 도감 (/policy): 의무 지도", () => {
     for (const [, id] of html.matchAll(/href="#([^"]*)"/g)) expect(html, id).toContain(` id="${id}"`);
   });
 
-  it("쓰지 않는 말이 없고(조문 원문은 빼고 본다), 마우스를 올려야 뜨는 말(title)이 없다", () => {
+  it("쓰지 않는 말이 없고(조문 원문과 제재 표의 몫은 빼고 본다), 마우스를 올려야 뜨는 말(title)이 없다", () => {
     const boxes = elementsOf(html, '<pre class="statute">');
-    const shown = plain(boxes.reduce((rest, box) => rest.replace(box, ""), html));
+    const shown = withoutSanctions(
+      plain(boxes.reduce((rest, box) => rest.replace(box, ""), html)),
+      map.duties.map((duty) => duty.sanction),
+    );
     for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(shown), `${pattern} — ${why}`).toBe(false);
     expect(html).not.toMatch(/\stitle="/);
   });

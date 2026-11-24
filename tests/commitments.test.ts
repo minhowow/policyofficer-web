@@ -1,10 +1,11 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { SANCTION_TEXT } from "@/lib/duties/sanction";
 import { packMeta, policySlug } from "@/lib/pack";
 import nextConfig from "../next.config";
 import { root, walk } from "./helpers";
-import { BANNED_WORDING } from "./wording";
+import { BANNED_WORDING, SANCTION_SOURCE } from "./wording";
 
 // docs/commitments.md 의 약속 가운데 기계로 지킬 수 있는 것. 2026-11-03 에 2장(2026-10-24 에 바뀐 약속: 서버가 있는 분석
 // 서비스)에 맞췄다. 정적 내보내기 시험을 걷고, 서버를 정한 구조 안에만 두는 시험으로 바꿨다. 문구 시험은 그대로다.
@@ -17,11 +18,24 @@ const code = sources.filter((file) => CODE.test(file));
 const read = (file: string) => readFileSync(path.join(root, file), "utf8");
 
 describe("표기 약속: 소스에 적은 문구", () => {
+  // 제재의 말(과징금·과태료·벌금)과 제재 표의 주의 문구는 SANCTION_SOURCE 한 파일에만 적는다(docs/commitments.md 1장, 2026-11-24
+  // 오너 승인). 그 파일도 다른 말(단정 등)은 막는다.
+  const sanctionWords = BANNED_WORDING.find(([pattern]) => pattern.test("과징금"))!;
   it.each(sources.filter((file) => /\.(js|jsx|mjs|cjs|ts|tsx|css|json|md|mdx|txt)$/.test(file)))("%s", (file) => {
-    const text = read(file);
-    for (const [pattern, why] of BANNED_WORDING) {
+    const own = file === SANCTION_SOURCE;
+    const text = own ? read(file).replace(`"${SANCTION_TEXT.note}"`, "") : read(file);
+    for (const entry of BANNED_WORDING) {
+      if (own && entry === sanctionWords) continue;
+      const [pattern, why] = entry;
       expect(pattern.test(text), `${file}: ${pattern} — ${why}`).toBe(false);
     }
+  });
+
+  it("제재의 말을 받는 파일은 그 말과 주의 문구를 쓴다", () => {
+    expect(sources).toContain(SANCTION_SOURCE);
+    expect(read(SANCTION_SOURCE)).toContain(`"${SANCTION_TEXT.note}"`);
+    expect(SANCTION_TEXT.note).toBe("법에 적힌 최대 제재입니다. 위반 판정이 아니며, 실제 부과는 위반 사실과 규모에 따라 다릅니다.");
+    expect(SANCTION_TEXT.badge("x")).toMatch(/^어기면 /);
   });
 });
 

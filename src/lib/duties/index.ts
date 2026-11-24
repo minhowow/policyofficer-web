@@ -1,10 +1,12 @@
 import raw from "@data/duty-map.json";
+import type { Sanction } from "./sanction";
 
 /**
  * 의무 지도(조문 도감 /policy/, 2026-11-15 오너 결정). CLI 의 기능–의무 표와 검토 후보 표에서 AI 검토(review)가 묻는 의무만
  * 옮긴 것이다(`node scripts/export-duty-map.mjs` → data/duty-map.json, 실행기가 설치하는 CLI 커밋에서 읽는다). 나머지 의무는 갈래별
  * 수만 있다. 조문 원문은 싣지 않고 법제처 주소만 둔다(조문 원문은 팩 메타데이터의 것만 싣는다). 화면에 쓰지 않는 말이 든 제목·의무
- * 한 줄·걸리는 코드는 내보낼 때 null 로 두었다(화면은 법·조문만 적는다).
+ * 한 줄·걸리는 코드는 내보낼 때 null 로 두었다(화면은 법·조문만 적는다). 의무마다 법에 적힌 제재(`sanction`)는 CLI 의 제재 표에서
+ * 옮긴 것이다(2026-11-24 오너 승인, `./sanction`).
  */
 
 export interface MapDuty {
@@ -30,10 +32,13 @@ export interface MapDuty {
   audience: boolean;
   /** 특정 품목을 팔 때만 걸리는 의무의 품목 이름. */
   goods: string | null;
+  /** 법에 적힌 제재. 고정 CLI 판에 제재 표가 없으면 없다. */
+  sanction?: Sanction | null;
 }
 
 export interface DutyMap {
-  cli: { commit: string };
+  /** 의무를 옮긴 CLI 커밋. `sanctions` 는 제재 표를 어디서 읽었는지(git: 그 커밋, file: 미리 보기용 파일, null: 그 판에 없음). */
+  cli: { commit: string; sanctions?: "git" | "file" | null };
   total: number;
   candidates: number;
   asked: number;
@@ -61,6 +66,13 @@ export function dutyFeatureHref(featureId: string): string {
 
 export function featureName(id: string): string {
   return dutyMap.features.find((feature) => feature.id === id)?.name ?? id;
+}
+
+const byId = new Map(dutyMap.duties.map((duty) => [duty.id, duty]));
+
+/** 의무 id 의 제재. 의무 지도에 없거나 제재 표가 없으면 null. 이미 저장된 분석과 사례의 체크리스트도 의무 id 로 이것을 붙인다. */
+export function sanctionOf(id: string): Sanction | null {
+  return byId.get(id)?.sanction ?? null;
 }
 
 /** 정책의 내용을 싣는 의무(팩에 적힌 그 정책의 첫 의무). */

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { casesFile } from "@/lib/cases";
 import { caseChecklist } from "@/lib/cases/checklist";
+import { dutyMap, sanctionOf } from "@/lib/duties";
+import { byWeight } from "@/lib/duties/sanction";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { parseReview, REVIEW_STATUSES } from "@/lib/review";
 import { checklistDoc, checklistFileName, checklistMarkdown } from "@/lib/review/checklist";
@@ -8,7 +10,11 @@ import { SANCTION } from "@/lib/review/text";
 import { syntheticStore } from "@/lib/service/synthetic";
 import { SITE } from "@/lib/site";
 import { getChecklistMarkdown } from "@/server/checklist";
+import { withoutSanctions } from "./sanctions";
 import { BANNED_WORDING } from "./wording";
+
+/** 의무 지도의 제재(제재 표가 있는 판이면). 문구 시험은 제재 표의 몫을 빼고 본다(docs/commitments.md 1장, 2026-11-24). */
+const sanctions = dutyMap.duties.map((duty) => duty.sanction);
 
 // 의무 체크리스트 내보내기(2026-11-13 오너 지시): 마크다운 파일과 인쇄용 보기가 같은 모양(checklistDoc)에서 나온다.
 
@@ -24,10 +30,12 @@ describe("체크리스트 내보내기", () => {
       if (labels.includes(REVIEW_GOODS_LABEL)) expect(labels.indexOf(REVIEW_GOODS_LABEL)).toBeGreaterThan(-1);
       const duties = doc.groups.flatMap((group) => group.entries.map((entry) => entry.duty));
       expect(duties.sort()).toEqual(review.checklist.map((item) => item.duty).sort());
-      // 코드에서 본 것은 결과의 요약이 고른 의무가 먼저다.
+      // 코드에서 본 것은 결과의 요약이 고른 의무가 먼저다. 제재 표가 있으면 그 위에 무거운 제재 먼저(같은 무게끼리는 그 차례).
       const seen = doc.groups.find((group) => group.key === "seen-in-code");
       const top = review.summary.top.filter((duty) => seen?.entries.some((entry) => entry.duty === duty));
-      expect(seen?.entries.slice(0, top.length).map((entry) => entry.duty) ?? []).toEqual(top);
+      const listed = seen?.entries.map((entry) => entry.duty) ?? [];
+      const before = [...top, ...listed.filter((duty) => !top.includes(duty))];
+      expect(listed).toEqual(byWeight(before, sanctionOf));
       expect(doc.overview.check).toBe(
         review.checklist.filter((item) => !c.recheck.includes(item.duty) && ["seen-in-code", "check-outside", "check-applicability"].includes(item.status) && item.group !== "goods").length,
       );
@@ -55,7 +63,7 @@ describe("체크리스트 내보내기", () => {
         }
         if (item.dutyText && SANCTION.test(item.dutyText)) expect(text).not.toContain(item.dutyText);
       }
-      for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(text), `${c.slug}: ${why}`).toBe(false);
+      for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(withoutSanctions(text, sanctions)), `${c.slug}: ${why}`).toBe(false);
       expect(checklistFileName(source)).toMatch(/^checklist-[A-Za-z0-9._-]+-[0-9a-f]{7}\.md$/);
     }
   });
@@ -68,7 +76,7 @@ describe("체크리스트 내보내기", () => {
     const doc = checklistDoc(changed);
     const entry = doc.groups.flatMap((group) => group.entries).find((e) => e.duty === review.checklist[0].duty)!;
     expect(entry.dutyText).toBe("");
-    expect(checklistMarkdown(doc, caseChecklist(c)!.source)).not.toContain(word);
+    expect(withoutSanctions(checklistMarkdown(doc, caseChecklist(c)!.source), sanctions)).not.toContain(word);
   });
 
   it("분석의 마크다운 파일(GET /api/analyses/{id}/checklist/): review 가 있는 끝난 분석만, 받기 머리와 함께. 합성이면 주소 없이 합성 예시", async () => {

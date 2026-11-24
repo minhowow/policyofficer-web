@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
 import type { CodeSource } from "@/components/result/PolicyCard";
+import { SanctionBadge, SanctionDetails } from "@/components/result/Sanction";
 import { Tier } from "@/components/result/Tiers";
 import { Where } from "@/components/result/Where";
 import { keepParticles } from "@/components/text";
+import { sanctionOf } from "@/lib/duties";
+import { byWeight, SANCTION_TEXT, sanctionTier } from "@/lib/duties/sanction";
 import { REVIEW_STATUSES, type Review, type ReviewCitation, type ReviewItem, type ReviewStatus } from "@/lib/review";
 import { layoutFlow } from "@/lib/review/flow";
 import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, rebutLine, SANCTION } from "@/lib/review/text";
@@ -11,6 +14,7 @@ import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@
 import { fileLink, shortCommit } from "@/lib/service/href";
 import { SITE } from "@/lib/site";
 import { CitedLines, FlowFigure } from "./FlowFigure";
+import { HeavyFilter } from "./HeavyFilter";
 
 /** 확인할 것(세 갈래)의 수. 체크리스트 내보내기·목록 줄의 수와 같은 함수다(`lib/review/text.ts`). */
 export { checkCount };
@@ -34,6 +38,11 @@ export { checkCount };
  *
  * 품목 신호가 없어 묻지 않은 품목 의무(묶음 goods)는 "특정 품목을 판다면 확인할 것" 한 줄로 접고 확인할 것의 수에 넣지 않는다. 프로필
  * 신호 인용(`why` profile)은 코드 줄이 아니라 기능이 있다는 파일이라 인용한 줄과 따로 적는다.
+ *
+ * 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 의무 id 로 의무 지도에서 찾아(`sanctionOf`. 이미 저장된 분석과 사례에도 그대로
+ * 붙는다) 항목 제목 옆에 표지, 항목 안에 조문을 적고, 갈래 안을 무거운 차례로 늘어놓는다(`byWeight`. 같은 무게는 지금 차례).
+ * 맨 위 요약에 확인할 것 가운데 강조 무게(징역 등, `SANCTION_TIERS` 의 첫째)가 걸리는 항목의 수(누르면 그 항목만)와 주의 문구를 한 번 둔다. 제재 표가 없는 판이면
+ * 셋 다 없다.
  */
 export function ReviewView({
   review,
@@ -50,6 +59,8 @@ export function ReviewView({
   const held = review.checklist.filter((item) => recheck.includes(item.duty));
   const items = review.checklist.filter((item) => !recheck.includes(item.duty));
   const check = checkCount(items);
+  const sanctioned = review.checklist.some((item) => sanctionOf(item.duty) !== null);
+  const heavy = items.filter(isHeavy).length;
   return (
     <div className="tiers review">
       {/* 맨 위 한 문장 요약: 감지된 기능 · 걸릴 수 있는 의무 · 확인할 것(세 갈래를 합친 수). 개수만 센다. */}
@@ -63,9 +74,21 @@ export function ReviewView({
         <span>
           확인할 것 <b>{check}건</b>
         </span>
+        {sanctioned && (
+          <span className="ov-sanc">
+            {heavy > 0 ? (
+              <HeavyFilter target={CHECKLIST_ID} label={SANCTION_TEXT.heavy} count={heavy} />
+            ) : (
+              <>
+                {SANCTION_TEXT.heavy} <b>0건</b>
+              </>
+            )}
+          </span>
+        )}
       </p>
       {/* 확인할 것이 0건이어도 법적 문제가 없다는 뜻이 아니다(docs/commitments.md 의 1. 목록 줄도 같은 수에 이 말을 단다). */}
       {check === 0 && <p className="hint zero-note">{SITE.zeroCheckIsNotClearance}</p>}
+      {sanctioned && <p className="hint sanc-caution">{SANCTION_TEXT.note}</p>}
       <ServiceTier review={review} code={code} />
       <Tier n={2} name="개인정보 흐름">
         {review.flow.nodes.length === 0 ? (
@@ -165,6 +188,29 @@ function SignalFiles({ citations, code }: { citations: ReviewCitation[]; code: C
   );
 }
 
+/** 체크리스트를 감싼 요소의 id(맨 위 요약의 걸러 보기가 가리킨다. 쪽에 체크리스트는 하나다). */
+const CHECKLIST_ID = "rv-checklist";
+
+/** 확인할 것(세 갈래, 묻지 않은 품목 빼고)이면서 강조 무게의 제재가 걸리는 항목. 맨 위 요약이 세고, 누르면 이것만 남긴다. */
+function isHeavy(item: ReviewItem): boolean {
+  const sanction = sanctionOf(item.duty);
+  return sanction !== null && sanctionTier(sanction) === 0 && CHECKS.includes(item.status) && item.group !== "goods";
+}
+
+/** 항목의 제목(의무 한 줄)과 그 옆의 제재 표지. 좁은 화면에서는 표지가 제목 아래로 내려간다. */
+function ItemTitle({ item }: { item: ReviewItem }) {
+  const sanction = sanctionOf(item.duty);
+  const duty = item.dutyText && !SANCTION.test(item.dutyText) ? item.dutyText : "";
+  if (!duty && !sanction) return null;
+  return (
+    <div className="rv-title">
+      {duty && <p className="rv-duty">{keepParticles(duty)}</p>}
+      {duty && sanction && " "}
+      {sanction && <SanctionBadge sanction={sanction} />}
+    </div>
+  );
+}
+
 /** 체크리스트의 의무 한 건. */
 function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   // 관문이 답을 바꾼 항목은 그 까닭을 첫 줄에, 모델의 말은 모두 '자세히'에 둔다.
@@ -173,8 +219,9 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   const notAnswered = notAnsweredText(item);
   const cites = item.citations.filter((cite) => cite.ok && cite.why !== "profile");
   const signals = item.citations.filter((cite) => cite.ok && cite.why === "profile");
+  const sanction = sanctionOf(item.duty);
   return (
-    <li className="rv-item">
+    <li className="rv-item" data-heavy={isHeavy(item) ? "" : undefined}>
       <p className="rv-law">
         <span>
           {item.law} {item.article}
@@ -190,7 +237,7 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
         )}
         {item.verification === "overturned" && <span className="tag">반박이 바꿈</span>}
       </p>
-      {item.dutyText && !SANCTION.test(item.dutyText) && <p className="rv-duty">{keepParticles(item.dutyText)}</p>}
+      <ItemTitle item={item} />
       {seen && <p className="rv-seen">{keepParticles(seen)}</p>}
       {item.missing && CHECKS.includes(item.status) && (
         <p className="ask-line">
@@ -205,6 +252,7 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
         </p>
       )}
       {notAnswered && <p className="hint">{notAnswered}</p>}
+      {sanction && <SanctionDetails sanction={sanction} />}
       {item.searches.length > 0 && (
         <details className="f-more">
           <summary>찾아본 말 {item.searches.length}개</summary>
@@ -236,6 +284,7 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
  * 쓴다.
  */
 function HeldItem({ item, ask = false }: { item: ReviewItem; ask?: boolean }) {
+  const sanction = sanctionOf(item.duty);
   return (
     <li className="rv-item">
       <p className="rv-law">
@@ -252,27 +301,34 @@ function HeldItem({ item, ask = false }: { item: ReviewItem; ask?: boolean }) {
           </a>
         )}
       </p>
-      {item.dutyText && !SANCTION.test(item.dutyText) && <p className="rv-duty">{keepParticles(item.dutyText)}</p>}
+      <ItemTitle item={item} />
       {ask && item.question && (
         <p className="ask-line">
           <span className="lbl">질문</span> {item.question}
         </p>
       )}
+      {sanction && <SanctionDetails sanction={sanction} />}
     </li>
   );
 }
 
-/** 의무 체크리스트: 코드에서 본 것의 맨 위 다섯 건을 먼저, 나머지 갈래는 접는다. 차례는 결과에 실린 그대로(이미 갈래 순)다. */
+/**
+ * 의무 체크리스트: 코드에서 본 것의 맨 위 다섯 건(결과의 요약이 고른 수)을 먼저, 나머지 갈래는 접는다. 차례는 갈래 안에서 무거운
+ * 제재 먼저(`byWeight`), 같은 무게끼리는 결과에 실린 그대로(코드에서 본 것은 요약이 고른 것 먼저)다.
+ */
 function Checklist({ review, items, held, code }: { review: Review; items: ReviewItem[]; held: ReviewItem[]; code: CodeSource | null }) {
-  const goods = items.filter((item) => item.group === "goods");
-  const by = (status: ReviewStatus) => items.filter((item) => item.status === status && item.group !== "goods");
-  const seen = by("seen-in-code");
-  const top = review.summary.top.flatMap((duty) => seen.filter((item) => item.duty === duty));
-  const others = seen.filter((item) => !top.includes(item));
-  const lead = top.length > 0 ? top : seen.slice(0, 5);
-  const restSeen = top.length > 0 ? others : seen.slice(5);
+  const weigh = (list: ReviewItem[]) => byWeight(list, (item) => sanctionOf(item.duty));
+  const goods = weigh(items.filter((item) => item.group === "goods"));
+  const by = (status: ReviewStatus) => weigh(items.filter((item) => item.status === status && item.group !== "goods"));
+  const raw = items.filter((item) => item.status === "seen-in-code" && item.group !== "goods");
+  const top = review.summary.top.flatMap((duty) => raw.filter((item) => item.duty === duty));
+  const seen = weigh([...top, ...raw.filter((item) => !top.includes(item))]);
+  const leadCount = top.length > 0 ? top.length : 5;
+  const lead = seen.slice(0, leadCount);
+  const restSeen = seen.slice(leadCount);
+  const heldItems = weigh(held);
   return (
-    <div className="rv-check">
+    <div className="rv-check" id={CHECKLIST_ID}>
       <section className="ck ck-check">
         <h3 className="ck-hd ck-hd-check">
           {REVIEW_STATUS_LABEL["seen-in-code"]} <span className="ck-n">{seen.length}건</span>
@@ -335,7 +391,7 @@ function Checklist({ review, items, held, code }: { review: Review; items: Revie
           </summary>
           <p className="hint">CLI 를 고친 다음 판에서 다시 돌립니다.</p>
           <ol className="rv-items">
-            {held.map((item) => (
+            {heldItems.map((item) => (
               <HeldItem key={item.duty} item={item} />
             ))}
           </ol>

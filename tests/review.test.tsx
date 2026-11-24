@@ -8,6 +8,7 @@ import { layoutFlow } from "@/lib/review/flow";
 import CasePage from "@/app/cases/[slug]/page";
 import CasesPage from "@/app/cases/page";
 import { casesFile } from "@/lib/cases";
+import { dutyMap } from "@/lib/duties";
 import { EVAL_LIMITS, evalFile } from "@/lib/cases/eval";
 import { evalFigureSvg } from "@/lib/cases/eval-figure";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
@@ -15,10 +16,13 @@ import { SITE } from "@/lib/site";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { closedDetailsAt, elementAt, elementsOf, readJson, textOf } from "./helpers";
+import { withoutSanctions } from "./sanctions";
 import { BANNED_WORDING } from "./wording";
 
+/** 쓰지 않는 말이 없다. 제재 표의 몫(표지·주의 문구·제재 조문, 2026-11-24)은 빼고 본다. */
 const expectNoBanned = (text: string) => {
-  for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(text), why).toBe(false);
+  const rest = withoutSanctions(text, dutyMap.duties.map((duty) => duty.sanction));
+  for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(rest), why).toBe(false);
 };
 
 // review 2판(policypack review, CLI e12e6ba)의 결과를 읽는 부품과 화면(2026-11-11 오너 지시). 자료는 손으로 만든 합성 예시다.
@@ -50,7 +54,7 @@ describe("review 결과 (2판)", () => {
   it("체크리스트: 코드에서 본 것의 맨 위 다섯 건은 펼쳐 두고, 나머지 갈래는 접는다. 해당 없음은 찾아본 말과 다시 센 건수를 펼치면 보인다", () => {
     const html = renderToStaticMarkup(<ReviewView review={parseReview(sample())!} />);
     const lead = elementsOf(html, '<ol class="rv-items">')[0];
-    expect(elementsOf(lead, '<li class="rv-item">')).toHaveLength(5);
+    expect(elementsOf(lead, '<li class="rv-item"')).toHaveLength(5);
     expect(closedDetailsAt(html, html.indexOf('<ol class="rv-items">'))).toEqual([]);
     for (const status of ["check-outside", "check-applicability", "unknown", "evidence-found", "likely-not-applicable", "not-applicable"] as const) {
       const at = html.indexOf(`<details class="rv-group rv-${status}">`);
@@ -108,7 +112,7 @@ describe("review 결과 (2판)", () => {
     expect(text).toContain("남은 부족한 점을 적어");
     expect(text).toContain("금지된 행위 자체를 보인 줄이 없어");
     expect(text).not.toContain("[remaining-gap]");
-    for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(text), why).toBe(false);
+    expectNoBanned(text);
   });
 
   it("인용은 관문을 통과한 것만, 의무 한 줄에 처분의 말이 들면 싣지 않는다", () => {

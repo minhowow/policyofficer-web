@@ -19,6 +19,25 @@ describe("의무 지도의 자료", () => {
     expect(dutyMap.asked).toBe(dutyMap.duties.length);
   });
 
+  it("제재(2026-11-24)는 고정 커밋의 제재 표에서 옮긴 것이고(미리 보기용 파일로 만든 자료는 커밋하지 않는다), 모든 의무에 있거나 모두 없다", () => {
+    const sanctioned = dutyMap.duties.filter((duty) => duty.sanction !== undefined);
+    if (sanctioned.length === 0) {
+      expect(dutyMap.cli.sanctions ?? null).toBeNull();
+      return;
+    }
+    expect(dutyMap.cli.sanctions).toBe("git");
+    expect(sanctioned).toHaveLength(dutyMap.duties.length);
+    for (const duty of dutyMap.duties) {
+      const sanction = duty.sanction!;
+      expect(sanction, duty.id).not.toBeNull();
+      expect([...sanction.label].length, duty.id).toBeLessThanOrEqual(32);
+      for (const item of sanction.items) {
+        if (item.url) expect(item.url.startsWith("https://www.law.go.kr/"), duty.id).toBe(true);
+        expect(item.quote.trim().length, duty.id).toBeGreaterThan(0);
+      }
+    }
+  });
+
   it("정적 규칙 팩의 정책은 모두 의무 지도의 의무를 가리키고, 정책이 붙은 의무는 팩의 정책만 가리킨다. 정책마다 내용을 싣는 의무는 팩에 적힌 첫 의무다", () => {
     for (const policy of packMeta.policies) expect(policyHomeDuty(policy.id)?.policies, policy.id).toContain(policy.id);
     // 국외 이전 정책(제28조의8, 제26조)은 표의 차례로는 제26조가 먼저지만 팩에 적힌 첫 의무는 제28조의8 이다.

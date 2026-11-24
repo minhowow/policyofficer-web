@@ -560,14 +560,18 @@ export interface DutyRowRead {
   open: boolean;
   /** 줄의 기능 차례(data-f). */
   f: string;
+  /** 줄의 제재 무게(data-s, 제재가 없으면 "-1"). */
+  s: string;
   title: string;
+  /** 제목 옆의 제재 표지와 펼친 안의 제재 조문(2026-11-24). 제재가 없으면 null. */
+  sanction: { badge: string; lines: string[]; quotes: string[]; links: string[] } | null;
   /** 둘째 줄의 조각들(조문, 기능, '정적 규칙'). */
   sub: string[];
   /** 펼친 안의 의무 한 줄. 없으면 null. */
   duty: string | null;
   /** 사실 줄(기능, 걸리는 코드, 조문). */
   facts: { label: string; value: string; html: string }[];
-  /** 법제처 링크(밖으로 가는 링크). */
+  /** 법제처 링크(밖으로 가는 링크. 제재 조문의 링크는 `sanction.links`). */
   ext: string[];
   /** 정적 규칙: 정책 쪽 링크와 규칙 링크(그 정책이 다른 의무에 실렸으면 그 의무의 자리로 가는 링크 하나). */
   statics: { title: string; hrefs: string[] } | null;
@@ -601,18 +605,31 @@ function dutyRowOf(details: string): DutyRowRead {
   const duty = first(body, '<p class="dr-duty">');
   const facts = need(body, '<dl class="dr-facts">');
   const block = first(body, '<section class="dr-static"') ?? first(body, '<p class="dr-static-link">');
+  const badge = first(summary, '<span class="sanc ');
+  const detail = first(body, '<div class="sanc-detail">');
+  const rest = detail === null ? body : body.replace(detail, "");
   return {
     id: attribute(tag, "id") ?? "",
     open: / open=""/.test(tag),
     f: attribute(tag, "data-f") ?? "",
+    s: attribute(tag, "data-s") ?? "",
     title: plain(need(summary, '<span class="dr-title">')),
+    sanction:
+      badge === null
+        ? null
+        : {
+            badge: plain(badge.replace(/<span class="sanc-mark"[^>]*>[^<]*<\/span>/, "")).trim(),
+            lines: detail === null ? [] : elementsOf(detail, '<p class="sanc-line">').map(plain),
+            quotes: detail === null ? [] : elementsOf(detail, '<blockquote class="statute">').map(plain),
+            links: detail === null ? [] : [...detail.matchAll(/<a class="ob-ext" href="([^"]*)"/g)].map((m) => decodeEntities(m[1])),
+          },
     sub: childrenOf(sub).map(plain),
     duty: duty === null ? null : plain(duty),
     facts: elementsOf(facts, "<div>").map((row) => {
       const dd = need(row, "<dd>");
       return { label: plain(need(row, "<dt>")), value: plain(dd), html: dd };
     }),
-    ext: [...body.matchAll(/<a class="ob-ext" href="([^"]*)"/g)].map((m) => decodeEntities(m[1])),
+    ext: [...rest.matchAll(/<a class="ob-ext" href="([^"]*)"/g)].map((m) => decodeEntities(m[1])),
     statics:
       block === null
         ? null

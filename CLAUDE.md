@@ -18,7 +18,8 @@ CLI 는 옆 폴더 `../Plitsoft-SDP` 에 따로 있고, 다른 사람(에이전�
 
 - **`../Plitsoft-SDP` 는 읽기만 한다.** 고치지 않는다. 그 소스(`src/policypack`)를 가져다 쓰지도 않는다.
   CLI 와는 설치된 명령의 출력(`contract/`)과 팩 메타데이터(`data/pack-meta.json`), 의무 지도(`data/duty-map.json`: 실행기의 고정
-  커밋에서 기능–의무 표를 `git show` 로 옮긴 것. 2026-11-15 오너 결정. 의무 지도의 조문 인용은 싣지 않는다)로만 이어진다.
+  커밋에서 기능–의무 표를 `git show` 로 옮긴 것. 2026-11-15 오너 결정. 의무 지도의 조문 인용은 싣지 않는다. 같은 커밋의 제재 표
+  `src/policypack/profile/sanctions.jsonl` 도 의무마다 `sanction` 으로 옮긴다. 2026-11-24 오너 승인)로만 이어진다.
 - **CLI 출력에 없는 정보를 꾸며 내지 않는다.** `decision_path` 같은 자유 문장을 해석해 구조를 만들지 않는다.
   필요한 것이 출력에 없으면 `docs/cli-requests.md` 에 요청으로 적고, 화면에는 "아직 알 수 없음"으로 정직하게 보인다.
 - **서버는 `docs/direction.md` 의 구조 안에서만 넣는다.** route handler, DB, GitHub API 호출, 실행기(GitHub Actions)
@@ -32,9 +33,10 @@ CLI 는 옆 폴더 `../Plitsoft-SDP` 에 따로 있고, 다른 사람(에이전�
   라이선스 정하기, 비용 상한 정하기. 실제 공개 저장소의 분석은 서비스가 사용자의 요청으로 한다. 에이전트가 남의 저장소를
   스스로 골라 분석하지 않는다(개발 중 시험은 합성 저장소나 오너가 정한 저장소로). 필요해지면 멈추고 `docs/ROADMAP.md` 의
   "사람 결정이 필요한 것"에 적는다.
-- **법에 관한 사실을 지어내지 않는다.** 조문은 `data/pack-meta.json` 의 `legal[].text` 원문만 쓴다. 팩에서 온 다른 글
+- **법에 관한 사실을 지어내지 않는다.** 조문은 `data/pack-meta.json` 의 `legal[].text` 원문과 제재 표의 원문 인용만 쓴다. 팩에서 온 다른 글
   가운데 제목·질문·메시지·고치는 법은 화면에 써도 된다. 팩 작성자 메모(`rationale`)는 쓰지 않는다(처분·액수 같은 주장이
-  들어 있다). 처분 사례·과징금 액수는 화면에 싣지 않는다. 싣는 것은 사람이 출처를 확인한 뒤의 일이다.
+  들어 있다). 처분 사례는 화면에 싣지 않는다. 의무마다 법에 적힌 제재는 CLI 의 제재 표에서 온 것만, 조문·원문 인용과 함께 싣는다
+  (2026-11-24 오너 승인. 표지는 "어기면"으로 시작, 주의 문구, 제재의 말은 `src/lib/duties/sanction.ts` 에만. docs/commitments.md 1장).
 
 ## 표기 (자세한 것은 docs/commitments.md)
 
@@ -84,19 +86,19 @@ npm run pack-meta   # 팩에서 data/pack-meta.json 다시 만들기
 
 | 경로 | 내용 |
 |---|---|
-| `src/app/` | 페이지: `/`(첫 화면: 표지·검색창·최근 분석), `/search`(빈 상태: 최근 분석·AI 검토가 묻는 의무(기능별), 질의: 결과·0건), `/r/[owner]/[repo]`(저장소), `/r/[owner]/[repo]/a/[id]`(분석), `/r/[owner]/[repo]/a/[id]/checklist`(의무 체크리스트 인쇄용 보기) — 이 다섯은 요청 때 그린다, `/view`(결과 파일), `/demo`(고치기 전·후), `/policy`(조문 도감 = 의무 지도: AI 검토가 묻는 의무를 법령별로, 기능·법령으로 거름. 자료 `data/duty-map.json`, 정적 규칙 정책은 그 의무 줄 안과 `/policy/[id]`), `/how`(구조 그림: 쉬운 판 셋·따라가 보기·접어 둔 자세한 판 셋. 자료는 `src/lib/how/`, 포스터·보고서용 파일은 `docs/figures/`), `/cases`(사례 넷, 41곳 평가 `data/eval-41.json`), `/cases/[slug]/checklist`(사례의 인쇄용 보기) — 빌드할 때 그린다. 체크리스트 마크다운 파일은 `/api/analyses/[id]/checklist/`, `/api/cases/[slug]/checklist/`(`src/lib/review/checklist.ts`) |
+| `src/app/` | 페이지: `/`(첫 화면: 표지·검색창·최근 분석), `/search`(빈 상태: 최근 분석·AI 검토가 묻는 의무(기능별), 질의: 결과·0건), `/r/[owner]/[repo]`(저장소), `/r/[owner]/[repo]/a/[id]`(분석), `/r/[owner]/[repo]/a/[id]/checklist`(의무 체크리스트 인쇄용 보기) — 이 다섯은 요청 때 그린다, `/view`(결과 파일), `/demo`(고치기 전·후), `/policy`(조문 도감 = 의무 지도: AI 검토가 묻는 의무를 법령별로, 기능·법령·제재로 거름, 의무마다 법에 적힌 제재의 표지와 조문. 자료 `data/duty-map.json`, 정적 규칙 정책은 그 의무 줄 안과 `/policy/[id]`), `/how`(구조 그림: 쉬운 판 셋·따라가 보기·접어 둔 자세한 판 셋. 자료는 `src/lib/how/`, 포스터·보고서용 파일은 `docs/figures/`), `/cases`(사례 넷, 41곳 평가 `data/eval-41.json`), `/cases/[slug]/checklist`(사례의 인쇄용 보기) — 빌드할 때 그린다. 체크리스트 마크다운 파일은 `/api/analyses/[id]/checklist/`, `/api/cases/[slug]/checklist/`(`src/lib/review/checklist.ts`) |
 | `src/lib/service/` | 분석 서비스의 데이터 모델과 `ServiceStore` 인터페이스, 합성 구현(`synthetic.ts`, SERVICE_STORE=synthetic 미리보기·시험용), 이름 검사, 최근 분석 고르기(`activity.ts`), 두벌식 → QWERTY(`keyboard.ts`), 자동 완성의 질의 꼴·합치기·상태 줄(`suggest.ts`) |
 | `src/server/` | 서버 코드(모두 `import "server-only"`): 설정(`config.ts`, 환경 변수와 기본값), DB(`db/`, pg·PGlite, `migrations/*.sql`), GitHub 클라이언트(`github.ts`), 실행기 깨우기(`runner.ts`), 저장소 구현(`store/`, `getStore()` 가 고른다), `/api/` 의 일(`api.ts`), 실행기 콜백의 상태 전이(`callbacks.ts`)와 서명(`signature.ts`) |
 | `src/app/api/` | route handler: `analyses/`(요청), `analyses/[id]/`(진행), `repos/suggest/`(검색창 자동 완성), `runner/[id]/`(실행기 콜백), `runner/claim/`(로컬 실행기). `src/server/api.ts` 를 부르기만 한다. 서버 코드는 `src/server/` 와 여기에만 둔다 |
 | `runner/`, `.github/workflows/analyze.yml` | 분석 실행기(GitHub Actions). `run.mjs`·`tar.mjs` 는 Node 내장 모듈만 쓴다. 대상 코드를 실행하지 않는다 |
 | `src/components/service/` | 검색창(`SearchForm.tsx` 가 셋 모두 `SearchCombobox.tsx` 로 그린다), 최근 분석 줄(`activity.tsx`), 저장소 쪽의 최신 분석(`repository.tsx`), 분석 쪽 부품, 분석 대시보드. 브라우저 부품은 요청 단추(`RequestButton.tsx`), 진행 다시 읽기(`LiveAnalysis.tsx`), 검색창 자동 완성(`SearchCombobox.tsx`) 셋이고 같은 사이트의 `/api/` 만 부른다. 머리글의 브라우저 부품(`src/components/HeaderBehavior.tsx`, 메뉴 닫기·지금 쪽 표시·쪽 이동 중 표시)은 어디에도 요청하지 않는다 |
-| `src/components/result/` | 결과 화면 부품. 모든 페이지가 함께 쓴다 |
+| `src/components/result/` | 결과 화면 부품. 모든 페이지가 함께 쓴다(의무마다 법에 적힌 제재의 표지·조문은 `Sanction.tsx`, 그 말과 무게는 `src/lib/duties/sanction.ts`) |
 | `src/components/policy/` | 조문 도감의 정책 쪽(`PolicyDetail.tsx`, 서버 부품). 브라우저 부품은 `PolicyNav.tsx` 하나(쪽 안의 자리로 옮기기, 주소의 규칙 자리 펼치기)이고 어디에도 요청하지 않는다. 규칙의 자리 이름은 `ruleAnchor()`, 그 주소는 `ruleHref()`(`src/lib/pack/href.ts`) |
 | `src/lib/report/` | 결과 JSON 타입, 파서, 상태 문구, 화면용 구조 |
 | `src/lib/pack/` | 팩 메타데이터 타입과 읽기 |
 | `contract/` | CLI 와의 이음매: 스키마, 실제 출력 수집본, v1 초안 예시, 합성 데모 코드 |
 | `data/pack-meta.json` | 생성물. 정책·조문 원문·대안·질문 |
-| `scripts/` | 수집, 팩 메타데이터 생성, 가짜 GitHub API(`github-stub.mjs`), 로컬 실행기(`local-runner.mjs`, `--fixture`), 죽은 CSS 점검(`css-unused.mjs`), 구조 그림 내보내기(`export-figures.mjs`), 41곳 평가의 숫자와 포스터 그림(`export-eval.mjs`, `export-eval-figure.mjs`), 의무 지도(`export-duty-map.mjs`: 실행기의 CLI 커밋에서 `git show` 로 기능–의무 표를 읽어 `data/duty-map.json`) |
+| `scripts/` | 수집, 팩 메타데이터 생성, 가짜 GitHub API(`github-stub.mjs`), 로컬 실행기(`local-runner.mjs`, `--fixture`), 죽은 CSS 점검(`css-unused.mjs`), 구조 그림 내보내기(`export-figures.mjs`), 41곳 평가의 숫자와 포스터 그림(`export-eval.mjs`, `export-eval-figure.mjs`), 의무 지도(`export-duty-map.mjs`: 실행기의 CLI 커밋에서 `git show` 로 기능–의무 표와 제재 표를 읽어 `data/duty-map.json`) |
 | `.env.example` | 환경 변수 이름(값은 비운다). 배포할 때 오너가 할 일은 `docs/deploy.md` |
 | `tests/` | 계약 시험, 화면 구조 시험, 그려 본 화면 시험, 약속 시험, 서버 시험(`server-*.test.ts`, 메모리 PGlite + 가짜 GitHub), 실행기 시험(`runner.test.ts`). `tests/browser/` 는 빌드된 사이트를 `next start` 로 띄워 Chrome 으로 연다. `tests/fixtures/` 는 손으로 만든 시험용 자료 |
 | `docs/` | 로드맵, 약속, 구조, CLI 에 보낸 요청, CLI 따라가기(`cli-followup.md`) |
