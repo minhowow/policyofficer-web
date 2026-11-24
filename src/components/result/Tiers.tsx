@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Icon } from "@/components/Icon";
 import { keepParticles } from "@/components/text";
+import { lawArticle } from "@/lib/duties/article";
 import type { Profile, ProfileDuties, ProfileEvidence } from "@/lib/profile";
 import { fileLink, shortCommit } from "@/lib/service/href";
 import type { CodeSource } from "./PolicyCard";
@@ -148,16 +149,14 @@ function DutyGroup({ name, duties }: { name: string; duties: ProfileDuties }) {
         {duties.items.map((item) => (
           <li key={item.id}>
             <span className="ob-law">
-              {item.law} {item.article}
+              {lawArticle(item.law, item.article)}
             </span>
             {item.duty && !SANCTION.test(item.duty) && <span className="ob-duty">{keepParticles(item.duty)}</span>}
             {item.url && (
               <a className="ob-ext" href={item.url} target="_blank" rel="noopener noreferrer">
                 법제처
                 <Icon name="external" />
-                <span className="visually-hidden">
-                  (새 창, {item.law} {item.article})
-                </span>
+                <span className="visually-hidden">{`(새 창, ${lawArticle(item.law, item.article)})`}</span>
               </a>
             )}
           </li>

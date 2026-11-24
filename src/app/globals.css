@@ -287,7 +287,8 @@ pre {
 }
 
 .request button:focus-visible,
-.segmented button[aria-pressed="true"]:focus-visible {
+.segmented button[aria-pressed="true"]:focus-visible,
+.sanc-filter[aria-pressed="true"]:focus-visible {
   outline-offset: 2px;
 }
 

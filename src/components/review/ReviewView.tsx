@@ -6,6 +6,7 @@ import { Tier } from "@/components/result/Tiers";
 import { Where } from "@/components/result/Where";
 import { keepParticles } from "@/components/text";
 import { sanctionOf } from "@/lib/duties";
+import { lawArticle } from "@/lib/duties/article";
 import { byWeight, SANCTION_TEXT, sanctionTier } from "@/lib/duties/sanction";
 import { REVIEW_STATUSES, type Review, type ReviewCitation, type ReviewItem, type ReviewStatus } from "@/lib/review";
 import { layoutFlow } from "@/lib/review/flow";
@@ -223,16 +224,12 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   return (
     <li className="rv-item" data-heavy={isHeavy(item) ? "" : undefined}>
       <p className="rv-law">
-        <span>
-          {item.law} {item.article}
-        </span>
+        <span>{lawArticle(item.law, item.article)}</span>
         {item.url && (
           <a className="ob-ext" href={item.url} target="_blank" rel="noopener noreferrer">
             법제처
             <Icon name="external" />
-            <span className="visually-hidden">
-              (새 창, {item.law} {item.article})
-            </span>
+            <span className="visually-hidden">{`(새 창, ${lawArticle(item.law, item.article)})`}</span>
           </a>
         )}
         {item.verification === "overturned" && <span className="tag">반박이 바꿈</span>}
@@ -288,16 +285,12 @@ function HeldItem({ item, ask = false }: { item: ReviewItem; ask?: boolean }) {
   return (
     <li className="rv-item">
       <p className="rv-law">
-        <span>
-          {item.law} {item.article}
-        </span>
+        <span>{lawArticle(item.law, item.article)}</span>
         {item.url && (
           <a className="ob-ext" href={item.url} target="_blank" rel="noopener noreferrer">
             법제처
             <Icon name="external" />
-            <span className="visually-hidden">
-              (새 창, {item.law} {item.article})
-            </span>
+            <span className="visually-hidden">{`(새 창, ${lawArticle(item.law, item.article)})`}</span>
           </a>
         )}
       </p>

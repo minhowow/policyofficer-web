@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { casesFile } from "@/lib/cases";
 import { caseChecklist } from "@/lib/cases/checklist";
-import { dutyMap, sanctionOf } from "@/lib/duties";
+import { sanctionOf } from "@/lib/duties";
 import { byWeight } from "@/lib/duties/sanction";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { parseReview, REVIEW_STATUSES } from "@/lib/review";
@@ -10,11 +10,8 @@ import { SANCTION } from "@/lib/review/text";
 import { syntheticStore } from "@/lib/service/synthetic";
 import { SITE } from "@/lib/site";
 import { getChecklistMarkdown } from "@/server/checklist";
-import { withoutSanctions } from "./sanctions";
+import { withoutSanctionsMarkdown } from "./sanctions";
 import { BANNED_WORDING } from "./wording";
-
-/** 의무 지도의 제재(제재 표가 있는 판이면). 문구 시험은 제재 표의 몫을 빼고 본다(docs/commitments.md 1장, 2026-11-24). */
-const sanctions = dutyMap.duties.map((duty) => duty.sanction);
 
 // 의무 체크리스트 내보내기(2026-11-13 오너 지시): 마크다운 파일과 인쇄용 보기가 같은 모양(checklistDoc)에서 나온다.
 
@@ -63,7 +60,7 @@ describe("체크리스트 내보내기", () => {
         }
         if (item.dutyText && SANCTION.test(item.dutyText)) expect(text).not.toContain(item.dutyText);
       }
-      for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(withoutSanctions(text, sanctions)), `${c.slug}: ${why}`).toBe(false);
+      for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(withoutSanctionsMarkdown(text)), `${c.slug}: ${why}`).toBe(false);
       expect(checklistFileName(source)).toMatch(/^checklist-[A-Za-z0-9._-]+-[0-9a-f]{7}\.md$/);
     }
   });
@@ -76,7 +73,8 @@ describe("체크리스트 내보내기", () => {
     const doc = checklistDoc(changed);
     const entry = doc.groups.flatMap((group) => group.entries).find((e) => e.duty === review.checklist[0].duty)!;
     expect(entry.dutyText).toBe("");
-    expect(withoutSanctions(checklistMarkdown(doc, caseChecklist(c)!.source), sanctions)).not.toContain(word);
+    // 제재 표의 몫(표지, 제재 조문, 원문)은 빼고 본다(docs/commitments.md 1장, 2026-11-24).
+    expect(withoutSanctionsMarkdown(checklistMarkdown(doc, caseChecklist(c)!.source))).not.toContain(word);
   });
 
   it("분석의 마크다운 파일(GET /api/analyses/{id}/checklist/): review 가 있는 끝난 분석만, 받기 머리와 함께. 합성이면 주소 없이 합성 예시", async () => {

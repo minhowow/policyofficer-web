@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { DutyMap, MapDuty } from "@/lib/duties";
 import { SANCTION_TEXT, SANCTION_TIERS, type Sanction } from "@/lib/duties/sanction";
-import { root } from "./helpers";
+import { elementAt, root } from "./helpers";
 
 /**
  * 제재 표(2026-11-24 오너 승인)를 시험하는 데 쓰는 것. `tests/fixtures/sanctions.jsonl` 은 CLI 제재 표의 모양(디렉터 README)을 따른
@@ -38,25 +38,41 @@ export function withFixtureSanctions(map: DutyMap): DutyMap {
   };
 }
 
-const ENTITIES: Record<string, string> = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#x27;": "'", "&#39;": "'" };
+/** 제재 표의 몫인 요소: 표지(sanc), 항목 상세(sanc-detail), 주의 문구(sanc-caution), 맨 위 요약의 수(ov-sanc), 인쇄본의 제재 조문(ck-sanc). */
+const PARTS = new Set(["sanc", "sanc-detail", "sanc-caution", "ov-sanc", "ck-sanc"]);
+
+/** 이 사이트가 정한 제재의 고정 문구(`SANCTION_TEXT`, 무게 이름). 표에서 온 글과 달리 소스의 것이라 어디서 지워도 다른 글을 가리지 않는다. */
+const FIXED = [SANCTION_TEXT.heavy, SANCTION_TEXT.note, ...SANCTION_TIERS.map((tier) => tier.label)].sort((a, b) => b.length - a.length);
+const dropFixed = (text: string) => FIXED.reduce((rest, piece) => rest.split(piece).join(" "), text);
 
 /**
- * 그려 낸 글에서 제재 표의 몫을 뺀다: 표지, 맨 위 요약의 이름, 주의 문구, 걸러 보기의 무게 이름, 그리고 표에서 온 글(표지 말,
- * 제재 문구, 걸리는 때, 보충, 원문). 문구 시험(BANNED_WORDING)은 그 나머지를 본다(docs/commitments.md 1장: 제재의 말은 제재 표의
- * 몫에만). 낱말 하나(과태료 등)만 따로 빼지는 않는다.
+ * 그려 낸 HTML 에서 제재 표의 몫을 뺀다: 제재의 요소(`PARTS`)를 자리째 걷어 내고, 남은 글에서 고정 문구(걸러 보기의 무게 이름 등)를
+ * 뺀다. 표에서 온 글(표지 말, 제재 문구)을 글자로 찾아 지우지 않는다. 그러면 다른 자리에 잘못 실린 처분 메모('[과징금 매출 3%]')까지
+ * 가린다. 문구 시험(BANNED_WORDING)은 그 나머지를 본다(docs/commitments.md 1장: 제재의 말은 제재 표의 몫에만).
  */
-export function withoutSanctions(text: string, sanctions: Iterable<Sanction | null | undefined>): string {
-  const pieces = new Set<string>([SANCTION_TEXT.heavy, SANCTION_TEXT.note, SANCTION_TEXT.order, ...SANCTION_TIERS.map((tier) => tier.label)]);
-  for (const sanction of sanctions) {
-    if (!sanction) continue;
-    pieces.add(SANCTION_TEXT.badge(sanction.label));
-    pieces.add(sanction.label);
-    if (sanction.note) pieces.add(sanction.note);
-    for (const item of sanction.items) {
-      for (const piece of [item.penalty, item.condition, item.quote]) if (piece) pieces.add(piece);
-    }
+export function withoutSanctions(html: string): string {
+  let out = html;
+  for (let at = findPart(out); at >= 0; at = findPart(out)) out = `${out.slice(0, at)}${out.slice(at + elementAt(out, at).length)}`;
+  return dropFixed(out);
+}
+
+function findPart(html: string): number {
+  for (const match of html.matchAll(/<[a-z0-9]+\b[^>]*\bclass="([^"]*)"/g)) {
+    if (match[1].split(/\s+/).some((name) => PARTS.has(name))) return match.index;
   }
-  let out = text.replace(/&(amp|lt|gt|quot|#x27|#39);/g, (entity) => ENTITIES[entity]);
-  for (const piece of [...pieces].sort((a, b) => b.length - a.length)) out = out.split(piece).join(" ");
-  return out;
+  return -1;
+}
+
+/**
+ * 내보낸 마크다운에서 제재 표의 몫을 뺀다: 항목 줄 끝의 표지(` · 어기면 · …`), 제재 조문과 보충 줄(`  - 어기면: …`), 원문 줄(`    > …`),
+ * 그리고 고정 문구(요약의 수, 주의 문구).
+ */
+export function withoutSanctionsMarkdown(text: string): string {
+  const head = SANCTION_TEXT.head;
+  const cut = text
+    .split("\n")
+    .filter((line) => !line.startsWith(`  - ${head}: `) && !line.startsWith("    > "))
+    .map((line) => line.replace(new RegExp(` · ${head} · .*?(?=( \\(반박이 바꿈\\))?$)`), ""))
+    .join("\n");
+  return dropFixed(cut);
 }

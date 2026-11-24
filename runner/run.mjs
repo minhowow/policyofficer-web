@@ -407,11 +407,16 @@ export function reviewOptions(env) {
 /** CLI 가 받는 반박 범위. */
 const REBUT_SCOPES = ["all", "found"];
 
-/** `policypack review` 의 인자(저장소 폴더는 지금 폴더). 모델 id 의 모양이나 반박 범위가 맞지 않으면 null. 묶음(--batch)은 CLI 기본(duty)이다. */
+/**
+ * `policypack review` 의 인자(저장소 폴더는 지금 폴더). 모델 id 의 모양이나 반박 범위가 맞지 않으면 null. 묶음(--batch)은 CLI 기본(duty)이다.
+ * 진행 표시는 plain 으로 못 박는다(handoff-w13-1 부터. 터미널이 아니면 원래 plain 이라 결과는 같다: stderr 에 제어 문자 없는 [mm:ss]
+ * 한 줄씩, stdout 은 JSON 그대로. 2026-11-24 오너 승인 web14).
+ */
 export function reviewArgs({ model, checker, maxUsd, timeLimitSeconds, rebutScope }) {
   if (!MODEL_ID.test(model) || !MODEL_ID.test(checker) || !REBUT_SCOPES.includes(rebutScope)) return null;
   return [
     "review", ".", "--model", model, "--checker", checker, "--max-usd", String(maxUsd), "--time-limit", String(timeLimitSeconds), "--rebut-scope", rebutScope,
+    "--progress", "plain",
   ];
 }
 

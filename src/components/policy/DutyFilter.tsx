@@ -5,6 +5,9 @@ import { Suspense, useEffect, useRef, useState, type MouseEvent, type ReactNode 
 import { SANCTION_TEXT } from "@/lib/duties/sanction";
 import { moveTo } from "@/lib/scroll";
 
+/** 같은 쪽의 이동 링크가 걸러 보기가 감춘 줄을 가리킬 때 거른 것을 풀라는 신호(`DutyJump` 가 내고 걸러 보기가 듣는다). */
+const CLEAR = "dm-clear-filters";
+
 interface FilterProps {
   features: { id: string; name: string; n: number }[];
   laws: { name: string; n: number }[];
@@ -69,8 +72,13 @@ function FilterView({ features, laws, tiers, index, wanted, live }: FilterProps 
     // 처음 열 때는 거른 것이 없다(?f= 와 #duty- 를 함께 주는 링크는 없다).
     open(false);
     const onHash = () => open(true);
+    const onClear = () => setPicked({ for: wantedNow.current, f: -1, l: -1, s: -1 });
     window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
+    window.addEventListener(CLEAR, onClear);
+    return () => {
+      window.removeEventListener("hashchange", onHash);
+      window.removeEventListener(CLEAR, onClear);
+    };
   }, [live]);
 
   const shown = index.filter(([df, dl, ds]) => (f < 0 || df === f) && (l < 0 || dl === l) && (s < 0 || ds === s)).length;
@@ -131,7 +139,8 @@ function FilterView({ features, laws, tiers, index, wanted, live }: FilterProps 
 
 /**
  * 같은 쪽의 다른 의무 줄로 가는 링크(정책 하나가 의무 둘을 가리킬 때 둘째 의무에서 첫째로). 누르면 그 줄을 펼치고 옮긴다. 주소와
- * 방문 기록은 건드리지 않는다(까닭은 `lib/scroll.ts` 의 `moveTo`). 스크립트가 붙기 전에는 해시 링크 그대로 듣는다.
+ * 방문 기록은 건드리지 않는다(까닭은 `lib/scroll.ts` 의 `moveTo`). 스크립트가 붙기 전에는 해시 링크 그대로 듣는다. 걸러 보기가 그 줄을
+ * 감췄으면(제재 거르개는 한 정책의 두 의무를 가를 수 있다) 거른 것을 풀고 다음 그림에서 옮긴다(주소의 자리가 바뀔 때와 같다).
  */
 export function DutyJump({ target, children }: { target: string; children: ReactNode }) {
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -140,7 +149,12 @@ export function DutyJump({ target, children }: { target: string; children: React
     if (!(element instanceof HTMLDetailsElement)) return;
     event.preventDefault();
     element.open = true;
-    moveTo(element);
+    if (element.getClientRects().length > 0) {
+      moveTo(element);
+      return;
+    }
+    window.dispatchEvent(new Event(CLEAR));
+    requestAnimationFrame(() => requestAnimationFrame(() => moveTo(element)));
   };
   return (
     <a href={`#${target}`} onClick={onClick}>

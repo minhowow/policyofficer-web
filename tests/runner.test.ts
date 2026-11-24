@@ -334,9 +334,12 @@ describe("도구 설치와 검사", () => {
     // 기본값은 워크플로에 값이 없을 때다(조사 haiku, 반박 sonnet, $3, 420초).
     expect(reviewArgs(reviewOptions({}))).toEqual([
       "review", ".", "--model", "anthropic:claude-haiku-5-5", "--checker", "anthropic:claude-sonnet-5-5", "--max-usd", "3", "--time-limit", "420", "--rebut-scope", "found",
+      "--progress", "plain",
     ]);
     const options = reviewOptions({ REVIEW_MODEL: "anthropic:m1", REVIEW_CHECKER: "anthropic:m2", REVIEW_MAX_USD: "0.5", REVIEW_TIME_LIMIT_SECONDS: "120" });
-    expect(reviewArgs(options)).toEqual(["review", ".", "--model", "anthropic:m1", "--checker", "anthropic:m2", "--max-usd", "0.5", "--time-limit", "120", "--rebut-scope", "found"]);
+    expect(reviewArgs(options)).toEqual([
+      "review", ".", "--model", "anthropic:m1", "--checker", "anthropic:m2", "--max-usd", "0.5", "--time-limit", "120", "--rebut-scope", "found", "--progress", "plain",
+    ]);
     // 반박 범위(2026-11-15 오너 지시: 기본 found). 워크플로가 all 을 주면 all, 모르는 값이면 기본. 묶음(--batch)은 넘기지 않는다(CLI 기본 duty).
     expect(reviewOptions({ REVIEW_REBUT_SCOPE: "all" }).rebutScope).toBe("all");
     expect(reviewOptions({ REVIEW_REBUT_SCOPE: "bogus" }).rebutScope).toBe("found");

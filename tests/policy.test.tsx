@@ -1214,11 +1214,11 @@ describe("조문 도감 (/policy): 의무 지도", () => {
 
   it("쓰지 않는 말이 없고(조문 원문과 제재 표의 몫은 빼고 본다), 마우스를 올려야 뜨는 말(title)이 없다", () => {
     const boxes = elementsOf(html, '<pre class="statute">');
-    const shown = withoutSanctions(
-      plain(boxes.reduce((rest, box) => rest.replace(box, ""), html)),
-      map.duties.map((duty) => duty.sanction),
-    );
+    const shown = plain(withoutSanctions(boxes.reduce((rest, box) => rest.replace(box, ""), html)));
     for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(shown), `${pattern} — ${why}`).toBe(false);
     expect(html).not.toMatch(/\stitle="/);
+    // 조문 앞의 '시행령'이 두 번 적히지 않고, 제재 표지가 '어기면'을 겹쳐 적지 않는다(CLI handoff-w13-2).
+    expect(plain(html)).not.toMatch(/(시행령|시행규칙) \1/);
+    expect(plain(html)).not.toContain("어기면 · 시정명령을 어기면");
   });
 });

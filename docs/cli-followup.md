@@ -2,19 +2,30 @@
 
 웹은 CLI(`../Plitsoft-SDP`)의 출력만 계약으로 받는다(`contract/README.md`). CLI 는 2026-11-10 에 웹이 고정할 판으로 태그
 `handoff-w11`(`50c70bc`)을 원격에 올렸고, 13주(11/24~11/30)에 도구 판 태그 `v0.4.0` 을 따로 단다. 그 전까지 웹은 `handoff-w11` 을
-고정하라고 적는다(CLI `docs/output.md`. 아래 "`a228856` → `handoff-w11`"). 웹의 고정 판은 지금 `handoff-w11-13`(`122de1d`)이다
+고정하라고 적는다(CLI `docs/output.md`. 아래 "`a228856` → `handoff-w11`"). 웹의 고정 판은 지금 `handoff-w13-2`(`6f1b50c`)이다
 (판 이력은 `contract/README.md`). 이 문서는
 CLI 가 바뀐 것을 언제, 어떻게 보고 어떤 순서로 받아들이는지 적는다. 요청은 `docs/cli-requests.md`, 사람이 정할 것은
 `docs/ROADMAP.md` 의 "사람 결정이 필요한 것"에 둔다.
 
-## 지금 맞춘 판 (2026-11-15, `handoff-w11-13`)
+## 지금 맞춘 판 (2026-11-24, `handoff-w13-2`)
 
 | 자리 | CLI 커밋 | 팩 판(`pack.yaml` sha256 앞 16자) |
 |---|---|---|
-| 수집본 `contract/cli-current/` (`MANIFEST.json`) | `122de1d` (2026-11-15, `dirty: false`) | `9f70938de41b6f3a` |
-| 팩 메타데이터 `data/pack-meta.json` | `122de1d` 의 `policies/kr-core` | `9f70938de41b6f3a` |
-| 실행기 `.github/workflows/analyze.yml` | `CLI_COMMIT` `122de1d66d…`, `CLI_EXCLUDE_NEWER` 2026-11-15, `REVIEW_REBUT_SCOPE` found | 같다 |
-| 의무 지도 `data/duty-map.json` | `122de1d` 의 기능–의무 표 | — |
+| 수집본 `contract/cli-current/` (`MANIFEST.json`) | `6f1b50c` (2026-11-24, `dirty: false`) | `9f70938de41b6f3a` |
+| 팩 메타데이터 `data/pack-meta.json` | `6f1b50c` 의 `policies/kr-core` | `9f70938de41b6f3a` |
+| 실행기 `.github/workflows/analyze.yml` | `CLI_COMMIT` `6f1b50c912…`, `CLI_EXCLUDE_NEWER` 2026-11-24, `REVIEW_REBUT_SCOPE` found, review 에 `--progress plain` | 같다 |
+| 의무 지도 `data/duty-map.json` | `6f1b50c` 의 기능–의무 표와 제재 표(`profile/sanctions.jsonl`) | — |
+
+`784d45f` → `6f1b50c`(2026-11-24, `handoff-w13-2`): 제재 표지 말 26개('시정명령을 어기면' → '시정명령 불이행 시', 표지 앞머리 '어기면 · '와
+겹치지 않게)와 시행령 의무 15개 조문 앞의 '시행령 '을 뗀 것뿐이다(키·구조 그대로. 프로필 수집본 두 곳의 조문이 바뀜). 그 전 판으로 만든
+결과(이미 저장된 분석, 사례 쪽)에는 '…시행령 시행령 제27조'가 남아 있어 화면이 법령 이름과 조문을 이을 때 겹친 말 하나를 뺀다(`lawArticle`).
+
+`122de1d` → `784d45f`(2026-11-24): 검사 수집본 7개의 판정·키·종료 코드와 팩 판, 프로필, 기능–의무 표는 그대로다(MANIFEST 만 바뀜).
+의무별 제재 표 `profile/sanctions.jsonl`(디렉터가 법령 원문의 벌칙·과징금·과태료 조문으로 만든 것, 의무 220개)이 더해져 의무 지도의 의무마다
+`sanction` 으로 옮겼다(2026-11-24 오너 승인. 화면은 체크리스트·조문 도감·인쇄본의 표지와 무거운 차례). review 2판은 판 번호 그대로이고
+체크리스트 항목에 선택 필드 `sanction` 이 붙었다(스키마 사본도 그 판의 것. 웹은 의무 id 로 의무 지도의 제재를 붙이므로 그 필드를 읽지
+않는다). review 는 stderr 에 진행 표시를 내고(터미널이 아니면 제어 문자 없는 `[mm:ss]` 한 줄씩), stdout 이 터미널이면 JSON 대신 요약을
+낸다(실행기는 파이프라 JSON 그대로). 실행기는 `--progress plain` 을 넘긴다.
 
 `b5888e5` → `122de1d`(2026-11-15): 검사 수집본 7개의 판정·키·종료 코드와 팩 판은 그대로다(MANIFEST 만 바뀜). 프로필은 기능
 이름 하나(`genai` 가 '생성형 AI(LLM·생성 API 호출)')만 바뀌었고 기능이 27가지가 됐다(`ai-model` 이 더해짐, 의무 없음). review 2판에

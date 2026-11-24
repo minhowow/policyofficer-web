@@ -6,7 +6,7 @@
  *   runner/run.mjs, src/server/queue.ts·callbacks.ts, src/server/db/migrations/. VM 이 작업 뒤 사라지는 것은 GitHub 호스팅 실행기의
  *   성질이다(이 저장소는 '분석마다 새 VM'만 적는다).
  * - 그림 2·3: CLI 세션의 사실 자료(~/.cache/policypack-eval/structure-2026-11-13/cli-structure.md, 태그 handoff-w11-8 기준)와 고정
- *   태그(handoff-w11-13)의 CLI 코드·docs/output.md. 의무 지도는 법령 206개(법률·시행령·시행규칙·고시)를 읽어 뽑은 의무 795개이고, 795줄에
+ *   태그의 CLI 코드·docs/output.md(handoff-w11-13 에서 보고 handoff-w13-2 에서 다시 봄. 그 사이에 더해진 것은 제재 표와 진행 표시다). 의무 지도는 법령 206개(법률·시행령·시행규칙·고시)를 읽어 뽑은 의무 795개이고, 795줄에
  *   적힌 법령 이름은 113개다(CLI docs/lawmap/README.md, duties.jsonl). 기능은 27가지(features.yaml 의 features. handoff-w11-13 에서
  *   '그 밖의 AI(분류·인식 모델)'가 더해졌다. 품목 6가지는 따로). 기능은 이해 단계가 기능마다 인용과 함께 정한다(언어와 상관없이, JS·TS
  *   신호는 단서). 웹은 반박을 '코드에서 본 것'·'충족 근거 있음'에만 건다(runner 의 --rebut-scope found). 상태 이름은 사이트의 말
@@ -16,12 +16,13 @@
  * (tests/how.test.ts 가 파일이 이 자료와 같은지, CLI_PIN 이 수집본의 커밋과 같은지 본다).
  */
 import { CASE_STORIES } from "../cases/stories.ts";
+import { lawArticle } from "../duties/article.ts";
 import { REVIEW_STATUS_LABEL } from "../report/status.ts";
 import { SITE } from "../site.ts";
 import { BIG, boxHeight, Canvas, SIZE, wrap, type Figure, type Tone } from "./draw.ts";
 
 /** 실행기가 고정한 CLI(analyze.yml 의 CLI_COMMIT 앞 7자리, contract/cli-current/MANIFEST.json 과 같다)와 그 커밋을 가리키는 태그. */
-export const CLI_PIN = { commit: "122de1d", tag: "handoff-w11-13" } as const;
+export const CLI_PIN = { commit: "6f1b50c", tag: "handoff-w13-2" } as const;
 
 /** 따라가 보기의 사례와 의무(jobtalk: 상담 메시지를 OpenAI 로 보내는데 가입 동의문에 국외 이전이 없다). */
 export const TRACE = { slug: "jobtalk", duty: "pipa-28-8-1" } as const;
@@ -364,7 +365,7 @@ function traceFigure(source: TraceSource): Figure {
       title: "② 고른 의무",
       who: "도구가 규칙으로",
       tone: "tool",
-      lines: [{ text: `${item.law} ${item.article}`, bold: true }, ...wrap(item.duty_text, DW, 15, 2).map((text) => ({ text }))],
+      lines: [{ text: lawArticle(item.law, item.article), bold: true }, ...wrap(item.duty_text, DW, 15, 2).map((text) => ({ text }))],
     },
     {
       title: "③ AI 가 댄 근거",
@@ -407,7 +408,7 @@ function traceFigure(source: TraceSource): Figure {
       who: "사람이 확인할 것",
       tone: "keep",
       lines: [
-        { text: `${REVIEW_STATUS_LABEL[item.status]} — ${item.law} ${item.article}`, bold: true },
+        { text: `${REVIEW_STATUS_LABEL[item.status]} — ${lawArticle(item.law, item.article)}`, bold: true },
         ...wrap(`없는 것: ${item.missing}`, DW, 15, 2).map((text) => ({ text })),
       ],
     },

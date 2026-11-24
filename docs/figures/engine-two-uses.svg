@@ -97,8 +97,8 @@
   <text class="hw-lane-name" x="956" y="30" font-size="15" font-weight="700" text-anchor="middle">이음매</text>
   <rect class="hw-box t-keep" x="996" y="190" width="228" height="175" rx="8" data-id="site"/>
   <text class="hw-title" x="1010" y="217" font-size="17" font-weight="700" data-in="site">웹 (이 사이트)</text>
-  <text class="hw-line" x="1010" y="242" font-size="14" data-in="site">CLI 커밋 122de1d 고정</text>
-  <text class="hw-line" x="1010" y="263" font-size="14" data-in="site">(태그 handoff-w11-13)</text>
+  <text class="hw-line" x="1010" y="242" font-size="14" data-in="site">CLI 커밋 6f1b50c 고정</text>
+  <text class="hw-line" x="1010" y="263" font-size="14" data-in="site">(태그 handoff-w13-2)</text>
   <text class="hw-line" x="1010" y="284" font-size="14" data-in="site">결과 JSON 의 스키마</text>
   <text class="hw-line" x="1010" y="305" font-size="14" data-in="site">(review-2 사본 · scan 판 1)</text>
   <text class="hw-line" x="1010" y="326" font-size="14" data-in="site">팩 메타데이터 (조문 원문)</text>

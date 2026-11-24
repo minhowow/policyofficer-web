@@ -1094,6 +1094,9 @@
             "$ref": "#/$defs/static"
           }
         },
+        "sanction": {
+          "$ref": "#/$defs/sanction"
+        },
         "status": {
           "enum": [
             "seen-in-code",
@@ -1439,6 +1442,121 @@
         "stage"
       ],
       "additionalProperties": false
+    },
+    "sanction_item": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "징역",
+            "벌금",
+            "과징금",
+            "과태료"
+          ]
+        },
+        "via": {
+          "enum": [
+            "direct",
+            "order"
+          ]
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "penalty": {
+          "type": "string"
+        },
+        "law": {
+          "type": "string"
+        },
+        "clause": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "clause",
+        "condition",
+        "kind",
+        "law",
+        "penalty",
+        "quote",
+        "url",
+        "via"
+      ],
+      "additionalProperties": false,
+      "description": "제재 조문 하나. kind: 징역(징역형이 있는 벌칙)·벌금(벌금형만)·과징금·과태료. via: direct 는 이 의무를 어긴 것 자체, order 는 시정명령 등을 따르지 않았을 때만(direct 가 없을 때만 싣는다). condition: 걸리는 조건(예: 개인정보가 유출되면). quote: 그 호(또는 항)의 법령 원문(공백만 정리)."
+    },
+    "sanction": {
+      "type": "object",
+      "properties": {
+        "class": {
+          "enum": [
+            "징역",
+            "과징금",
+            "벌금",
+            "과태료",
+            "명령",
+            "없음"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "max_won": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sanction_item"
+          }
+        },
+        "note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "as_of": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "as_of",
+        "class",
+        "items",
+        "label",
+        "max_won",
+        "note"
+      ],
+      "additionalProperties": false,
+      "description": "의무를 어기면 법에 적힌 최대 제재(11/24 덧붙임, profile/sanctions.jsonl 에서 duty 를 뺀 레코드). 위반 판정이 아니다. class 는 무거운 순서 징역 > 과징금 > 벌금 > 과태료 > 명령 > 없음(direct 항목으로 정한다. 더 무거운 사정을 요구하는 조건의 항목은 세지 않는다), label 은 표지에 쓰는 짧은 말(화면에는 '어기면 · {label}', class 없음이면 '벌칙·과태료 없음'), max_won 은 같은 class 안의 정렬에 쓰는 정액 상한(원). 행정처분(영업정지·등록취소 등)은 넣지 않는다."
     }
   }
 }

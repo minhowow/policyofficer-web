@@ -1,7 +1,8 @@
 import type { Browser, BrowserContext } from "playwright-core";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { findCase } from "@/lib/cases";
-import { dutyMap, sanctionOf } from "@/lib/duties";
+import { dutyAnchor, dutyMap, sanctionOf } from "@/lib/duties";
+import { SANCTION_TIERS } from "@/lib/duties/sanction";
 import { parseReview } from "@/lib/review";
 import { closeChrome, launchChrome, openPage, overflow, serveSite, type OpenOptions, type Site } from "./site";
 
@@ -58,9 +59,14 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
     await expect.poll(visible).toEqual(heavy.map(() => true));
     expect(await button.getAttribute("aria-pressed")).toBe("true");
     await expect.poll(() => page.evaluate(() => document.activeElement?.hasAttribute("data-heavy") ?? false)).toBe(true);
-    await page.locator(".overview .sanc-all").click();
+    // 거르는 동안 갈래의 수(거르지 않은 수)는 감춘다.
+    expect(await page.locator("#rv-checklist .ck-n").evaluateAll((nodes) => nodes.filter((node) => (node as HTMLElement).checkVisibility()).length)).toBe(0);
+    await page.locator(".overview .sanc-all").focus();
+    await page.keyboard.press("Enter");
     await expect.poll(async () => (await visible()).length).toBeGreaterThan(heavy.length);
     expect(await button.getAttribute("aria-pressed")).toBe("false");
+    // '모두 보기'는 사라지므로 초점은 요약의 단추로 돌아온다.
+    expect(await page.evaluate(() => document.activeElement?.className)).toBe("sanc-filter");
   });
 
   it.each(["light", "dark"] as const)("360px(%s): 표지는 제목 아래, 가로로 넘치지 않는다(사례 쪽과 조문 도감)", async (colorScheme) => {
@@ -93,6 +99,28 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
     await expect.poll(() => page.locator(".dm-n").textContent()).toBe(`의무 ${want}`);
     const shown = await page.evaluate(() => [...document.querySelectorAll("details.duty-row")].filter((row) => row.checkVisibility()).map((row) => (row as HTMLElement).dataset.s));
     expect(shown).toEqual(Array.from({ length: want }, () => "0"));
+  });
+
+  it("조문 도감: 정적 규칙의 이동 링크가 제재 거르개에 감춰진 줄을 가리키면 거른 것을 풀고 그 줄을 펼쳐 옮긴다", async () => {
+    const tier = (id: string) => {
+      const sanction = dutyMap.duties.find((duty) => duty.id === id)!.sanction!;
+      return SANCTION_TIERS.findIndex((t) => t.classes.includes(sanction.class));
+    };
+    const pair = Object.entries(dutyMap.policyHome)
+      .flatMap(([policy, home]) => dutyMap.duties.filter((duty) => duty.id !== home && duty.policies.includes(policy)).map((duty) => ({ from: duty.id, to: home })))
+      .find(({ from, to }) => tier(from) !== tier(to));
+    expect(pair, "무게가 다른 두 의무를 잇는 정적 규칙이 의무 지도에 없습니다").toBeDefined();
+    const { page } = await open("/policy/");
+    await page.locator(".dm-filter select").nth(2).selectOption(String(tier(pair!.from)));
+    const target = page.locator(`#${dutyAnchor(pair!.to)}`);
+    await expect.poll(() => target.isVisible()).toBe(false);
+    const from = page.locator(`#${dutyAnchor(pair!.from)}`);
+    await from.locator(":scope > summary").click();
+    await from.locator(".dr-static-link a").click();
+    await expect.poll(() => target.isVisible()).toBe(true);
+    expect(await target.evaluate((row) => (row as HTMLDetailsElement).open)).toBe(true);
+    expect(await page.locator(".dm-filter select").nth(2).inputValue()).toBe("-1");
+    await expect.poll(() => page.evaluate((id) => document.activeElement?.id === id, dutyAnchor(pair!.to))).toBe(true);
   });
 
   it("인쇄용 보기: 표지는 검은 선과 기호로 찍힌다(강조는 굵은 글·두꺼운 선·느낌표)", async () => {

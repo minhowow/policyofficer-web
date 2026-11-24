@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { articleLabel, dutyAnchor, dutyFeatureHref, dutyMap, fullArticle, lawGroups, policyHomeDuty } from "@/lib/duties";
+import { lawArticle } from "@/lib/duties/article";
 import { packMeta } from "@/lib/pack";
 import { SANCTION } from "@/lib/review/text";
 import { BANNED_WORDING } from "./wording";
@@ -62,9 +63,15 @@ describe("의무 지도의 자료", () => {
     }
   });
 
-  it("법령 이름과 조문(fullArticle): '시행령'을 두 번 적지 않는다", () => {
-    const decree = dutyMap.duties.find((duty) => duty.law.endsWith(" 시행령") && duty.article.startsWith("시행령 "))!;
-    expect(fullArticle(decree)).toBe(`${decree.law}${decree.article.slice("시행령".length)}`);
+  it("법령 이름과 조문(fullArticle, lawArticle): '시행령'을 두 번 적지 않는다(CLI handoff-w13-2 전의 표·결과에는 조문 앞에 '시행령 '이 붙어 있다)", () => {
+    const law = "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법 시행령";
+    expect(lawArticle(law, "시행령 제27조제1항(법 제34조제1항)")).toBe(`${law} 제27조제1항(법 제34조제1항)`);
+    expect(lawArticle(law, "제27조제1항(법 제34조제1항)")).toBe(`${law} 제27조제1항(법 제34조제1항)`);
+    expect(lawArticle("근로기준법 시행규칙", "시행규칙 제2조")).toBe("근로기준법 시행규칙 제2조");
+    expect(lawArticle("개인정보 보호법", "시행령 제30조")).toBe("개인정보 보호법 시행령 제30조");
+    expect(lawArticle("개인정보 보호법", "")).toBe("개인정보 보호법");
+    const decree = dutyMap.duties.find((duty) => duty.law.endsWith(" 시행령"))!;
+    expect(fullArticle({ ...decree, article: `시행령 ${decree.article}` })).toBe(fullArticle(decree));
     for (const duty of dutyMap.duties) {
       expect(fullArticle(duty), duty.id).not.toMatch(/(시행령|시행규칙) \1/);
       expect(fullArticle(duty).endsWith(duty.article.replace(/^(시행령|시행규칙) /, "")), duty.id).toBe(true);

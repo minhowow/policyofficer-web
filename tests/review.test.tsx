@@ -8,7 +8,6 @@ import { layoutFlow } from "@/lib/review/flow";
 import CasePage from "@/app/cases/[slug]/page";
 import CasesPage from "@/app/cases/page";
 import { casesFile } from "@/lib/cases";
-import { dutyMap } from "@/lib/duties";
 import { EVAL_LIMITS, evalFile } from "@/lib/cases/eval";
 import { evalFigureSvg } from "@/lib/cases/eval-figure";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
@@ -19,9 +18,9 @@ import { closedDetailsAt, elementAt, elementsOf, readJson, textOf } from "./help
 import { withoutSanctions } from "./sanctions";
 import { BANNED_WORDING } from "./wording";
 
-/** 쓰지 않는 말이 없다. 제재 표의 몫(표지·주의 문구·제재 조문, 2026-11-24)은 빼고 본다. */
-const expectNoBanned = (text: string) => {
-  const rest = withoutSanctions(text, dutyMap.duties.map((duty) => duty.sanction));
+/** 그린 HTML 에 쓰지 않는 말이 없다. 제재 표의 몫(표지·주의 문구·제재 조문, 2026-11-24)은 자리째 빼고 본다. */
+const expectNoBanned = (html: string) => {
+  const rest = textOf(withoutSanctions(html));
   for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(rest), why).toBe(false);
 };
 
@@ -112,7 +111,7 @@ describe("review 결과 (2판)", () => {
     expect(text).toContain("남은 부족한 점을 적어");
     expect(text).toContain("금지된 행위 자체를 보인 줄이 없어");
     expect(text).not.toContain("[remaining-gap]");
-    expectNoBanned(text);
+    expectNoBanned(html);
   });
 
   it("인용은 관문을 통과한 것만, 의무 한 줄에 처분의 말이 들면 싣지 않는다", () => {
@@ -287,6 +286,10 @@ describe("사례 쪽: review 2판 실측(2026-11-12)", () => {
       expect(html.includes('<details class="rv-group rv-recheck">'), c.slug).toBe(c.recheck.length > 0);
       expect(html).toContain(c.commit.slice(0, 7));
       expect(textOf(html)).toContain(SITE.cases.regate);
+      // 앞선 판으로 만든 결과의 조문 앞 '시행령 '이 법령 이름과 겹쳐 두 번 적히지 않고(lawArticle), 제재 표지가 '어기면'을 겹쳐
+      // 적지 않는다(CLI handoff-w13-2 의 표지 말, 2026-11-24).
+      expect(textOf(html), c.slug).not.toMatch(/(시행령|시행규칙) \1/);
+      expect(textOf(html), c.slug).not.toContain("어기면 · 시정명령을 어기면");
     }
   });
 
@@ -323,7 +326,7 @@ describe("사례 쪽: review 2판 실측(2026-11-12)", () => {
     expect(section).not.toContain("<a ");
     expect(section).not.toMatch(/github\.com/);
     expect(elementsOf(section, "<li>").length).toBe(EVAL_LIMITS.length);
-    expectNoBanned(text);
+    expectNoBanned(section);
   });
 
   it("41곳 포스터 그림(docs/figures/review-results-41.svg)은 지금 데이터로 그린 것과 같다", () => {

@@ -1,4 +1,5 @@
 import { sanctionOf } from "@/lib/duties";
+import { lawArticle } from "@/lib/duties/article";
 import { byWeight, SANCTION_TEXT, sanctionTier, sanctionWhen, type Sanction, type SanctionItem } from "@/lib/duties/sanction";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { SITE } from "@/lib/site";
@@ -81,7 +82,7 @@ function entryOf(item: ReviewItem, held = false): ChecklistEntry {
   const cite = (c: { file: string; line: number | null; text: string }) => ({ file: c.file, line: c.line, text: c.text.trim() });
   return {
     duty: item.duty,
-    law: `${item.law} ${item.article}`.trim(),
+    law: lawArticle(item.law, item.article),
     url: item.url,
     dutyText: item.dutyText && !SANCTION.test(item.dutyText) ? item.dutyText : "",
     seen,
@@ -206,7 +207,7 @@ export function checklistMarkdown(doc: ChecklistDoc, source: ChecklistSource): s
         sub(`${SANCTION_TEXT.head}: ${md(sanctionLine(item))}${item.url ? ` (법제처: ${item.url})` : ""}`);
         out.push(`    > ${md(item.quote)}`);
       }
-      if (entry.sanction?.note) sub(md(entry.sanction.note));
+      if (entry.sanction?.note) sub(`${SANCTION_TEXT.head}: ${md(entry.sanction.note)}`);
       if (entry.url) sub(`법제처: ${entry.url}`);
     }
     out.push("");

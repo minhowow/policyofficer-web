@@ -1,4 +1,5 @@
 import raw from "@data/duty-map.json";
+import { lawArticle } from "./article";
 import type { Sanction } from "./sanction";
 
 /**
@@ -86,8 +87,7 @@ export function policyHomeDuty(policyId: string): MapDuty | null {
  * 시행령 제9조…'가 아니라 '근로기준법 시행령 제9조…').
  */
 export function fullArticle(duty: MapDuty): string {
-  const sub = SUB.exec(duty.law)?.[1];
-  return sub && duty.article.startsWith(`${sub} `) ? `${duty.law}${duty.article.slice(sub.length)}` : `${duty.law} ${duty.article}`;
+  return lawArticle(duty.law, duty.article);
 }
 
 export interface LawGroup {

@@ -37,7 +37,7 @@ export function ChecklistSheet({ doc, source, back, markdown }: { doc: Checklist
             <li key={fact}>{fact}</li>
           ))}
           <li>{overviewLine(doc)}</li>
-          {doc.overview.heavy !== null && <li>{SANCTION_TEXT.note}</li>}
+          {doc.overview.heavy !== null && <li className="sanc-caution">{SANCTION_TEXT.note}</li>}
           <li>인용은 도구가 그 파일에서 글자 그대로 확인한 줄만 실었습니다.</li>
         </ul>
         {doc.groups.map((group) => (
@@ -107,7 +107,7 @@ export function ChecklistSheet({ doc, source, back, markdown }: { doc: Checklist
                       <p className="ck-quote">{item.quote}</p>
                     </div>
                   ))}
-                  {entry.sanction?.note && <p className="ck-rest">{entry.sanction.note}</p>}
+                  {entry.sanction?.note && <p className="ck-rest ck-sanc">{entry.sanction.note}</p>}
                 </li>
               ))}
             </ol>

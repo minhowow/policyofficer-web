@@ -1,7 +1,8 @@
 {
   "generated_by": "scripts/export-duty-map.mjs",
   "cli": {
-    "commit": "122de1d66d32371f40b5cbb118e96a51e5dd48ee"
+    "commit": "6f1b50c9127d36bfe96cc9b75006fabd22d4f865",
+    "sanctions": "git"
   },
   "total": 795,
   "candidates": 218,
@@ -121,7 +122,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-34-2-1",
@@ -138,7 +168,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "order",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제27호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제64조제1항에 따른 시정조치 명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-6-3",
@@ -155,7 +204,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-7-4",
@@ -172,7 +250,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-15-2",
@@ -189,7 +296,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "order",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제27호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제64조제1항에 따른 시정조치 명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-22-2-1",
@@ -208,7 +334,36 @@
       ],
       "whenever": false,
       "audience": true,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년 · 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "개인정보 보호법",
+            "clause": "제71조제3호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제71조",
+            "quote": "제22조의2제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 법정대리인의 동의를 받지 아니하고 만 14세 미만인 아동의 개인정보를 처리한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제2호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "제22조의2제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 법정대리인의 동의를 받지 아니하고 만 14세 미만인 아동의 개인정보를 처리한 경우"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-22-5",
@@ -225,7 +380,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제1호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제16조제3항ㆍ제22조제5항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 재화 또는 서비스의 제공을 거부한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-23-1",
@@ -242,7 +416,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년 · 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "개인정보 보호법",
+            "clause": "제71조제4호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제71조",
+            "quote": "제23조제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 민감정보를 처리한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제3호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "제23조제1항제1호(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 정보주체의 동의를 받지 아니하고 민감정보를 처리한 경우"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "tcra-3-2",
@@ -259,7 +462,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "약관의 규제에 관한 법률",
+            "clause": "제34조제3항제1호",
+            "url": "https://www.law.go.kr/법령/약관의규제에관한법률/제34조",
+            "quote": "제3조제2항을 위반하여 고객에게 약관의 내용을 밝히지 아니하거나 그 약관의 사본을 내주지 아니한 자"
+          }
+        ],
+        "note": "어기면 그 약관을 계약 내용으로 주장 못 함(제3조제4항)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "cistd-annex4-4",
@@ -276,7 +498,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제2항제2호의6",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제23조의6제2항에 따른 안전조치를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "netact-23-2-1",
@@ -293,7 +534,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제2항제2호",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제23조의2제1항을 위반하여 주민등록번호를 수집ㆍ이용하거나 같은 조 제2항에 따른 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-24-1",
@@ -310,7 +570,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년 · 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "개인정보 보호법",
+            "clause": "제71조제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제71조",
+            "quote": "제24조제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 고유식별정보를 처리한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제4호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "제24조제1항ㆍ제24조의2제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 고유식별정보 또는 주민등록번호를 처리한 경우"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-24-2-1",
@@ -327,7 +616,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 3% · 과태료 3천만원",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제4호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "제24조제1항ㆍ제24조의2제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 고유식별정보 또는 주민등록번호를 처리한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제7호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제24조의2제1항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 주민등록번호를 처리한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-24-2-3",
@@ -344,7 +662,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제24조의2제3항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 정보주체가 주민등록번호를 사용하지 아니할 수 있는 방법을 제공하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "resreg-37-1-h4",
@@ -361,7 +698,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "주민등록법",
+            "clause": "제37조제1항제1호",
+            "url": "https://www.law.go.kr/법령/주민등록법/제37조",
+            "quote": "제7조의2에 따른 주민등록번호 부여방법으로 거짓의 주민등록번호를 만들어 자기 또는 다른 사람의 재물이나 재산상의 이익을 위하여 사용한 자"
+          },
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "주민등록법",
+            "clause": "제37조제1항제4호",
+            "url": "https://www.law.go.kr/법령/주민등록법/제37조",
+            "quote": "거짓의 주민등록번호를 만드는 프로그램을 다른 사람에게 전달하거나 유포한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-5-6",
@@ -378,7 +744,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-7-1",
@@ -395,7 +790,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-7-2",
@@ -412,7 +836,46 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": "대상이 주민등록번호이면",
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제8호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제24조의2제2항(제26조제8항에 따라 준용되는 경우를 포함한다)을 위반하여 암호화 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-5-1",
@@ -429,7 +892,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-5-4",
@@ -446,7 +938,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-6-2",
@@ -463,7 +984,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "safety-std-8-1",
@@ -480,7 +1030,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과태료 3천만원 · 유출되면 과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인정보가 유출등이 되면",
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제9호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "개인정보처리자가 처리하는 개인정보가 유출등이 된 경우. 다만, 개인정보가 유출등이 되지 아니하도록 개인정보처리자가 제29조(제26조제8항에 따라 준용되는 경우를 포함한다)에 따른 안전성 확보에 필요한 조치를 다한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제23조제2항ㆍ제24조제3항ㆍ제25조제6항(제25조의2제4항에 따라 준용되는 경우를 포함한다)ㆍ제28조의4제1항ㆍ제29조(제26조제8항에 따라 준용되는 경우를 포함한다)를 위반하여 안전성 확보에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-8-2",
@@ -497,7 +1076,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-decree-9-1",
@@ -514,7 +1112,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "efta-15-1",
@@ -531,7 +1148,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "efta-36-1",
@@ -548,7 +1173,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 5천만원",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "전자금융거래법",
+            "clause": "제51조제1항제4호",
+            "url": "https://www.law.go.kr/법령/전자금융거래법/제51조",
+            "quote": "제36조를 위반하여 전자화폐의 명칭을 사용한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "scfa-19-4",
@@ -565,7 +1209,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 1년",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1년 이하의 징역 또는 1천만원 이하의 벌금",
+            "law": "여신전문금융업법",
+            "clause": "제70조제4항제5호",
+            "url": "https://www.law.go.kr/법령/여신전문금융업법/제70조",
+            "quote": "제19조제4항을 위반하여 가맹점수수료를 신용카드회원이 부담하게 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "agri-origin-5-1",
@@ -582,7 +1245,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "농수산물"
+      "goods": "농수산물",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "농수산물의 원산지 표시 등에 관한 법률",
+            "clause": "제18조제1항제1호",
+            "url": "https://www.law.go.kr/법령/농수산물의원산지표시등에관한법률/제18조",
+            "quote": "제5조제1항ㆍ제3항을 위반하여 원산지 표시를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "agri-origin-r3-b3-2",
@@ -599,7 +1281,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "농수산물"
+      "goods": "농수산물",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "농수산물의 원산지 표시 등에 관한 법률",
+            "clause": "제18조제1항제2호",
+            "url": "https://www.law.go.kr/법령/농수산물의원산지표시등에관한법률/제18조",
+            "quote": "제5조제4항에 따른 원산지의 표시방법을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "dsa-30-3",
@@ -616,7 +1317,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "방문판매 등에 관한 법률",
+            "clause": "제66조제3항제6호",
+            "url": "https://www.law.go.kr/법령/방문판매등에관한법률/제66조",
+            "quote": "제30조제3항을 위반하여 소비자에게 계약 종료일을 통지하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "dsa-31-1",
@@ -633,7 +1353,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정조치명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "방문판매 등에 관한 법률",
+            "clause": "제60조제1항제10호",
+            "url": "https://www.law.go.kr/법령/방문판매등에관한법률/제60조",
+            "quote": "제49조제1항에 따른 시정조치명령을 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "dsa-32-1",
@@ -650,7 +1389,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "방문판매 등에 관한 법률",
+            "clause": "제66조제2항제8호",
+            "url": "https://www.law.go.kr/법령/방문판매등에관한법률/제66조",
+            "quote": "제32조를 위반하여 위약금을 과다하게 청구하거나 대금 환급을 거부한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "dsa-penalty-4-1",
@@ -667,7 +1425,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "방문판매 등에 관한 법률",
+            "clause": "제66조제2항제8호",
+            "url": "https://www.law.go.kr/법령/방문판매등에관한법률/제66조",
+            "quote": "제32조를 위반하여 위약금을 과다하게 청구하거나 대금 환급을 거부한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-10-1",
@@ -684,7 +1461,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제10조제1항 또는 제13조제1항에 따른 사업자의 신원정보를 표시하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-13-1",
@@ -701,7 +1497,36 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "거짓이면 벌금 1천만원 · 과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "벌금",
+            "via": "direct",
+            "condition": "신원정보를 거짓으로 제공하면",
+            "penalty": "1천만원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제43조제1호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제43조",
+            "quote": "제13조제1항에 따른 사업자의 신원정보에 관하여 거짓 정보를 제공한 자"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제10조제1항 또는 제13조제1항에 따른 사업자의 신원정보를 표시하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-13-2",
@@ -718,7 +1543,46 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "거짓이면 벌금 1천만원 · 과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "벌금",
+            "via": "direct",
+            "condition": "거래조건을 거짓으로 제공하면",
+            "penalty": "1천만원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제43조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제43조",
+            "quote": "제13조제2항에 따른 거래조건에 관하여 거짓 정보를 제공한 자"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제4호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제13조제2항을 위반하여 표시ㆍ광고하거나 고지를 하지 아니하거나 계약내용에 관한 서면을 계약자에게 교부하지 아니한 자"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": "중개업자가 청약을 받으면(제5호 정보)",
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제6호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제20조의3제1호가목을 위반하여 제13조제2항제5호에 관한 정보의 제공을 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-13-2-h5",
@@ -735,7 +1599,46 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "거짓이면 벌금 1천만원 · 과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "벌금",
+            "via": "direct",
+            "condition": "거래조건을 거짓으로 제공하면",
+            "penalty": "1천만원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제43조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제43조",
+            "quote": "제13조제2항에 따른 거래조건에 관하여 거짓 정보를 제공한 자"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제4호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제13조제2항을 위반하여 표시ㆍ광고하거나 고지를 하지 아니하거나 계약내용에 관한 서면을 계약자에게 교부하지 아니한 자"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": "중개업자가 청약을 받으면",
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제6호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제20조의3제1호가목을 위반하여 제13조제2항제5호에 관한 정보의 제공을 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-13-3",
@@ -752,7 +1655,26 @@
       "policies": [],
       "whenever": false,
       "audience": true,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제5호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제13조제3항을 위반하여 재화등의 거래에 관한 계약을 취소할 수 있다는 내용을 거래 상대방인 미성년자에게 고지하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-13-6",
@@ -769,7 +1691,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제5호의2",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제13조제6항을 위반하여 소비자의 동의를 받지 아니하거나 소비자에게 고지하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-17-6",
@@ -786,7 +1727,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-18-10",
@@ -803,7 +1763,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-18-3",
@@ -820,7 +1799,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-18-9",
@@ -837,7 +1835,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-21-1-h1-lure",
@@ -854,7 +1871,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 2천만원",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제3항제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제21조제1항제1호부터 제5호까지의 금지행위 중 어느 하나에 해당하는 행위를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-21-1-h1-withdraw",
@@ -871,7 +1907,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 2천만원",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제3항제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제21조제1항제1호부터 제5호까지의 금지행위 중 어느 하나에 해당하는 행위를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-21-2-1-h1",
@@ -888,7 +1943,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제7호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제21조의2제1항 각 호의 금지행위 중 어느 하나에 해당하는 행위를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-21-2-1-h2",
@@ -905,7 +1979,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제7호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제21조의2제1항 각 호의 금지행위 중 어느 하나에 해당하는 행위를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-21-2-1-h4",
@@ -922,7 +2015,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제7호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제21조의2제1항 각 호의 금지행위 중 어느 하나에 해당하는 행위를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-21-2-1-h5",
@@ -939,7 +2051,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제7호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제21조의2제1항 각 호의 금지행위 중 어느 하나에 해당하는 행위를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-5-4",
@@ -956,7 +2087,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-6-1",
@@ -973,7 +2123,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제1호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제6조를 위반하여 거래기록을 보존하지 아니하거나 소비자에게 거래기록을 열람ㆍ보존할 수 있는 방법을 제공하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-decree-21-1",
@@ -990,7 +2159,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-decree-6-2-h3",
@@ -1007,7 +2184,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제1호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제6조를 위반하여 거래기록을 보존하지 아니하거나 소비자에게 거래기록을 열람ㆍ보존할 수 있는 방법을 제공하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-rule-7-2",
@@ -1024,7 +2220,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "elec-safety-18-4",
@@ -1041,7 +2256,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "전기용품·생활용품"
+      "goods": "전기용품·생활용품",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제51조제2항제8호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제51조",
+            "quote": "제18조제4항을 위반하여 안전확인 관련 정보를 게시하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "elec-safety-25-4",
@@ -1058,7 +2292,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "전기용품·생활용품"
+      "goods": "전기용품·생활용품",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제51조제2항제14호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제51조",
+            "quote": "제25조제4항을 위반하여 공급자적합성확인 관련 정보를 게시하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "elec-safety-9-4",
@@ -1075,7 +2328,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "전기용품·생활용품"
+      "goods": "전기용품·생활용품",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제51조제2항제3호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제51조",
+            "quote": "제9조제4항을 위반하여 안전인증 관련 정보를 게시하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "fla-3-1-h1",
@@ -1092,7 +2364,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년 · 과징금 매출 2%",
+        "maxWon": 500000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 1억5천만원 이하의 벌금",
+            "law": "표시ㆍ광고의 공정화에 관한 법률",
+            "clause": "제17조제1호",
+            "url": "https://www.law.go.kr/법령/표시ㆍ광고의공정화에관한법률/제17조",
+            "quote": "제3조제1항을 위반하여 부당한 표시ㆍ광고 행위를 하거나 다른 사업자등으로 하여금 하게 한 사업자등"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 2 이하의 과징금(매출액이 없으면 5억원 이하)",
+            "law": "표시ㆍ광고의 공정화에 관한 법률",
+            "clause": "제9조제1항",
+            "url": "https://www.law.go.kr/법령/표시ㆍ광고의공정화에관한법률/제9조",
+            "quote": "공정거래위원회는 제3조제1항을 위반하여 표시ㆍ광고 행위를 한 사업자등에 대하여는 대통령령으로 정하는 매출액(대통령령으로 정하는 사업자의 경우에는 영업수익을 말한다. 이하 같다)에 100분의 2를 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          }
+        ],
+        "note": "과징금 매출은 위반기간 관련 상품 매출액(시행령 제12조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "fla-3-1-h2",
@@ -1109,7 +2410,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년 · 과징금 매출 2%",
+        "maxWon": 500000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 1억5천만원 이하의 벌금",
+            "law": "표시ㆍ광고의 공정화에 관한 법률",
+            "clause": "제17조제1호",
+            "url": "https://www.law.go.kr/법령/표시ㆍ광고의공정화에관한법률/제17조",
+            "quote": "제3조제1항을 위반하여 부당한 표시ㆍ광고 행위를 하거나 다른 사업자등으로 하여금 하게 한 사업자등"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 2 이하의 과징금(매출액이 없으면 5억원 이하)",
+            "law": "표시ㆍ광고의 공정화에 관한 법률",
+            "clause": "제9조제1항",
+            "url": "https://www.law.go.kr/법령/표시ㆍ광고의공정화에관한법률/제9조",
+            "quote": "공정거래위원회는 제3조제1항을 위반하여 표시ㆍ광고 행위를 한 사업자등에 대하여는 대통령령으로 정하는 매출액(대통령령으로 정하는 사업자의 경우에는 영업수익을 말한다. 이하 같다)에 100분의 2를 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          }
+        ],
+        "note": "과징금 매출은 위반기간 관련 상품 매출액(시행령 제12조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "liquor-mail-6-0-0-2",
@@ -1126,7 +2456,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "주류"
+      "goods": "주류",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 2천만원",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2천만원 이하의 과태료",
+            "law": "주류 면허 등에 관한 법률",
+            "clause": "제38조제1항제1호",
+            "url": "https://www.law.go.kr/법령/주류면허등에관한법률/제38조",
+            "quote": "다음 각 목의 어느 하나에 해당하는 명령을 위반한 자 가. 제17조에 따른 주세 보전명령"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "medtech-12-5",
@@ -1143,7 +2492,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "안경·콘택트렌즈"
+      "goods": "안경·콘택트렌즈",
+      "sanction": {
+        "class": "벌금",
+        "label": "벌금 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "벌금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 벌금",
+            "law": "의료기사 등에 관한 법률",
+            "clause": "제31조제3호의2",
+            "url": "https://www.law.go.kr/법령/의료기사등에관한법률/제31조",
+            "quote": "제12조제5항을 위반한 사람"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "publishing-22-3",
@@ -1160,7 +2528,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "도서·간행물"
+      "goods": "도서·간행물",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "출판문화산업 진흥법",
+            "clause": "제28조제1항제1호",
+            "url": "https://www.law.go.kr/법령/출판문화산업진흥법/제28조",
+            "quote": "제22조제1항 또는 제2항을 위반하여 정가를 간행물에 표시하지 아니한 자 또는 같은 조 제3항을 위반하여 정가를 서지정보에 명확하게 적지 아니하거나 판매사이트에 표시하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "publishing-22-4",
@@ -1177,7 +2564,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "도서·간행물"
+      "goods": "도서·간행물",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "출판문화산업 진흥법",
+            "clause": "제28조제1항제2호",
+            "url": "https://www.law.go.kr/법령/출판문화산업진흥법/제28조",
+            "quote": "제22조제4항ㆍ제5항 또는 제6항을 위반하여 간행물을 판매한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "publishing-22-5",
@@ -1194,7 +2600,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "도서·간행물"
+      "goods": "도서·간행물",
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "출판문화산업 진흥법",
+            "clause": "제28조제1항제2호",
+            "url": "https://www.law.go.kr/법령/출판문화산업진흥법/제28조",
+            "quote": "제22조제4항ㆍ제5항 또는 제6항을 위반하여 간행물을 판매한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "youth-28-4",
@@ -1211,7 +2636,46 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": "청소년유해약물(주류·담배 등)"
+      "goods": "청소년유해약물(주류·담배 등)",
+      "sanction": {
+        "class": "징역",
+        "label": "청소년에게 팔면 징역 3년",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": "청소년에게 판매·대여·배포하면",
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "청소년 보호법",
+            "clause": "제58조제3호",
+            "url": "https://www.law.go.kr/법령/청소년보호법/제58조",
+            "quote": "제28조제1항을 위반하여 청소년에게 제2조제4호가목4)ㆍ5)의 청소년유해약물 또는 같은 호 나목1)ㆍ2)의 청소년유해물건을 판매ㆍ대여ㆍ배포(자동기계장치ㆍ무인판매장치ㆍ통신장치를 통하여 판매ㆍ대여ㆍ배포한 경우를 포함한다)한 자"
+          },
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": "청소년에게 판매·대여·배포하면",
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "청소년 보호법",
+            "clause": "제59조제6호",
+            "url": "https://www.law.go.kr/법령/청소년보호법/제59조",
+            "quote": "제28조제1항을 위반하여 청소년에게 제2조제4호가목1)ㆍ2)의 청소년유해약물 또는 같은 호 나목3)의 청소년유해물건을 판매ㆍ대여ㆍ배포(자동기계장치ㆍ무인판매장치ㆍ통신장치를 통하여 판매ㆍ대여ㆍ배포한 경우를 포함한다)하거나 영리를 목적으로 무상 제공한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "위반으로 이익을 얻었으면",
+            "penalty": "1천만원 이하의 과징금",
+            "law": "청소년 보호법",
+            "clause": "제54조제2항",
+            "url": "https://www.law.go.kr/법령/청소년보호법/제54조",
+            "quote": "시장ㆍ군수ㆍ구청장은 제58조 각 호의 어느 하나 또는 제59조 각 호의 어느 하나에 해당하는 행위로 인하여 이익을 취득한 자에게 대통령령으로 정하는 바에 따라 1천만원 이하의 과징금을 부과ㆍ징수할 수 있다."
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-20-1",
@@ -1228,7 +2692,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제5호의3",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제20조제1항을 위반하여 통신판매의 당사자가 아니라는 사실을 소비자에게 미리 고지하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-20-2",
@@ -1245,7 +2728,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제5호의4",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제20조제2항을 위반하여 통신판매중개의뢰자의 신원정보를 확인하지 아니하거나 소비자에게 제공하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-20-4-1",
@@ -1262,7 +2764,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제6호의2",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제20조의4제1항을 위반하여 개인 간 거래에서 개인 판매자의 신원정보를 확인하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-20-4-3",
@@ -1279,7 +2800,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제6호의4",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제20조의4제3항을 위반하여 같은 항 각 호의 사항을 이행하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "elec-safety-10-2",
@@ -1296,7 +2836,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년 · 과태료 500만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제49조제1항제12호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제49조",
+            "quote": "제10조제2항을 위반하여 안전인증표시등이 없는 안전인증대상전기용품의 판매를 중개하거나 구매 또는 수입을 대행한 자(제35조제1호에 따라 구매대행을 한 자는 제외한다)"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제51조제2항제4호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제51조",
+            "quote": "제10조제2항을 위반하여 안전인증표시등이 없는 안전인증대상생활용품의 판매를 중개하거나 구매 또는 수입을 대행한 자(제35조제1호에 따라 구매대행을 한 자는 제외한다)"
+          }
+        ],
+        "note": "징역은 전기용품, 생활용품은 과태료 500만원",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "elec-safety-19-2",
@@ -1313,7 +2882,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년 · 과태료 500만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제49조제1항제25호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제49조",
+            "quote": "제19조제2항을 위반하여 안전확인표시등이 없는 안전확인대상전기용품의 판매를 중개하거나 구매 또는 수입을 대행한 자(제35조제2호에 따라 구매대행을 한 자는 제외한다)"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제51조제2항제9호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제51조",
+            "quote": "제19조제2항을 위반하여 안전확인표시등이 없는 안전확인대상생활용품의 판매를 중개하거나 구매 또는 수입을 대행한 자(제35조제3호에 따라 구매대행을 한 자는 제외한다)"
+          }
+        ],
+        "note": "징역은 전기용품, 생활용품은 과태료 500만원",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "elec-safety-26-2",
@@ -1330,7 +2928,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년 · 과태료 500만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제49조제1항제31호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제49조",
+            "quote": "제26조제2항을 위반하여 공급자적합성확인표시등이 없는 공급자적합성확인대상전기용품의 판매를 중개하거나 수입을 대행한 자"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제51조제2항제16호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제51조",
+            "quote": "제26조제2항을 위반하여 공급자적합성확인표시등이 없는 공급자적합성확인대상생활용품의 판매를 중개하거나 수입을 대행한 자"
+          }
+        ],
+        "note": "징역은 전기용품, 생활용품은 과태료 500만원",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "elec-safety-34의5-2",
@@ -1347,7 +2974,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제49조제1항제32호의9",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제49조",
+            "quote": "제34조의5제2항을 위반하여 안전성검사표시등이 없는 안전성검사대상전기용품의 판매를 중개한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "elec-safety-36-1",
@@ -1364,7 +3010,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전기용품 및 생활용품 안전관리법",
+            "clause": "제51조제1항제5호",
+            "url": "https://www.law.go.kr/법령/전기용품및생활용품안전관리법/제51조",
+            "quote": "제36조제1항을 위반하여 구매대행 고지사항을 고지하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "kids-product-30-0-0",
@@ -1381,7 +3046,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "어린이제품 안전 특별법",
+            "clause": "제43조제3항제25호",
+            "url": "https://www.law.go.kr/법령/어린이제품안전특별법/제43조",
+            "quote": "제30조를 위반하여 안전인증, 안전확인 및 공급자적합성확인의 표시 등이 없는 안전관리대상어린이제품의 판매를 중개하거나 구매 또는 수입을 대행한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "passenger-81-1",
@@ -1398,7 +3082,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "여객자동차 운수사업법",
+            "clause": "제90조제8호",
+            "url": "https://www.law.go.kr/법령/여객자동차운수사업법/제90조",
+            "quote": "제81조를 위반하여 자가용자동차를 유상으로 운송용으로 제공 또는 임대하거나 이를 알선한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-12-1",
@@ -1415,7 +3118,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제3호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제12조제1항을 위반하여 이용약관을 공개하지 아니하거나 이용약관의 변경이유 및 변경내용을 공개하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-15-1",
@@ -1432,7 +3154,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제40조제4호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제40조",
+            "quote": "제15조제1항을 위반하여 개인위치정보주체의 동의를 받지 아니하고 해당 개인위치정보를 수집ㆍ이용 또는 제공한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-16-2",
@@ -1449,7 +3190,36 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 1년 · 과징금 매출 3%",
+        "maxWon": 400000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제41조제4호의2",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제41조",
+            "quote": "제16조제2항을 위반하여 위치정보 수집ㆍ이용ㆍ제공사실 확인자료가 위치정보시스템에 자동으로 기록ㆍ보존되도록 하지 아니한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "위반행위와 관련한 매출액의 100분의 3 이하의 과징금(매출액이 없거나 산정이 곤란하면 4억원 이하)",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제14조제1항제1호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제14조",
+            "quote": "제16조제1항에 따른 관리적 조치와 기술적 조치 또는 같은 조 제2항에 따른 위치정보 수집ㆍ이용ㆍ제공사실 확인자료(이하 \"위치정보 수집ㆍ이용ㆍ제공사실 확인자료\"라 한다)의 기록ㆍ보존조치를 하지 아니한 경우"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-19-1",
@@ -1466,7 +3236,46 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년 · 과징금 매출 3%",
+        "maxWon": 400000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제39조제3호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제39조",
+            "quote": "제18조제1항ㆍ제2항 또는 제19조제1항ㆍ제2항ㆍ제5항을 위반하여 개인위치정보주체의 동의를 얻지 아니하거나 동의의 범위를 넘어 개인위치정보를 수집ㆍ이용 또는 제공한 자 및 그 정을 알고 영리 또는 부정한 목적으로 개인위치정보를 제공받은 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "위반행위와 관련한 매출액의 100분의 3 이하의 과징금(매출액이 없거나 산정이 곤란하면 4억원 이하)",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제14조제1항제3호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제14조",
+            "quote": "제19조제1항ㆍ제2항ㆍ제5항을 위반하여 개인위치정보주체의 동의를 받지 아니하거나 동의의 범위를 넘어 개인위치정보를 이용 또는 제공한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제5호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제18조제1항 또는 제19조제1항의 규정을 위반하여 이용약관명시의무를 다하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-19-2",
@@ -1483,7 +3292,46 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년 · 과징금 매출 3%",
+        "maxWon": 400000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제39조제3호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제39조",
+            "quote": "제18조제1항ㆍ제2항 또는 제19조제1항ㆍ제2항ㆍ제5항을 위반하여 개인위치정보주체의 동의를 얻지 아니하거나 동의의 범위를 넘어 개인위치정보를 수집ㆍ이용 또는 제공한 자 및 그 정을 알고 영리 또는 부정한 목적으로 개인위치정보를 제공받은 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "위반행위와 관련한 매출액의 100분의 3 이하의 과징금(매출액이 없거나 산정이 곤란하면 4억원 이하)",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제14조제1항제3호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제14조",
+            "quote": "제19조제1항ㆍ제2항ㆍ제5항을 위반하여 개인위치정보주체의 동의를 받지 아니하거나 동의의 범위를 넘어 개인위치정보를 이용 또는 제공한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제7호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제19조제2항부터 제4항까지의 규정을 위반하여 고지 또는 통보를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-19-3",
@@ -1500,7 +3348,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제7호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제19조제2항부터 제4항까지의 규정을 위반하여 고지 또는 통보를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-19-4",
@@ -1517,7 +3384,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제7호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제19조제2항부터 제4항까지의 규정을 위반하여 고지 또는 통보를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-23-1",
@@ -1534,7 +3420,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제40조의2",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제40조의2",
+            "quote": "제23조제1항을 위반하여 개인위치정보를 파기하지 아니한 자는 2년 이하의 징역 또는 2천만원 이하의 벌금에 처한다."
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-23-2",
@@ -1551,7 +3456,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제8호의2",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제23조제2항을 위반하여 개인위치정보의 파기에 필요한 조치를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-24-2",
@@ -1568,7 +3492,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 2천만원",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제1항제5호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제24조제2항의 규정을 위반하여 일시적인 중지 요구를 거절 또는 기술적 수단을 갖추지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-24-4",
@@ -1585,7 +3528,26 @@
       "policies": [],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제8호의3",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제24조제4항을 위반하여 개인위치정보 및 위치정보 수집ㆍ이용ㆍ제공사실 확인자료를 파기하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-25-1",
@@ -1602,7 +3564,26 @@
       "policies": [],
       "whenever": false,
       "audience": true,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제10호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제25조제1항의 규정을 위반하여 법정대리인의 동의를 얻지 아니하거나 법정대리인이 동의하였는지를 확인하지 아니하고 개인위치정보를 수집ㆍ이용 또는 제공한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-decree-24-1",
@@ -1619,7 +3600,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제7호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제19조제2항부터 제4항까지의 규정을 위반하여 고지 또는 통보를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-decree-24-4",
@@ -1636,7 +3636,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제43조제2항제7호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제43조",
+            "quote": "제19조제2항부터 제4항까지의 규정을 위반하여 고지 또는 통보를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-decree-26-2-3",
@@ -1653,7 +3672,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제40조의2",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제40조의2",
+            "quote": "제23조제1항을 위반하여 개인위치정보를 파기하지 아니한 자는 2년 이하의 징역 또는 2천만원 이하의 벌금에 처한다."
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "locinfo-std-6-5",
@@ -1670,7 +3708,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 1년 · 과징금 매출 3%",
+        "maxWon": 400000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제41조제4호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제41조",
+            "quote": "제16조제1항을 위반하여 기술적ㆍ관리적 조치를 하지 아니한 자(제38조의3에 따라 준용되는 자를 포함한다)"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "위반행위와 관련한 매출액의 100분의 3 이하의 과징금(매출액이 없거나 산정이 곤란하면 4억원 이하)",
+            "law": "위치정보의 보호 및 이용 등에 관한 법률",
+            "clause": "제14조제1항제1호",
+            "url": "https://www.law.go.kr/법령/위치정보의보호및이용등에관한법률/제14조",
+            "quote": "제16조제1항에 따른 관리적 조치와 기술적 조치 또는 같은 조 제2항에 따른 위치정보 수집ㆍ이용ㆍ제공사실 확인자료(이하 \"위치정보 수집ㆍ이용ㆍ제공사실 확인자료\"라 한다)의 기록ㆍ보존조치를 하지 아니한 경우"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-24-2-1",
@@ -1687,7 +3754,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제40조제2호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제40조",
+            "quote": "제32조제1항에 따른 시정조치명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "netact-50-1",
@@ -1704,7 +3790,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 6% · 과태료 3천만원",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 6 이하의 과징금(매출액이 없거나 산정하기 곤란하면 20억원 이하)",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제50조의9제1항",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제50조의9",
+            "quote": "방송미디어통신위원회는 제50조, 제50조의4, 제50조의5, 제50조의7 또는 제50조의8을 위반한 자에게 대통령령으로 정하는 매출액에 100분의 6을 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제2항제7호",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제50조제1항부터 제3항까지의 규정을 위반하여 영리 목적의 광고성 정보를 전송한 자"
+          }
+        ],
+        "note": "과징금을 매긴 행위엔 과태료를 매기지 않음(제77조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "netact-50-2",
@@ -1721,7 +3836,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 6% · 과태료 3천만원",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 6 이하의 과징금(매출액이 없거나 산정하기 곤란하면 20억원 이하)",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제50조의9제1항",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제50조의9",
+            "quote": "방송미디어통신위원회는 제50조, 제50조의4, 제50조의5, 제50조의7 또는 제50조의8을 위반한 자에게 대통령령으로 정하는 매출액에 100분의 6을 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제2항제7호",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제50조제1항부터 제3항까지의 규정을 위반하여 영리 목적의 광고성 정보를 전송한 자"
+          }
+        ],
+        "note": "과징금을 매긴 행위엔 과태료를 매기지 않음(제77조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "netact-50-3",
@@ -1740,7 +3884,36 @@
       ],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 6% · 과태료 3천만원",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 6 이하의 과징금(매출액이 없거나 산정하기 곤란하면 20억원 이하)",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제50조의9제1항",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제50조의9",
+            "quote": "방송미디어통신위원회는 제50조, 제50조의4, 제50조의5, 제50조의7 또는 제50조의8을 위반한 자에게 대통령령으로 정하는 매출액에 100분의 6을 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제2항제7호",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제50조제1항부터 제3항까지의 규정을 위반하여 영리 목적의 광고성 정보를 전송한 자"
+          }
+        ],
+        "note": "과징금을 매긴 행위엔 과태료를 매기지 않음(제77조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "netact-50-4",
@@ -1759,7 +3932,36 @@
       ],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 6% · 과태료 3천만원",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 6 이하의 과징금(매출액이 없거나 산정하기 곤란하면 20억원 이하)",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제50조의9제1항",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제50조의9",
+            "quote": "방송미디어통신위원회는 제50조, 제50조의4, 제50조의5, 제50조의7 또는 제50조의8을 위반한 자에게 대통령령으로 정하는 매출액에 100분의 6을 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제2항제8호",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제50조제4항을 위반하여 광고성 정보를 전송할 때 밝혀야 하는 사항을 밝히지 아니하거나 거짓으로 밝힌 자"
+          }
+        ],
+        "note": "과징금을 매긴 행위엔 과태료를 매기지 않음(제77조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "netact-50-6",
@@ -1778,7 +3980,36 @@
       ],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 6% · 과태료 3천만원",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 6 이하의 과징금(매출액이 없거나 산정하기 곤란하면 20억원 이하)",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제50조의9제1항",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제50조의9",
+            "quote": "방송미디어통신위원회는 제50조, 제50조의4, 제50조의5, 제50조의7 또는 제50조의8을 위반한 자에게 대통령령으로 정하는 매출액에 100분의 6을 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제2항제9호",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제50조제6항을 위반하여 비용을 수신자에게 부담하도록 한 자"
+          }
+        ],
+        "note": "과징금을 매긴 행위엔 과태료를 매기지 않음(제77조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "netact-50-7",
@@ -1795,7 +4026,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 6% · 과태료 1천만원",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 6 이하의 과징금(매출액이 없거나 산정하기 곤란하면 20억원 이하)",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제50조의9제1항",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제50조의9",
+            "quote": "방송미디어통신위원회는 제50조, 제50조의4, 제50조의5, 제50조의7 또는 제50조의8을 위반한 자에게 대통령령으로 정하는 매출액에 100분의 6을 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제4항제12호의3",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제50조제7항을 위반하여 수신동의, 수신거부 또는 수신동의 철회에 대한 처리 결과를 알리지 아니한 자"
+          }
+        ],
+        "note": "과징금을 매긴 행위엔 과태료를 매기지 않음(제77조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "netact-50-8",
@@ -1812,7 +4072,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 6% · 과태료 3천만원",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 6 이하의 과징금(매출액이 없거나 산정하기 곤란하면 20억원 이하)",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제50조의9제1항",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제50조의9",
+            "quote": "방송미디어통신위원회는 제50조, 제50조의4, 제50조의5, 제50조의7 또는 제50조의8을 위반한 자에게 대통령령으로 정하는 매출액에 100분의 6을 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "정보통신망 이용촉진 및 정보보호 등에 관한 법률",
+            "clause": "제76조제2항제9호의2",
+            "url": "https://www.law.go.kr/법령/정보통신망이용촉진및정보보호등에관한법률/제76조",
+            "quote": "제50조제8항을 위반하여 수신동의 여부를 확인하지 아니한 자"
+          }
+        ],
+        "note": "과징금을 매긴 행위엔 과태료를 매기지 않음(제77조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "telecom-84-2-2",
@@ -1829,7 +4118,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전기통신사업법",
+            "clause": "제95조의2제5호",
+            "url": "https://www.law.go.kr/법령/전기통신사업법/제95조의2",
+            "quote": "제84조의2제2항을 위반하여 영리를 목적으로 송신인의 전화번호를 변작하는 등 거짓으로 표시하는 서비스를 제공하거나 송신인의 전화번호를 변작하는 등 거짓으로 표시할 수 있는 장치를 제조, 수입, 배포, 판매, 대여한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "ecom-21-4-1",
@@ -1846,7 +4154,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "전자상거래 등에서의 소비자보호에 관한 법률",
+            "clause": "제45조제4항제8호",
+            "url": "https://www.law.go.kr/법령/전자상거래등에서의소비자보호에관한법률/제45조",
+            "quote": "제21조의4제1항을 위반하여 사용후기의 수집 및 처리에 관한 정보를 공개하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "fcpa-22-1",
@@ -1863,7 +4190,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1억원",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1억원 이하의 과태료",
+            "law": "금융소비자 보호에 관한 법률",
+            "clause": "제69조제1항제5호",
+            "url": "https://www.law.go.kr/법령/금융소비자보호에관한법률/제69조",
+            "quote": "제22조제1항ㆍ제3항 또는 제4항을 위반하여 금융상품등에 관한 광고를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "fla-endorse-5-6",
@@ -1880,7 +4226,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년 · 과징금 매출 2%",
+        "maxWon": 500000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 1억5천만원 이하의 벌금",
+            "law": "표시ㆍ광고의 공정화에 관한 법률",
+            "clause": "제17조제1호",
+            "url": "https://www.law.go.kr/법령/표시ㆍ광고의공정화에관한법률/제17조",
+            "quote": "제3조제1항을 위반하여 부당한 표시ㆍ광고 행위를 하거나 다른 사업자등으로 하여금 하게 한 사업자등"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 2 이하의 과징금(매출액이 없으면 5억원 이하)",
+            "law": "표시ㆍ광고의 공정화에 관한 법률",
+            "clause": "제9조제1항",
+            "url": "https://www.law.go.kr/법령/표시ㆍ광고의공정화에관한법률/제9조",
+            "quote": "공정거래위원회는 제3조제1항을 위반하여 표시ㆍ광고 행위를 한 사업자등에 대하여는 대통령령으로 정하는 매출액(대통령령으로 정하는 사업자의 경우에는 영업수익을 말한다. 이하 같다)에 100분의 2를 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          }
+        ],
+        "note": "과징금 매출은 위반기간 관련 상품 매출액(시행령 제12조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "foodad-8-1-h11",
@@ -1897,7 +4272,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금(병과 가능)",
+            "law": "식품 등의 표시ㆍ광고에 관한 법률",
+            "clause": "제27조제2호",
+            "url": "https://www.law.go.kr/법령/식품등의표시ㆍ광고에관한법률/제27조",
+            "quote": "제8조제1항제4호부터 제11호까지를 위반하여 표시 또는 광고를 한 자"
+          }
+        ],
+        "note": "2026-11-27 시행(제11호 신설·벌칙 대상 추가)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lending-9-2-1",
@@ -1914,7 +4308,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 10년",
+        "maxWon": 500000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "10년 이하의 징역 또는 5억원 이하의 벌금",
+            "law": "대부업 등의 등록 및 금융이용자 보호에 관한 법률",
+            "clause": "제19조제1항제3호",
+            "url": "https://www.law.go.kr/법령/대부업등의등록및금융이용자보호에관한법률/제19조",
+            "quote": "제9조의2제1항 또는 제2항을 위반하여 대부업 또는 대부중개업 광고를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "liquor-mail-6-0-0-1",
@@ -1931,7 +4344,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 2천만원",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2천만원 이하의 과태료",
+            "law": "주류 면허 등에 관한 법률",
+            "clause": "제38조제1항제1호",
+            "url": "https://www.law.go.kr/법령/주류면허등에관한법률/제38조",
+            "quote": "다음 각 목의 어느 하나에 해당하는 명령을 위반한 자 가. 제17조에 따른 주세 보전명령"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "meddev-24-2-h3",
@@ -1948,7 +4380,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "의료기기법",
+            "clause": "제52조제1항제1호",
+            "url": "https://www.law.go.kr/법령/의료기기법/제52조",
+            "quote": "제10조제1항ㆍ제2항 전단ㆍ제4항, 제12조제1항(제15조제6항 및 제16조제4항에서 준용하는 경우를 포함한다), 제13조제1항(제15조제6항에서 준용하는 경우를 포함한다), 제16조제1항 본문, 제17조제1항, 제18조의2제1항, 제24조제1항ㆍ제2항, 제26조제2항부터 제7항까지 또는 제45조제2항을 위반한 자"
+          }
+        ],
+        "note": "AI 가상 전문가 광고 금지는 2026-12-10 시행",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pharm-68-7",
@@ -1965,7 +4416,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 1년",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1년 이하의 징역 또는 1천만원 이하의 벌금",
+            "law": "약사법",
+            "clause": "제95조제1항제10호",
+            "url": "https://www.law.go.kr/법령/약사법/제95조",
+            "quote": "제60조(제66조에 따라 준용되는 경우를 포함한다), 제64조제1항 또는 제68조를 위반한 자"
+          }
+        ],
+        "note": "제68조제7항은 2026-11-27 시행",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "aiact-31-1",
@@ -1984,7 +4454,26 @@
       ],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+            "clause": "제43조제1항제1호",
+            "url": "https://www.law.go.kr/법령/인공지능발전과신뢰기반조성등에관한기본법/제43조",
+            "quote": "제31조제1항을 위반하여 고지를 이행하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "aiact-31-2",
@@ -2003,7 +4492,26 @@
       ],
       "whenever": true,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "order",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+            "clause": "제43조제1항제3호",
+            "url": "https://www.law.go.kr/법령/인공지능발전과신뢰기반조성등에관한기본법/제43조",
+            "quote": "제40조제3항에 따른 중지명령이나 시정명령을 이행하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "aiact-31-3",
@@ -2020,7 +4528,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "order",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+            "clause": "제43조제1항제3호",
+            "url": "https://www.law.go.kr/법령/인공지능발전과신뢰기반조성등에관한기본법/제43조",
+            "quote": "제40조제3항에 따른 중지명령이나 시정명령을 이행하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "aiact-decree-27-1",
@@ -2028,7 +4555,7 @@
       "law": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법 시행령",
       "lawShort": "인공지능기본법 시행령",
       "kind": "시행령",
-      "article": "시행령 제27조제1항(법 제34조제1항)",
+      "article": "제27조제1항(법 제34조제1항)",
       "title": "고영향 AI 조치 내용 홈페이지 게시",
       "duty": "위험관리·설명 방안 주요 내용, 이용자 보호 방안, 관리·감독자 성명·연락처를 사업장·홈페이지에 게시",
       "trigger": "고영향 AI 서비스의 공개 웹 레이아웃(푸터 정책 링크 상수, `/ai-policy`·`/governance` 라우트)",
@@ -2037,7 +4564,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "order",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법",
+            "clause": "제43조제1항제3호",
+            "url": "https://www.law.go.kr/법령/인공지능발전과신뢰기반조성등에관한기본법/제43조",
+            "quote": "제40조제3항에 따른 중지명령이나 시정명령을 이행하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "fla-endorse-5-5",
@@ -2054,7 +4600,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년 · 과징금 매출 2%",
+        "maxWon": 500000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 1억5천만원 이하의 벌금",
+            "law": "표시ㆍ광고의 공정화에 관한 법률",
+            "clause": "제17조제1호",
+            "url": "https://www.law.go.kr/법령/표시ㆍ광고의공정화에관한법률/제17조",
+            "quote": "제3조제1항을 위반하여 부당한 표시ㆍ광고 행위를 하거나 다른 사업자등으로 하여금 하게 한 사업자등"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "대통령령으로 정하는 매출액의 100분의 2 이하의 과징금(매출액이 없으면 5억원 이하)",
+            "law": "표시ㆍ광고의 공정화에 관한 법률",
+            "clause": "제9조제1항",
+            "url": "https://www.law.go.kr/법령/표시ㆍ광고의공정화에관한법률/제9조",
+            "quote": "공정거래위원회는 제3조제1항을 위반하여 표시ㆍ광고 행위를 한 사업자등에 대하여는 대통령령으로 정하는 매출액(대통령령으로 정하는 사업자의 경우에는 영업수익을 말한다. 이하 같다)에 100분의 2를 곱한 금액을 초과하지 아니하는 범위에서 과징금을 부과할 수 있다."
+          }
+        ],
+        "note": "과징금 매출은 위반기간 관련 상품 매출액(시행령 제12조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-17-2",
@@ -2071,7 +4646,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "order",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제27호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제64조제1항에 따른 시정조치 명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-26-2",
@@ -2090,7 +4684,26 @@
       ],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제4항제5호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제26조제2항을 위반하여 위탁하는 업무의 내용과 수탁자를 공개하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-28-8-1",
@@ -2109,7 +4722,26 @@
       ],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 매출 3%",
+        "maxWon": 2000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 20억원 이하)",
+            "law": "개인정보 보호법",
+            "clause": "제64조의2제1항제7호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제64조의2",
+            "quote": "제28조의8제1항(제26조제8항 및 제28조의11에 따라 준용되는 경우를 포함한다)을 위반하여 개인정보를 국외로 이전한 경우"
+          }
+        ],
+        "note": "고의·중과실로 반복하거나 1천만명 이상 피해면 매출 10%까지",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pipa-28-8-2",
@@ -2126,7 +4758,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "order",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "개인정보 보호법",
+            "clause": "제75조제2항제27호",
+            "url": "https://www.law.go.kr/법령/개인정보보호법/제75조",
+            "quote": "제64조제1항에 따른 시정조치 명령에 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "copyright-103-2",
@@ -2143,7 +4794,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": "어기면 침해 책임 면제(제103조제5항)를 못 받음",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "copyright-103-4",
@@ -2160,7 +4819,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": "공지 안 하면 침해 책임 면제(제103조제5항)를 못 받음",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "telecom-22-5-1",
@@ -2177,7 +4844,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년 · 의도적이면 과징금 매출 3%",
+        "maxWon": 100000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 1억원 이하의 벌금",
+            "law": "전기통신사업법",
+            "clause": "제95조의2제1호의2",
+            "url": "https://www.law.go.kr/법령/전기통신사업법/제95조의2",
+            "quote": "제22조의5제1항에 따른 불법촬영물등의 삭제ㆍ접속차단 등 유통방지에 필요한 조치를 취하지 아니한 자. 다만, 불법촬영물등을 인식한 경우 지체 없이 해당 정보의 삭제ㆍ접속차단 등 유통방지에 필요한 조치를 취하기 위하여 상당한 주의를 게을리하지 아니하였거나 해당 정보의 삭제ㆍ접속차단 등 유통방지에 필요한 조치가 기술적으로 현저히 곤란한 경우에는 그러하지 아니하다."
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "의도적으로 조치하지 않으면",
+            "penalty": "대통령령으로 정하는 매출액의 100분의 3 이하의 과징금(매출액이 없거나 산정하기 곤란하면 10억원 이하)",
+            "law": "전기통신사업법",
+            "clause": "제22조의6제1항",
+            "url": "https://www.law.go.kr/법령/전기통신사업법/제22조의6",
+            "quote": "방송미디어통신위원회는 제22조의5제1항에 따른 불법촬영물등의 삭제ㆍ접속차단 등 유통방지에 필요한 조치를 의도적으로 취하지 아니한 자에게 대통령령으로 정하는 매출액의 100분의 3 이하에 해당하는 금액을 과징금으로 부과할 수 있다."
+          }
+        ],
+        "note": "상당한 주의를 다했거나 기술적으로 현저히 곤란하면 형벌 없음",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "filmvideo-53-0-2",
@@ -2194,7 +4890,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 5천만원",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "영화 및 비디오물의 진흥에 관한 법률",
+            "clause": "제98조제1항제4호",
+            "url": "https://www.law.go.kr/법령/영화및비디오물의진흥에관한법률/제98조",
+            "quote": "제53조제2항의 규정을 위반하여 비디오물을 시청에 제공한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "filmvideo-dec-27-0-3-b3-2",
@@ -2202,7 +4917,7 @@
       "law": "영화 및 비디오물의 진흥에 관한 법률 시행령",
       "lawShort": "영화비디오법 시행령",
       "kind": "대통령령",
-      "article": "시행령 제27조제3항 별표 3 제2호(법 제65조제1항·제2항)",
+      "article": "제27조제3항 별표 3 제2호(법 제65조제1항·제2항)",
       "title": "온라인 비디오물 초기 화면 등급 표시(3초·색·크기)",
       "duty": "재생 초기 화면에 ALL·12·15·19 등급을 지정 색 사각형으로 3초 이상, 화면 대각선 1/20 이상 크기로 표시",
       "trigger": "등급분류 대상 온라인비디오물(유료)을 재생하는 플레이어 컴포넌트",
@@ -2211,7 +4926,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "영화 및 비디오물의 진흥에 관한 법률",
+            "clause": "제98조제2항제9호",
+            "url": "https://www.law.go.kr/법령/영화및비디오물의진흥에관한법률/제98조",
+            "quote": "제65조제1항 또는 제2항의 규정을 위반하여 등급 또는 내용정보 표시를 하지 아니하거나 표시방법과 다르게 표시한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "filmvideo-dec-27-0-3-b3-3",
@@ -2219,7 +4953,7 @@
       "law": "영화 및 비디오물의 진흥에 관한 법률 시행령",
       "lawShort": "영화비디오법 시행령",
       "kind": "대통령령",
-      "article": "시행령 제27조제3항 별표 3 제3호(법 제65조제1항·제2항)",
+      "article": "제27조제3항 별표 3 제3호(법 제65조제1항·제2항)",
       "title": "내용정보(최대 3개) 표시",
       "duty": "전체관람가 외 비디오물은 내용정보(주제·선정성 등 최대 3개)를 초기 화면 3초 이상 또는 홈페이지에 표시",
       "trigger": "12·15·19 등급 온라인비디오물의 재생·상세 화면",
@@ -2228,7 +4962,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "영화 및 비디오물의 진흥에 관한 법률",
+            "clause": "제98조제2항제9호",
+            "url": "https://www.law.go.kr/법령/영화및비디오물의진흥에관한법률/제98조",
+            "quote": "제65조제1항 또는 제2항의 규정을 위반하여 등급 또는 내용정보 표시를 하지 아니하거나 표시방법과 다르게 표시한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "filmvideo-dec-27-0-3-b3-6",
@@ -2236,7 +4989,7 @@
       "law": "영화 및 비디오물의 진흥에 관한 법률 시행령",
       "lawShort": "영화비디오법 시행령",
       "kind": "대통령령",
-      "article": "시행령 제27조제3항 별표 3 제6호(법 제65조제1항·제2항)",
+      "article": "제27조제3항 별표 3 제6호(법 제65조제1항·제2항)",
       "title": "청소년 관람불가 시청 전 경고문",
       "duty": "19등급 비디오물은 시청 전 \"19세 미만 청소년은 시청할 수 없습니다\" 경고문 표시",
       "trigger": "청소년 관람불가(`rating === '19'`) 작품을 재생하는 흐름",
@@ -2245,7 +4998,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "영화 및 비디오물의 진흥에 관한 법률",
+            "clause": "제98조제2항제9호",
+            "url": "https://www.law.go.kr/법령/영화및비디오물의진흥에관한법률/제98조",
+            "quote": "제65조제1항 또는 제2항의 규정을 위반하여 등급 또는 내용정보 표시를 하지 아니하거나 표시방법과 다르게 표시한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "youth-13-1",
@@ -2262,7 +5034,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "청소년 보호법",
+            "clause": "제59조제1호",
+            "url": "https://www.law.go.kr/법령/청소년보호법/제59조",
+            "quote": "제13조제1항 및 제28조제7항을 위반하여 청소년유해매체물 또는 청소년유해약물등에 청소년유해표시를 하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "youth-16-1",
@@ -2279,7 +5070,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "영리로 청소년에게 제공하면 징역 3년",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": "영리로 청소년에게 제공하면",
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "청소년 보호법",
+            "clause": "제58조제1호",
+            "url": "https://www.law.go.kr/법령/청소년보호법/제58조",
+            "quote": "영리를 목적으로 제16조제1항을 위반하여 청소년에게 청소년유해매체물을 판매ㆍ대여ㆍ배포하거나 시청ㆍ관람ㆍ이용하도록 제공한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "위반으로 이익을 얻었으면",
+            "penalty": "1천만원 이하의 과징금",
+            "law": "청소년 보호법",
+            "clause": "제54조제2항",
+            "url": "https://www.law.go.kr/법령/청소년보호법/제54조",
+            "quote": "시장ㆍ군수ㆍ구청장은 제58조 각 호의 어느 하나 또는 제59조 각 호의 어느 하나에 해당하는 행위로 인하여 이익을 취득한 자에게 대통령령으로 정하는 바에 따라 1천만원 이하의 과징금을 부과ㆍ징수할 수 있다."
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "youth-decree-15-3",
@@ -2287,7 +5107,7 @@
       "law": "청소년 보호법 시행령",
       "lawShort": "청소년보호법 시행령",
       "kind": "시행령",
-      "article": "시행령 제15조제1항~제3항(법 제14조제1항 후단)",
+      "article": "제15조제1항~제3항(법 제14조제1항 후단)",
       "title": "나이·본인 확인 전 유해 미리보기 차단(포장에 준하는 보호조치)",
       "duty": "나이·본인 확인 전에 제공되는 정보(썸네일·미리보기·발췌·제목 등)로 유해한 부호·문언·영상이 보이지 않게 하기",
       "trigger": "성인 콘텐츠 목록·검색결과·추천 카드 렌더(`<Thumbnail src={item.thumbnailUrl}>`, `og:image`, 비인증 검색 API 응답)",
@@ -2296,7 +5116,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "청소년 보호법",
+            "clause": "제59조제2호",
+            "url": "https://www.law.go.kr/법령/청소년보호법/제59조",
+            "quote": "제14조(제28조제10항에서 준용하는 경우를 포함한다)를 위반하여 청소년유해매체물 또는 청소년유해약물등을 포장하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-12-3-1-h1",
@@ -2313,7 +5152,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제45조제1호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제45조",
+            "quote": "제12조의3제5항에 따른 문화체육관광부장관의 시정명령을 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-12-3-1-h2",
@@ -2330,7 +5188,26 @@
       "policies": [],
       "whenever": false,
       "audience": true,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제45조제1호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제45조",
+            "quote": "제12조의3제5항에 따른 문화체육관광부장관의 시정명령을 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-12-3-1-h3",
@@ -2347,7 +5224,26 @@
       "policies": [],
       "whenever": false,
       "audience": true,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제45조제1호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제45조",
+            "quote": "제12조의3제5항에 따른 문화체육관광부장관의 시정명령을 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-12-3-1-h4",
@@ -2364,7 +5260,26 @@
       "policies": [],
       "whenever": false,
       "audience": true,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제45조제1호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제45조",
+            "quote": "제12조의3제5항에 따른 문화체육관광부장관의 시정명령을 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-33-1",
@@ -2381,7 +5296,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제45조제7호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제45조",
+            "quote": "제32조제1항제6호 및 제33조제1항ㆍ제3항을 위반하여 표시의무를 이행하지 아니한 게임물을 유통시키거나 이용에 제공한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-33-2",
@@ -2398,7 +5332,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제45조제11호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제45조",
+            "quote": "제38조제9항 전단에 따른 문화체육관광부장관의 명령을 이행하지 아니한 자"
+          }
+        ],
+        "note": "고의 위반은 손해의 3배까지 배상 책임(제33조의2)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-decree-8-3-7",
@@ -2406,7 +5359,7 @@
       "law": "게임산업진흥에 관한 법률 시행령",
       "lawShort": "게임산업법 시행령",
       "kind": "시행령",
-      "article": "시행령 제8조의3제7항(법 제12조의3제1항제5호)",
+      "article": "제8조의3제7항(법 제12조의3제1항제5호)",
       "title": "과몰입 주의문구 1시간마다 3초 이상 게시",
       "duty": "'과도한 게임이용은 정상적인 일상생활에 지장을 줄 수 있습니다.' 주의문구를 이용 1시간마다 3초 이상 이용화면에 게시",
       "trigger": "게임 클라이언트의 플레이 화면·HUD·세션 타이머(`requestAnimationFrame` 루프, Phaser `Scene.update`, `sessionStartedAt`)",
@@ -2415,7 +5368,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제45조제1호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제45조",
+            "quote": "제12조의3제5항에 따른 문화체육관광부장관의 시정명령을 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-decree-8-3-8",
@@ -2423,7 +5395,7 @@
       "law": "게임산업진흥에 관한 법률 시행령",
       "lawShort": "게임산업법 시행령",
       "kind": "시행령",
-      "article": "시행령 제8조의3제8항(법 제12조의3제1항제6호)",
+      "article": "제8조의3제8항(법 제12조의3제1항제6호)",
       "title": "게임 이용시간 경과 1시간마다 3초 이상 표시",
       "duty": "게임 이용에 지장을 주지 않는 범위에서 이용시간 경과 내역을 1시간마다 3초 이상 이용화면에 알아보기 쉽게 표시",
       "trigger": "게임 플레이 화면·HUD·세션 타이머(`sessionStartedAt`, 게임 루프 `update(dt)`)",
@@ -2432,7 +5404,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "order",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제45조제1호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제45조",
+            "quote": "제12조의3제5항에 따른 문화체육관광부장관의 시정명령을 따르지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-decree-b2-8-ba",
@@ -2440,7 +5431,7 @@
       "law": "게임산업진흥에 관한 법률 시행령",
       "lawShort": "게임산업법 시행령",
       "kind": "시행령",
-      "article": "시행령 제17조 별표 2 제8호 바목(법 제28조제1항제8호)",
+      "article": "제17조 별표 2 제8호 바목(법 제28조제1항제8호)",
       "title": "웹보드게임 본인확인 수단과 1년마다 본인 확인",
       "duty": "웹보드게임 이용자 본인확인 수단(전자서명인증사업자·본인확인기관 등)을 마련하고 1년마다 본인 확인",
       "trigger": "웹보드게임 로그인·로비 입장 처리(`onLogin`, `enterLobby`)",
@@ -2449,7 +5440,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 10억원",
+        "maxWon": 1000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "10억원 이하의 과징금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제36조제1항제2호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제36조",
+            "quote": "제28조제1항제4호, 제5호, 제5호의2 및 제6호부터 제8호까지에 따른 준수사항을 위반한 때"
+          }
+        ],
+        "note": "영업정지 처분을 갈음해 부과하는 과징금",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-decree-b2-8-ga",
@@ -2457,7 +5467,7 @@
       "law": "게임산업진흥에 관한 법률 시행령",
       "lawShort": "게임산업법 시행령",
       "kind": "시행령",
-      "article": "시행령 제17조 별표 2 제8호 가목·나목(법 제28조제1항제8호)",
+      "article": "제17조 별표 2 제8호 가목·나목(법 제28조제1항제8호)",
       "title": "웹보드게임 월 구매한도 100만원·1회 사용 한도",
       "duty": "웹보드게임 이용자별 월 구매 100만원(증여 수령 포함) 한도와 1회 게임머니 사용 한도(그 최저 게임머니의 1/10) 지키게 하기",
       "trigger": "포커·고스톱·맞고·스포츠 예측 게임의 충전·선물·베팅 처리(`purchaseCash`, `giftCash`, `placeBet`, `ante`)",
@@ -2466,7 +5476,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 10억원",
+        "maxWon": 1000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "10억원 이하의 과징금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제36조제1항제2호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제36조",
+            "quote": "제28조제1항제4호, 제5호, 제5호의2 및 제6호부터 제8호까지에 따른 준수사항을 위반한 때"
+          }
+        ],
+        "note": "영업정지 처분을 갈음해 부과하는 과징금",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gameact-decree-b2-8-ra",
@@ -2474,7 +5503,7 @@
       "law": "게임산업진흥에 관한 법률 시행령",
       "lawShort": "게임산업법 시행령",
       "kind": "시행령",
-      "article": "시행령 제17조 별표 2 제8호 라목·마목(법 제28조제1항제8호)",
+      "article": "제17조 별표 2 제8호 라목·마목(법 제28조제1항제8호)",
       "title": "웹보드게임 상대방 선택·자동 베팅 금지",
       "duty": "웹보드게임 이용자가 게임 상대방을 고를 수 없게 하고(무료 별도 머니·1/200 이하 소액 예외), 베팅을 자동으로 할 수 없게 하기",
       "trigger": "방 만들기·입장·친구 대전·매칭과 베팅 입력 코드(`joinRoom(roomId)`, `inviteFriend`, `autoBet`, `setAutoPlay`)",
@@ -2483,7 +5512,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "과징금 10억원",
+        "maxWon": 1000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "10억원 이하의 과징금",
+            "law": "게임산업진흥에 관한 법률",
+            "clause": "제36조제1항제2호",
+            "url": "https://www.law.go.kr/법령/게임산업진흥에관한법률/제36조",
+            "quote": "제28조제1항제4호, 제5호, 제5호의2 및 제6호부터 제8호까지에 따른 준수사항을 위반한 때"
+          }
+        ],
+        "note": "영업정지 처분을 갈음해 부과하는 과징금",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-26-0-1",
@@ -2500,7 +5548,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 7년",
+        "maxWon": 70000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "7년 이하의 징역이나 7천만원 이하의 벌금",
+            "law": "국민체육진흥법",
+            "clause": "제47조제2호",
+            "url": "https://www.law.go.kr/법령/국민체육진흥법/제47조",
+            "quote": "제26조제1항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-26-0-2-h1",
@@ -2517,7 +5584,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역이나 5천만원 이하의 벌금",
+            "law": "국민체육진흥법",
+            "clause": "제48조제4호",
+            "url": "https://www.law.go.kr/법령/국민체육진흥법/제48조",
+            "quote": "제26조제2항제1호에 해당하는 행위를 한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "youth-24-1",
@@ -2534,7 +5620,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "youth-25-1",
@@ -2551,7 +5645,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-4-2-1-h1",
@@ -2568,7 +5670,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 1년",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1년 이하의 징역 또는 1천만원 이하의 벌금",
+            "law": "공연법",
+            "clause": "제41조제1호",
+            "url": "https://www.law.go.kr/법령/공연법/제41조",
+            "quote": "제4조의2제1항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-dec-3-3-h1-da",
@@ -2585,7 +5706,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-dec-3-3-h1-ga",
@@ -2602,7 +5731,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-dec-3-3-h1-na",
@@ -2619,7 +5756,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-dec-3-3-h1-ra",
@@ -2636,7 +5781,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-dec-3-3-h2-da",
@@ -2653,7 +5806,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-dec-3-3-h2-ga",
@@ -2670,7 +5831,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-dec-3-3-h2-na",
@@ -2687,7 +5856,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "perfact-dec-3-3-h2-ra",
@@ -2704,7 +5881,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-6-2-1-h1",
@@ -2721,7 +5906,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 1년",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1년 이하의 징역이나 1천만원 이하의 벌금",
+            "law": "국민체육진흥법",
+            "clause": "제49조의2제1호",
+            "url": "https://www.law.go.kr/법령/국민체육진흥법/제49조의2",
+            "quote": "제6조의2제1항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-dec-4-2-h1-da",
@@ -2738,7 +5942,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-dec-4-2-h1-ga",
@@ -2755,7 +5967,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-dec-4-2-h1-na",
@@ -2772,7 +5992,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-dec-4-2-h1-ra",
@@ -2789,7 +6017,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-dec-4-2-h2-da",
@@ -2806,7 +6042,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-dec-4-2-h2-ga",
@@ -2823,7 +6067,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-dec-4-2-h2-na",
@@ -2840,7 +6092,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "sportsact-dec-4-2-h2-ra",
@@ -2857,7 +6117,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-15-2",
@@ -2874,7 +6142,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 5천만원",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제2호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제15조제2항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-17-4",
@@ -2891,7 +6178,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제17조제4항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-20-2",
@@ -2908,7 +6214,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 1년",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1년 이하의 징역 또는 1천만원 이하의 벌금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제50조제4항제5호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제50조",
+            "quote": "제20조제2항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-20-2-1",
@@ -2925,7 +6250,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제5항제6호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제20조의2제1항ㆍ제3항 또는 제4항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-20-2-2",
@@ -2942,7 +6286,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제20조의2제2항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-32-1",
@@ -2959,7 +6322,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년 · 과징금 매출 3%",
+        "maxWon": 20000000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제50조제2항제6호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제50조",
+            "quote": "제32조제1항 또는 제2항(제34조에 따라 준용하는 경우를 포함한다)을 위반한 자 및 그 사정을 알고 개인신용정보를 제공받거나 이용한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 200억원 이하)",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호의2",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제32조제6항제9호의2에 해당하지 아니함에도 제32조제1항 또는 제2항을 위반하여 신용정보주체의 동의를 받지 아니하고 개인신용정보를 제3자에게 제공한 경우 및 그 사정을 알면서도 영리 또는 부정한 목적으로 개인신용정보를 제공받은 경우"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-32-2",
@@ -2976,7 +6368,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년 · 과징금 매출 3%",
+        "maxWon": 20000000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제50조제2항제6호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제50조",
+            "quote": "제32조제1항 또는 제2항(제34조에 따라 준용하는 경우를 포함한다)을 위반한 자 및 그 사정을 알고 개인신용정보를 제공받거나 이용한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 200억원 이하)",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호의2",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제32조제6항제9호의2에 해당하지 아니함에도 제32조제1항 또는 제2항을 위반하여 신용정보주체의 동의를 받지 아니하고 개인신용정보를 제3자에게 제공한 경우 및 그 사정을 알면서도 영리 또는 부정한 목적으로 개인신용정보를 제공받은 경우"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-32-4",
@@ -2993,7 +6414,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 5천만원",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제5호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제32조제4항 또는 제5항(제34조에 따라 준용하는 경우를 포함한다)을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-32-5",
@@ -3010,7 +6450,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 5천만원",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제5호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제32조제4항 또는 제5항(제34조에 따라 준용하는 경우를 포함한다)을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-33-1",
@@ -3027,7 +6486,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년 · 과징금 매출 3%",
+        "maxWon": 20000000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제50조제2항제7호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제50조",
+            "quote": "제33조(제34조에 따라 준용하는 경우를 포함한다)를 위반한 자"
+          },
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "전체 매출액의 100분의 3 이하의 과징금(매출액이 없으면 200억원 이하)",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호의3",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제32조제6항제9호의2 및 제33조제1항제4호에 해당하지 아니함에도 제33조제1항을 위반하여 개인신용정보를 이용한 경우"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-34-2-1",
@@ -3044,7 +6532,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제6호의3",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제34조의2제1항을 위반하여 신용정보주체에게 알려야 할 사항을 알리지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-35-3-1",
@@ -3061,7 +6568,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제6호의6",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제35조의3제1항을 위반하여 통지하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-36-1",
@@ -3078,7 +6604,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제7호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제36조제1항 또는 제3항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-37-3",
@@ -3095,7 +6640,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제8호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제37조제3항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-38-3",
@@ -3112,7 +6676,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제9호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제38조제3항부터 제6항까지 또는 제8항을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-38-3-2",
@@ -3129,7 +6712,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제11호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제38조의3을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-40-2",
@@ -3146,7 +6748,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 3천만원",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제3항제15호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제40조제2항을 위반하여 영리목적의 광고성 정보를 전송하는 행위에 이용한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-40-2-8",
@@ -3163,7 +6784,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 1천만원",
+        "maxWon": 10000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "1천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제5항제11호의3",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제40조의2제8항을 위반하여 개인신용정보를 가명처리하거나 익명처리한 기록을 보존하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "creditinfo-decree-16-1-h3",
@@ -3171,7 +6811,7 @@
       "law": "신용정보의 이용 및 보호에 관한 법률 시행령",
       "lawShort": "신용정보법 시행령",
       "kind": "시행령",
-      "article": "시행령 제16조제1항제3호(법 제19조제1항, 신용정보업감독규정 별표 3 Ⅲ.2)",
+      "article": "제16조제1항제3호(법 제19조제1항, 신용정보업감독규정 별표 3 Ⅲ.2)",
       "title": "신용정보 조회 권한 차등·조회기록 점검",
       "duty": "신용정보 취급·조회 권한을 직급·업무별로 차등 부여하고 조회기록을 주기적으로 점검",
       "trigger": "신용정보회사등의 백오피스·상담 도구가 고객 신용정보(대출·연체·신용평점·소득)를 조회·수정하는 API·화면",
@@ -3180,7 +6820,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "credsup-b3-2-1-1",
@@ -3197,7 +6866,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "credsup-b3-2-1-5",
@@ -3214,7 +6912,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "credsup-b3-2-1-6",
@@ -3231,7 +6958,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "credsup-b3-2-2",
@@ -3248,7 +7004,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "credsup-b3-2-3-1",
@@ -3265,7 +7050,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "credsup-b3-2-3-2",
@@ -3282,7 +7096,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "credsup-b3-2-3-4",
@@ -3299,7 +7142,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "credsup-b3-2-5",
@@ -3316,7 +7188,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과징금",
+        "label": "유출되면 과징금 50억원 · 과태료 5천만원",
+        "maxWon": 5000000000,
+        "items": [
+          {
+            "kind": "과징금",
+            "via": "direct",
+            "condition": "개인신용정보가 분실·도난·누출·변조·훼손되면",
+            "penalty": "50억원 이하의 과징금",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제42조의2제1항제1호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제42조의2",
+            "quote": "제19조제1항을 위반하여 개인신용정보를 분실ㆍ도난ㆍ누출ㆍ변조 또는 훼손당한 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5천만원 이하의 과태료",
+            "law": "신용정보의 이용 및 보호에 관한 법률",
+            "clause": "제52조제2항제3호",
+            "url": "https://www.law.go.kr/법령/신용정보의이용및보호에관한법률/제52조",
+            "quote": "제19조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "medical-34-9-1-h5",
@@ -3333,7 +7234,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 3년",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역이나 3천만원 이하의 벌금",
+            "law": "의료법",
+            "clause": "제88조제1호",
+            "url": "https://www.law.go.kr/법령/의료법/제88조",
+            "quote": "제19조, 제21조제2항(제40조의2제4항에서 준용하는 경우를 포함한다), 제22조제3항, 제27조제3항ㆍ제4항, 제33조제4항, 제34조의8제2항 전단, 제34조의9제1항, 제35조제1항 단서, 제38조제3항, 제47조제11항, 제59조제3항, 제64조제2항(제82조제3항에서 준용하는 경우를 포함한다), 제69조제3항을 위반한 자"
+          }
+        ],
+        "note": "비대면진료 중개 조항은 2026-12-24 시행",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "medical-34-9-2",
@@ -3350,7 +7270,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역이나 5천만원 이하의 벌금",
+            "law": "의료법",
+            "clause": "제87조의2제2항제2호",
+            "url": "https://www.law.go.kr/법령/의료법/제87조의2",
+            "quote": "제12조제2항 및 제3항, 제18조제3항, 제21조의2제5항ㆍ제8항, 제23조제3항, 제27조제1항, 제33조제2항(제82조제3항에서 준용하는 경우만을 말한다)ㆍ제8항(제82조제3항에서 준용하는 경우를 포함한다)ㆍ제10항, 제34조의7제4항ㆍ제6항, 제34조의9제3항을 위반한 자"
+          }
+        ],
+        "note": "징역은 제3항만, 제2항은 행정처분 · 2026-12-24 시행",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "pharm-50-1",
@@ -3367,7 +7306,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "약사법",
+            "clause": "제93조제1항제7호",
+            "url": "https://www.law.go.kr/법령/약사법/제93조",
+            "quote": "제44조제1항을 위반한 자"
+          },
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "약사법",
+            "clause": "제94조제1항제8호",
+            "url": "https://www.law.go.kr/법령/약사법/제94조",
+            "quote": "제50조제1항(제44조의6제1항에서 준용하는 경우를 포함한다)을 위반한 자"
+          }
+        ],
+        "note": "약국 아닌 판매자 징역 5년, 약국의 점포 밖 판매 3년",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "gender-eq-7-2",
@@ -3384,7 +7352,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "벌금",
+        "label": "벌금 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "벌금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 벌금",
+            "law": "남녀고용평등과 일ㆍ가정 양립 지원에 관한 법률",
+            "clause": "제37조제4항제1호",
+            "url": "https://www.law.go.kr/법령/남녀고용평등과일ㆍ가정양립지원에관한법률/제37조",
+            "quote": "제7조를 위반하여 근로자의 모집 및 채용에서 남녀를 차별하거나, 근로자를 모집ㆍ채용할 때 그 직무의 수행에 필요하지 아니한 용모ㆍ키ㆍ체중 등의 신체적 조건, 미혼 조건 등을 제시하거나 요구한 경우"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "hiring-7-2",
@@ -3401,7 +7388,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "jobsec-25-1-h2",
@@ -3418,7 +7413,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": "벌칙·과태료 대신 사업정지 처분 대상(직업안정법 제36조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "jobsec-25-1-h5",
@@ -3435,7 +7438,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": "2026-12-10 시행 · 사업정지 처분 대상(직업안정법 제36조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "jobsec-decree-28-h1",
@@ -3443,7 +7454,7 @@
       "law": "직업안정법 시행령",
       "lawShort": "직업안정법 시행령",
       "kind": "시행령",
-      "article": "시행령 제28조제1호(법 제25조제3호)",
+      "article": "제28조제1호(법 제25조제3호)",
       "title": "신원 불확실 구인광고 게재 금지",
       "duty": "업체명·성명·사업자등록 확인 불가 또는 사서함 연락처뿐인 구인광고 게재 금지",
       "trigger": "구인공고 등록 API, 기업회원 가입 흐름",
@@ -3452,7 +7463,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": "벌칙·과태료 대신 사업정지 처분 대상(직업안정법 제36조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "jobsec-decree-28-h3",
@@ -3460,7 +7479,7 @@
       "law": "직업안정법 시행령",
       "lawShort": "직업안정법 시행령",
       "kind": "시행령",
-      "article": "시행령 제28조제3호",
+      "article": "제28조제3호",
       "title": "'(무료)취업상담·취업추천·취업지원' 표현 사용 금지",
       "duty": "직업정보제공매체·광고문에 '(무료)취업상담', '취업추천', '취업지원' 표현 사용 금지",
       "trigger": "랜딩·배너·메뉴 문구, i18n 리소스",
@@ -3469,7 +7488,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": "벌칙·과태료 대신 사업정지 처분 대상(직업안정법 제36조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "jobsec-decree-28-h5",
@@ -3477,7 +7504,7 @@
       "law": "직업안정법 시행령",
       "lawShort": "직업안정법 시행령",
       "kind": "시행령",
-      "article": "시행령 제28조제5호",
+      "article": "제28조제5호",
       "title": "직업정보제공사업 신고번호 표시",
       "duty": "매체에 직업정보제공사업 신고번호(직업소개 겸업 시 등록번호)를 알아보기 쉽게 표시",
       "trigger": "구인구직 서비스의 공통 푸터·사업자 정보 컴포넌트",
@@ -3486,7 +7513,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": "벌칙·과태료 대신 사업정지 처분 대상(직업안정법 제36조)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-17-0-2",
@@ -3503,7 +7538,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "벌금",
+        "label": "벌금 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "벌금",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제114조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제114조",
+            "quote": "제6조, 제16조, 제17조, 제20조, 제21조, 제22조제2항, 제47조, 제53조제4항 단서, 제67조제1항ㆍ제3항, 제70조제3항, 제73조, 제74조제6항, 제77조, 제94조, 제95조 및 제100조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-42-0-0",
@@ -3520,7 +7574,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "근로기준법",
+            "clause": "제116조제2항제2호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제116조",
+            "quote": "제14조, 제39조, 제41조, 제42조, 제44조의4제1항ㆍ제4항ㆍ제5항, 제48조, 제66조, 제74조제7항ㆍ제9항, 제76조의3제2항ㆍ제4항ㆍ제5항ㆍ제7항, 제91조, 제93조, 제98조제2항 및 제99조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-48-0-1",
@@ -3537,7 +7610,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "근로기준법",
+            "clause": "제116조제2항제2호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제116조",
+            "quote": "제14조, 제39조, 제41조, 제42조, 제44조의4제1항ㆍ제4항ㆍ제5항, 제48조, 제66조, 제74조제7항ㆍ제9항, 제76조의3제2항ㆍ제4항ㆍ제5항ㆍ제7항, 제91조, 제93조, 제98조제2항 및 제99조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-48-0-2",
@@ -3554,7 +7646,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "근로기준법",
+            "clause": "제116조제2항제2호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제116조",
+            "quote": "제14조, 제39조, 제41조, 제42조, 제44조의4제1항ㆍ제4항ㆍ제5항, 제48조, 제66조, 제74조제7항ㆍ제9항, 제76조의3제2항ㆍ제4항ㆍ제5항ㆍ제7항, 제91조, 제93조, 제98조제2항 및 제99조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-53-0-1",
@@ -3571,7 +7682,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-54-0-1",
@@ -3588,7 +7718,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-55-0-1",
@@ -3605,7 +7754,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-55-0-2",
@@ -3622,7 +7790,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-56-0-1",
@@ -3639,7 +7826,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제107조제1항",
+            "url": "https://www.law.go.kr/법령/근로기준법/제107조",
+            "quote": "제7조, 제8조, 제9조, 제23조제2항, 제36조, 제40조, 제43조, 제44조, 제44조의2, 제46조, 제51조의3, 제52조제2항제2호 또는 제56조를 위반한 자는 5년 이하의 징역 또는 5천만원 이하의 벌금에 처한다."
+          }
+        ],
+        "note": "피해자가 처벌을 원치 않는다고 밝히면 공소 불가(반의사불벌)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-56-0-2",
@@ -3656,7 +7862,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제107조제1항",
+            "url": "https://www.law.go.kr/법령/근로기준법/제107조",
+            "quote": "제7조, 제8조, 제9조, 제23조제2항, 제36조, 제40조, 제43조, 제44조, 제44조의2, 제46조, 제51조의3, 제52조제2항제2호 또는 제56조를 위반한 자는 5년 이하의 징역 또는 5천만원 이하의 벌금에 처한다."
+          }
+        ],
+        "note": "피해자가 처벌을 원치 않는다고 밝히면 공소 불가(반의사불벌)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-56-0-3",
@@ -3673,7 +7898,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 5년",
+        "maxWon": 50000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "5년 이하의 징역 또는 5천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제107조제1항",
+            "url": "https://www.law.go.kr/법령/근로기준법/제107조",
+            "quote": "제7조, 제8조, 제9조, 제23조제2항, 제36조, 제40조, 제43조, 제44조, 제44조의2, 제46조, 제51조의3, 제52조제2항제2호 또는 제56조를 위반한 자는 5년 이하의 징역 또는 5천만원 이하의 벌금에 처한다."
+          }
+        ],
+        "note": "피해자가 처벌을 원치 않는다고 밝히면 공소 불가(반의사불벌)",
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-60-0-1",
@@ -3690,7 +7934,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-60-0-2",
@@ -3707,7 +7970,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-60-0-4",
@@ -3724,7 +8006,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-60-0-6",
@@ -3741,7 +8042,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-74-0-1",
@@ -3758,7 +8078,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-74-0-7",
@@ -3775,7 +8114,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "과태료",
+        "label": "과태료 500만원",
+        "maxWon": 5000000,
+        "items": [
+          {
+            "kind": "과태료",
+            "via": "direct",
+            "condition": null,
+            "penalty": "500만원 이하의 과태료",
+            "law": "근로기준법",
+            "clause": "제116조제2항제2호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제116조",
+            "quote": "제14조, 제39조, 제41조, 제42조, 제44조의4제1항ㆍ제4항ㆍ제5항, 제48조, 제66조, 제74조제7항ㆍ제9항, 제76조의3제2항ㆍ제4항ㆍ제5항ㆍ제7항, 제91조, 제93조, 제98조제2항 및 제99조를 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-74-0-8",
@@ -3792,7 +8150,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "lsa-decree-9-0-1",
@@ -3800,7 +8166,7 @@
       "law": "근로기준법 시행령",
       "lawShort": "근로기준법 시행령",
       "kind": "대통령령",
-      "article": "시행령 제9조제1항 별표 2 제4호나목(법 제18조)",
+      "article": "제9조제1항 별표 2 제4호나목(법 제18조)",
       "title": "단시간근로자 연차 시간 단위 비례 계산",
       "duty": "단시간근로자 연차는 통상근로자 일수×소정근로시간 비율×8시간의 시간 단위로, 1시간 미만은 1시간으로",
       "trigger": "파트타임·시급제 근로자 연차 계산 코드",
@@ -3809,7 +8175,26 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "징역",
+        "label": "징역 2년",
+        "maxWon": 20000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": null,
+            "penalty": "2년 이하의 징역 또는 2천만원 이하의 벌금",
+            "law": "근로기준법",
+            "clause": "제110조제1호",
+            "url": "https://www.law.go.kr/법령/근로기준법/제110조",
+            "quote": "제10조, 제22조제1항, 제26조, 제50조, 제51조의2제2항, 제52조제2항제1호, 제53조제1항ㆍ제2항, 같은 조 제4항 본문ㆍ제7항, 제54조, 제55조, 제59조제2항, 제60조제1항ㆍ제2항ㆍ제4항 및 제5항, 제64조제1항, 제69조, 제70조제1항ㆍ제2항, 제71조, 제74조제1항부터 제5항까지, 제75조, 제78조부터 제80조까지, 제82조, 제83조 및 제104조을 위반한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "dincl-19-2",
@@ -3826,7 +8211,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "disc-decree-14-2-h1",
@@ -3843,7 +8236,36 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "명령",
+        "label": "시정명령 불이행 시 과태료 · 악의적이면 징역 3년",
+        "maxWon": 30000000,
+        "items": [
+          {
+            "kind": "징역",
+            "via": "direct",
+            "condition": "악의적 차별로 인정되면",
+            "penalty": "3년 이하의 징역 또는 3천만원 이하의 벌금",
+            "law": "장애인차별금지 및 권리구제 등에 관한 법률",
+            "clause": "제49조제1항",
+            "url": "https://www.law.go.kr/법령/장애인차별금지및권리구제등에관한법률/제49조",
+            "quote": "이 법에서 금지한 차별행위를 행하고 그 행위가 악의적인 것으로 인정되는 경우"
+          },
+          {
+            "kind": "과태료",
+            "via": "order",
+            "condition": null,
+            "penalty": "3천만원 이하의 과태료",
+            "law": "장애인차별금지 및 권리구제 등에 관한 법률",
+            "clause": "제50조제1항",
+            "url": "https://www.law.go.kr/법령/장애인차별금지및권리구제등에관한법률/제50조",
+            "quote": "제44조에 따라 확정된 시정명령을 정당한 사유 없이 이행하지 아니한 자"
+          }
+        ],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     },
     {
       "id": "dvnotice-13-1",
@@ -3860,7 +8282,15 @@
       "policies": [],
       "whenever": false,
       "audience": false,
-      "goods": null
+      "goods": null,
+      "sanction": {
+        "class": "없음",
+        "label": "벌칙·과태료 없음",
+        "maxWon": null,
+        "items": [],
+        "note": null,
+        "asOf": "2026-11-24"
+      }
     }
   ]
 }

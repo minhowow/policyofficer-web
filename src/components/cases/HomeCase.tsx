@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CitedLines } from "@/components/review/FlowFigure";
 import { keepParticles } from "@/components/text";
 import { casesFile, casesHref } from "@/lib/cases";
+import { lawArticle } from "@/lib/duties/article";
 import { TRACE, traceData, traceSourceLine } from "@/lib/how/figures";
 import { REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { parseReview, REVIEW_STATUSES, type ReviewStatus } from "@/lib/review";
@@ -52,7 +53,7 @@ export function HomeCase() {
         <li>
           <span className="hc-k">의무 고르기</span>
           <span className="hc-v">
-            {item.law} {item.article}
+            {lawArticle(item.law, item.article)}
           </span>
         </li>
         {cite && (
@@ -73,7 +74,7 @@ export function HomeCase() {
             {shown.map((i) => (
               <li key={i.duty}>
                 <span className="hc-law">
-                  {i.law} {i.article}
+                  {lawArticle(i.law, i.article)}
                 </span>
                 {i.dutyText && !SANCTION.test(i.dutyText) && <span className="hc-duty">{keepParticles(i.dutyText)}</span>}
               </li>

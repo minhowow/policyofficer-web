@@ -432,7 +432,8 @@ describe("DB + GitHub 으로 띄운 사이트", () => {
     // 하나의 한도(28초)에 닿았다.
     const runner = runLocalRunner(["--fixture", "--once", "--step-delay", "3000", "--site", site.origin], { RUNNER_SECRET });
     try {
-      await page.locator(".step-active .step-name", { hasText: /저장소 받기|검사/ }).waitFor({ timeout: 30_000 });
+      // 검사 단계 안의 하위 단계(정적 검사·AI 판정)가 함께 진행 중으로 그려지는 때가 있어 첫 것만 기다린다.
+      await page.locator(".step-active .step-name", { hasText: /저장소 받기|검사/ }).first().waitFor({ timeout: 30_000 });
       expect(await page.locator(".an-meta .badge").textContent()).toBe("분석 중");
       expect(await page.locator(".live-now").textContent()).not.toContain("대기열");
       await page.locator(".report").waitFor({ timeout: 15_000 });
