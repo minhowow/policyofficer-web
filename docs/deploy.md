@@ -6,7 +6,7 @@
 ## 0. 주소 바꾸기(2026-11-25 오너 지시, 제품 이름 policyofficer)
 
 GitHub 저장소는 `minhowow/policyofficer-web`(웹)과 `minhowow/policyofficer`(CLI)다. 사이트 주소는 `https://policyofficer.vercel.app` 이다
-(2026-11-25 Vercel 프로젝트에 더함). 옛 주소 `plitsoft-sdp-web.vercel.app` 으로 온 요청은 `vercel.json` 의 `redirects` 가 새 주소로
+(2026-11-25 Vercel 프로젝트에 더함). 옛 주소 `plitsoft-sdp-web.vercel.app` 으로 온 요청은 `next.config.ts` 의 `redirects` 가 새 주소로
 넘긴다(같은 경로). 같은 날 바꾼 것:
 
 | 어디 | 이름 | 값 |

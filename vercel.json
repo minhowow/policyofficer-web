@@ -1,12 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["sin1"],
-  "redirects": [
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "plitsoft-sdp-web.vercel.app" }],
-      "destination": "https://policyofficer.vercel.app/:path*",
-      "permanent": true
-    }
-  ]
+  "regions": ["sin1"]
 }
