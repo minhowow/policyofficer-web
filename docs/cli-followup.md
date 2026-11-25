@@ -2,19 +2,29 @@
 
 웹은 CLI(`../Plitsoft-SDP`)의 출력만 계약으로 받는다(`contract/README.md`). CLI 는 2026-11-10 에 웹이 고정할 판으로 태그
 `handoff-w11`(`50c70bc`)을 원격에 올렸고, 13주(11/24~11/30)에 도구 판 태그 `v0.4.0` 을 따로 단다. 그 전까지 웹은 `handoff-w11` 을
-고정하라고 적는다(CLI `docs/output.md`. 아래 "`a228856` → `handoff-w11`"). 웹의 고정 판은 지금 `handoff-w13-3`(`7cf9758`)이다
+고정하라고 적는다(CLI `docs/output.md`. 아래 "`a228856` → `handoff-w11`"). 웹의 고정 판은 지금 `handoff-w13-5`(`5cd23d0`)이다
 (판 이력은 `contract/README.md`). 이 문서는
 CLI 가 바뀐 것을 언제, 어떻게 보고 어떤 순서로 받아들이는지 적는다. 요청은 `docs/cli-requests.md`, 사람이 정할 것은
 `docs/ROADMAP.md` 의 "사람 결정이 필요한 것"에 둔다.
 
-## 지금 맞춘 판 (2026-11-24, `handoff-w13-3`)
+## 지금 맞춘 판 (2026-11-25, `handoff-w13-5`)
 
-| 자리 | CLI 커밋 | 팩 판(`pack.yaml` sha256 앞 16자) |
-|---|---|---|
-| 수집본 `contract/cli-current/` (`MANIFEST.json`) | `7cf9758` (2026-11-24, `dirty: false`) | `284a5b28911a0124` |
-| 팩 메타데이터 `data/pack-meta.json` | `7cf9758` 의 `policies/kr-core` | `284a5b28911a0124` |
-| 실행기 `.github/workflows/analyze.yml` | `CLI_REPO` `minhowow/policyofficer`, `CLI_COMMIT` `7cf9758f6f…`, `CLI_EXCLUDE_NEWER` 2026-11-24, `REVIEW_REBUT_SCOPE` found, review 에 `--progress plain` | 같다 |
-| 의무 지도 `data/duty-map.json` | `7cf9758` 의 기능–의무 표와 제재 표(`src/policyofficer/profile/`) | — |
+| 자리 | CLI 커밋 |
+|---|---|
+| 프로필 수집본 `contract/cli-current/` (`MANIFEST.json`) | `5cd23d0` (2026-11-25, `dirty: false`) |
+| review 스키마 사본 `contract/schema/review.cli-2.schema.json` | `5cd23d0` 의 `schemas/review-2.json` |
+| 실행기 `.github/workflows/analyze.yml` | `CLI_REPO` `minhowow/policyofficer`, `CLI_COMMIT` `5cd23d04de…`, `CLI_EXCLUDE_NEWER` 2026-11-25, `REVIEW_REBUT_SCOPE` found, review 에 `--progress plain` |
+| 의무 지도 `data/duty-map.json` | `5cd23d0` 의 기능–의무 표와 제재 표(`src/policyofficer/profile/`) |
+
+`386ce07` → `5cd23d0`(2026-11-25, `handoff-w13-5`): 한 줄 명령 `policyofficer [폴더]`(실행기는 `policyofficer review` 그대로), 판정기의
+도구·인용 관문이 프로젝트 파일만 본다(깨끗한 클론에서는 전과 같은 집합), review JSON 에 `summary.highlights`(먼저 볼 것 3건까지,
+`{duty, file, line, text}`)가 더해졌다. 프로필 수집본 7개와 기능–의무 표·제재 표는 그대로다(MANIFEST 만 바뀜). 화면은 결과 쪽의 '코드에서
+확인된 것' 카드를 그 목록의 차례로 고르고 카드의 인용도 그 자리로 보인다(그 키가 없는 옛 결과는 같은 규칙으로 웹이 고른다. 미리 돌린
+jobtalk 에서 CLI 의 함수와 웹이 고른 세 건·인용이 같다). 웹은 그 목록에서도 반박을 견딘 것만 카드로 올린다(CLI 는 견딘 것을 앞에 둘 뿐).
+그 뒤 CLI main `d09542d` 는 터미널 화면의 '어기면'만 뺐다(JSON 그대로). 따라가지 않는다.
+
+`7cf9758` → `386ce07`(2026-11-25, `handoff-w13-4`): 규칙 검사(scan)와 정책 팩을 걷어 냈다. 남은 명령은 profile·review·replay 이고 review
+JSON 에서 `checklist[].static`·`krcore`·`run.static` 이 빠졌다. 웹도 같은 날 그 검사의 화면을 지웠다(2026-11-25 오너 지시).
 
 `6f1b50c` → `7cf9758`(2026-11-24, `handoff-w13-3`): 제품 이름을 policyofficer 로 바꾼 판이다(CLI `docs/output.md` 의 '이름 바꾸기').
 저장소 `minhowow/policyofficer`, 설치 이름 `policyofficer @ git+…`, 명령 `policyofficer <명령>`, JSON `tool.name`, `run.fingerprint_version`

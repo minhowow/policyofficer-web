@@ -10,7 +10,7 @@ import { lawArticle } from "@/lib/duties/article";
 import { byWeight, SANCTION_TEXT, SANCTION_TIERS, sanctionTier, type Sanction } from "@/lib/duties/sanction";
 import { REVIEW_STATUSES, type Review, type ReviewCitation, type ReviewItem, type ReviewStatus } from "@/lib/review";
 import { layoutFlow } from "@/lib/review/flow";
-import { confirmedItems } from "@/lib/review/pick";
+import { cardCitation, confirmedItems } from "@/lib/review/pick";
 import { CHECKS, checkCount, costText, firstSentence, gateText, modelLabel, notAnsweredText, SANCTION, shortStatus, toolCheck, verifySentence } from "@/lib/review/text";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { fileLink, shortCommit } from "@/lib/service/href";
@@ -72,7 +72,7 @@ export function ReviewView({
         {cards.length > 0 ? (
           <ol className="rv-cards">
             {cards.map((item) => (
-              <Card key={item.duty} item={item} code={code} />
+              <Card key={item.duty} review={review} item={item} code={code} />
             ))}
           </ol>
         ) : (
@@ -144,15 +144,15 @@ function Lead({ review }: { review: Review }) {
  * 줄, 커밋 고정 링크)과 '도구가 파일에서 확인함', 걸릴 수 있는 의무(조문·법제처, 짧은 제목, 제재 표지), 확인할 질문, 찾지 못한 것(작게).
  * 나머지(본 것, 인용 더, 도구 확인, 제재 조문, 찾아본 말, 자세히)는 '자세히' 안에 둔다. 글은 결과에 실린 그대로다.
  */
-function Card({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
-  const cites = item.citations.filter((cite) => cite.ok && cite.why !== "profile");
+function Card({ review, item, code }: { review: Review; item: ReviewItem; code: CodeSource | null }) {
+  const cite = cardCitation(review, item);
   const fact = item.condition || firstSentence(item.reason)[0];
   const sanction = sanctionOf(item.duty);
   return (
     <li className="rv-card" id={dutyAnchor(item.duty)}>
       <p className="rv-fact">{keepParticles(fact)}</p>
       <div className="rv-card-cite">
-        <CitedLines citations={cites.slice(0, 1)} code={code} />
+        <CitedLines citations={cite ? [cite] : []} code={code} />
         <p className="rv-checked">도구가 파일에서 확인함</p>
       </div>
       <div className="rv-card-duty">

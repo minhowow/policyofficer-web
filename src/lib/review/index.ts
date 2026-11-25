@@ -114,12 +114,19 @@ export interface ReviewItem {
   gate: string | null;
 }
 
+/** CLI 가 고른 '먼저 볼 것' 한 건: 의무 id 와 보일 인용 하나의 자리(handoff-w13-5 의 `{duty, file, line, text}`). */
+export interface ReviewHighlight {
+  duty: string;
+  file: string | null;
+  line: number | null;
+}
+
 export interface Review {
   /**
-   * `highlights` 는 CLI 가 고른 '먼저 볼 것'의 의무 id(handoff-w13-5 부터. 코드에서 본 것 가운데 반박을 견디고 인용이 받아진 것, 무거운
-   * 제재 순, 기능마다 하나 먼저). 그 판 전의 결과에는 없다(null).
+   * `highlights` 는 CLI 가 고른 '먼저 볼 것'(handoff-w13-5 부터, 3건까지. 코드에서 본 것 가운데 모델의 인용이 관문을 통과한 것을 반박을
+   * 견딘 것 → 제재 등급 → 정액 상한 → 체크리스트 차례로, 기능마다 하나 먼저). 그 판 전의 결과에는 없다(null).
    */
-  summary: { counts: Partial<Record<ReviewStatus, number>>; top: string[]; highlights: string[] | null };
+  summary: { counts: Partial<Record<ReviewStatus, number>>; top: string[]; highlights: ReviewHighlight[] | null };
   profile: {
     commit: string | null;
     platforms: string[];
@@ -284,7 +291,13 @@ export function parseReview(data: unknown): Review | null {
       counts: counts(summary.counts) as Partial<Record<ReviewStatus, number>>,
       top: strs(summary.top),
       highlights: Array.isArray(summary.highlights)
-        ? summary.highlights.flatMap((h) => (typeof h === "string" ? [h] : isObj(h) && str(h.duty) !== null ? [h.duty as string] : []))
+        ? summary.highlights.flatMap((h): ReviewHighlight[] =>
+            typeof h === "string"
+              ? [{ duty: h, file: null, line: null }]
+              : isObj(h) && str(h.duty) !== null
+                ? [{ duty: h.duty as string, file: str(h.file), line: num(h.line) }]
+                : [],
+          )
         : null,
     },
     profile: {

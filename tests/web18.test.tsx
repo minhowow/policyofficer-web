@@ -4,7 +4,7 @@ import { ReviewView } from "@/components/review/ReviewView";
 import { dutyAnchor, dutyMap, sanctionOf } from "@/lib/duties";
 import { byWeight, SANCTION_TEXT, sanctionTier } from "@/lib/duties/sanction";
 import { parseReview, type Review, type ReviewItem } from "@/lib/review";
-import { CONFIRMED_MAX, confirmedItems, isConfirmed } from "@/lib/review/pick";
+import { cardCitation, CONFIRMED_MAX, confirmedItems, isConfirmed } from "@/lib/review/pick";
 import { CHECKS, checkCount, firstSentence } from "@/lib/review/text";
 import { checklistHref, checklistMarkdownHref } from "@/lib/service/href";
 import { PRERUNS } from "@/lib/service/prerun";
@@ -97,9 +97,14 @@ describe("2. 코드에서 확인된 것", () => {
 
   it("CLI 가 고른 '먼저 볼 것'(summary.highlights)이 있으면 그 차례 그대로 쓴다: 이 결과에 있는 의무만, 3건까지. 빈 목록이면 고르지 않는다", () => {
     expect(review.summary.highlights).toBeNull();
-    // 문자열과 {duty} 꼴을 모두 읽는다. 무거운 차례가 아니라 CLI 가 고른 차례다. 결과에 없는 의무는 건너뛴다.
-    const over = withHighlights(["pipa-15-2", { duty: "aiact-31-1" }, "없는-의무"]);
-    expect(over.summary.highlights).toEqual(["pipa-15-2", "aiact-31-1", "없는-의무"]);
+    // CLI 의 꼴({duty, file, line, text})과 의무 id 만 적은 꼴을 모두 읽는다. 무거운 차례가 아니라 CLI 가 고른 차례다. 결과에 없는
+    // 의무는 건너뛴다.
+    const over = withHighlights(["pipa-15-2", { duty: "aiact-31-1", file: "a.ts", line: 3, text: "x" }, "없는-의무"]);
+    expect(over.summary.highlights).toEqual([
+      { duty: "pipa-15-2", file: null, line: null },
+      { duty: "aiact-31-1", file: "a.ts", line: 3 },
+      { duty: "없는-의무", file: null, line: null },
+    ]);
     const h = render(over);
     expect(cardIds(h)).toEqual(["pipa-15-2", "aiact-31-1"]);
     expect(textOf(first(h, '<h2 class="rv-sec-h" id="rv-confirmed-h">'))).toBe("코드에서 확인된 것 2건");
@@ -117,6 +122,18 @@ describe("2. 코드에서 확인된 것", () => {
     const none = render(withHighlights([]));
     expect(cardIds(none)).toEqual([]);
     expect(first(none, '<section class="rv-confirmed"')).toContain('<p class="tier-none">없음</p>');
+  });
+
+  it("카드의 인용은 CLI 가 고른 자리(highlights 의 file·line)이고, 그 자리가 받은 인용에 없으면 첫째 받은 인용이다", () => {
+    const item = review.checklist.find((i) => i.duty === "pipa-29-1")!;
+    const cites = item.citations.filter((c) => c.ok && c.why !== "profile");
+    expect(cites.length, "pipa-29-1 에 받은 인용이 둘 이상이어야 이 시험이 볼 것이 있습니다").toBeGreaterThan(1);
+    const second = cites[1];
+    const chosen = withHighlights([{ duty: "pipa-29-1", file: second.file, line: second.line, text: second.text }]);
+    expect(cardCitation(chosen, item)).toEqual(second);
+    expect(first(render(chosen), '<div class="rv-card-cite">')).toContain(`/blob/${code.commit}/${second.file}#L${second.line}"`);
+    expect(cardCitation(withHighlights([{ duty: "pipa-29-1", file: "없는.ts", line: 1, text: "" }]), item)).toEqual(cites[0]);
+    expect(cardCitation(review, item)).toEqual(cites[0]);
   });
 
   it("확인할 것의 다른 두 갈래(저장소 밖에서, 해당 여부부터), 품목 묶음, 반박하지 않았거나 뒤집힌 것, 받은 인용이 없는 것은 카드가 되지 않는다", () => {

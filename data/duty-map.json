@@ -1,7 +1,7 @@
 {
   "generated_by": "scripts/export-duty-map.mjs",
   "cli": {
-    "commit": "386ce077a1f2f310ef73f9d157470890120d5e20",
+    "commit": "5cd23d04de133aa6fa8a2bfac08d2be03ed586e1",
     "sanctions": "git"
   },
   "total": 795,

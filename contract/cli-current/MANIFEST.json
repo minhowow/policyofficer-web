@@ -3,7 +3,7 @@
   "cli": {
     "version": "0.3.0.dev0",
     "from": "../Plitsoft-SDP",
-    "commit": "386ce07",
+    "commit": "5cd23d0",
     "committed_on": "2026-11-25",
     "dirty": false
   },

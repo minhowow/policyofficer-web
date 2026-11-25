@@ -59,6 +59,38 @@
             ],
             "additionalProperties": false
           }
+        },
+        "highlights": {
+          "description": "먼저 볼 것(3건까지, 11/25 덧붙임). '코드에서 본 것' 가운데 모델의 인용이 관문을 통과한 항목을 반박을 견딘 것 → 제재 등급 → 정액 상한 → 체크리스트 순서로, 기능마다 하나씩 먼저 고른다. 후보가 없으면 빈 목록",
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "properties": {
+              "duty": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "line": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "duty",
+              "file",
+              "line",
+              "text"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [

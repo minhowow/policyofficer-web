@@ -1,9 +1,18 @@
 import { sanctionOf } from "@/lib/duties";
 import { byWeight } from "@/lib/duties/sanction";
-import type { Review, ReviewItem } from "./index";
+import type { Review, ReviewCitation, ReviewItem } from "./index";
 
 /** 결과 쪽의 '코드에서 확인된 것' 카드 수(2026-11-25 web18: 3건 안팎). */
 export const CONFIRMED_MAX = 3;
+
+/**
+ * 카드에 보일 인용 하나: 받은 인용(기능 신호가 아닌 것) 가운데 CLI 가 고른 자리(`summary.highlights` 의 file·line)와 같은 것, 없으면 첫째.
+ */
+export function cardCitation(review: Review, item: ReviewItem): ReviewCitation | null {
+  const cites = item.citations.filter((cite) => cite.ok && cite.why !== "profile");
+  const at = review.summary.highlights?.find((h) => h.duty === item.duty);
+  return (at && cites.find((cite) => cite.file === at.file && cite.line === at.line)) || cites[0] || null;
+}
 
 /** 카드가 될 수 있는 항목: 코드에서 본 것이고, 반박을 견뎠고(upheld), 도구가 받은 인용(기능 신호가 아닌 것)이 있다. */
 export function isConfirmed(item: ReviewItem): boolean {
@@ -24,7 +33,7 @@ export function isConfirmed(item: ReviewItem): boolean {
  */
 export function confirmedItems(review: Review, items: readonly ReviewItem[]): ReviewItem[] {
   if (review.summary.highlights) {
-    return review.summary.highlights.flatMap((duty) => items.filter((item) => item.duty === duty && isConfirmed(item))).slice(0, CONFIRMED_MAX);
+    return review.summary.highlights.flatMap((h) => items.filter((item) => item.duty === h.duty && isConfirmed(item))).slice(0, CONFIRMED_MAX);
   }
   const ordered = byWeight(items.filter(isConfirmed), (item) => sanctionOf(item.duty));
   const picked: ReviewItem[] = [];

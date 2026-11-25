@@ -22,7 +22,7 @@ import { SITE } from "../site.ts";
 import { BIG, boxHeight, Canvas, SIZE, wrap, type Figure, type Tone } from "./draw.ts";
 
 /** 실행기가 고정한 CLI(analyze.yml 의 CLI_COMMIT 앞 7자리)와 그 커밋을 가리키는 태그. */
-export const CLI_PIN = { commit: "386ce07", tag: "handoff-w13-4" } as const;
+export const CLI_PIN = { commit: "5cd23d0", tag: "handoff-w13-5" } as const;
 
 /** 따라가 보기의 의무(jobtalk: 상담 메시지를 OpenAI 로 보내는데 가입 동의문에 국외 이전이 없다). */
 export const TRACE = { duty: "pipa-28-8-1" } as const;
