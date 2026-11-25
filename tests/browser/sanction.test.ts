@@ -53,7 +53,7 @@ const heavy = review.checklist.filter((item) => {
 });
 
 describe.runIf(sanctioned)("제재가 있는 판", () => {
-  it("분석 쪽: 요약의 제재 단추를 누르면 그 무게의 행만 남고 목록 머리에 띠가 붙어 그리로 옮겨 가며, '모두 보기'로 돌아온다", async () => {
+  it("분석 쪽: 요약의 제재 단추를 누르면 그 자리에서 그 무게의 행만 남고 목록 머리에 띠가 붙는다. 화면과 초점은 움직이지 않는다. '모두 보기'로 돌아온다", async () => {
     // 합성 예시에 강조 무게의 확인할 것이 없으면 이 시험은 볼 것이 없다.
     expect(heavy.length, "합성 예시의 확인할 것 가운데 징역·과징금이 걸리는 항목이 없습니다").toBeGreaterThan(0);
     const { page } = await open(REVIEWED);
@@ -61,12 +61,17 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
     await expect.poll(() => button.textContent()).toBe(`!${SANCTION_TIERS[0].label} ${heavy.length}`);
     const visible = () =>
       page.evaluate(() => [...document.querySelectorAll("#rv-checklist .rv-item")].filter((item) => item.checkVisibility()).map((item) => item.getAttribute("data-tier")));
+    const scrolled = () => page.evaluate(() => window.scrollY);
+    const before = await scrolled();
     await button.click();
     await expect.poll(visible).toEqual(heavy.map(() => "0"));
+    // 화면은 목록 쪽으로 옮겨 가지 않고(2026-11-25 오너 지시), 초점은 누른 단추에 그대로다.
+    await page.waitForTimeout(300);
+    expect(await scrolled()).toBe(before);
+    expect(await page.evaluate(() => document.activeElement?.className)).toBe("sanc-filter sf-0");
     expect(await button.getAttribute("aria-pressed")).toBe("true");
     const band = page.locator("#rv-checklist-band .rv-band");
     expect(await band.textContent()).toBe(`${SANCTION_TIERS[0].label} ${heavy.length}건만 보는 중 · 모두 보기`);
-    await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? "")).toBe("rv-checklist-band");
     // 거르는 동안 갈래의 수(거르지 않은 수)와 접어 둔 나머지 갈래는 감춘다.
     expect(await page.locator("#rv-checklist .ck-n").evaluateAll((nodes) => nodes.filter((node) => (node as HTMLElement).checkVisibility()).length)).toBe(0);
     expect(await page.locator("#rv-checklist .rv-folded").isVisible()).toBe(false);

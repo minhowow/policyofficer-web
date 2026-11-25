@@ -15,10 +15,10 @@ import { moveTo } from "@/lib/scroll";
 const ROW = "details.rv-row";
 
 /**
- * 맨 위 요약의 제재 단추 셋(`SANCTION_TIERS`: 강조, 보통, 흐림). 누르면 확인할 것의 세 갈래에서 그 무게의 행만 남기고(그 밖의 행과
- * 그 행이 없는 갈래, 거르지 않은 갈래의 수, 접어 둔 나머지 갈래를 감추는 CSS 한 줄), 목록 머리(`#{target}-band`)에 '…건만 보는 중 · 모두
- * 보기' 띠를 붙인 뒤 그 띠로 옮긴다. 같은 단추를 다시 누르거나 '모두 보기'를 누르면 모두 보인다(초점은 누른 단추로 돌린다). 수가 0인
- * 무게의 단추는 누를 수 없다.
+ * 제재 단추 셋(`SANCTION_TIERS`: 강조, 보통, 흐림). 누르면 확인할 것의 세 갈래에서 그 무게의 행만 남기고(그 밖의 행과 그 행이 없는
+ * 갈래, 거르지 않은 갈래의 수, 접어 둔 나머지 갈래를 감추는 CSS 한 줄), 목록 머리(`#{target}-band`)에 '…건만 보는 중 · 모두 보기' 띠를
+ * 붙인다. 화면은 움직이지 않고 초점도 누른 단추에 그대로다(2026-11-25 오너 지시: 목록 쪽으로 옮겨 가면 헷갈린다). 같은 단추를 다시
+ * 누르거나 '모두 보기'를 누르면 모두 보인다('모두 보기'를 누르면 초점은 누른 단추로 돌린다). 수가 0인 무게의 단추는 누를 수 없다.
  */
 export function TierFilter({ target, tiers }: { target: string; tiers: { label: string; count: number }[] }) {
   const [on, setOn] = useState<number | null>(null);
@@ -28,11 +28,6 @@ export function TierFilter({ target, tiers }: { target: string; tiers: { label: 
     const next = on === tier ? null : tier;
     last.current = tier;
     setOn(next);
-    if (next === null) return;
-    requestAnimationFrame(() => {
-      const band = document.getElementById(`${target}-band`);
-      if (band) moveTo(band);
-    });
   };
   const scope = `#${target}`;
   // 띠의 자리. 단추를 누른 뒤에만(브라우저에서만) 찾는다.
