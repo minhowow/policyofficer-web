@@ -324,6 +324,21 @@ describe("주의 문구와 낱말", () => {
   });
 });
 
+describe("개인정보 흐름의 좁은 화면 목록 (2026-11-25 web16 d)", () => {
+  it("접은 흐름 안에 '외부로 보냄' 세로 목록(외부 마디의 이름과 항목)이 그림 앞에 있고, 그림은 '그림 보기' 단추가 있는 상자 안이다", () => {
+    const flow = first(html, '<details class="rv-fold" id="rv-flow">');
+    const out = review.flow.nodes.filter((node) => node.kind === "external");
+    expect(out.length, "jobtalk 에 외부 마디가 없습니다").toBeGreaterThan(0);
+    const narrow = first(flow, '<div class="flow-narrow">');
+    expect(textOf(first(narrow, '<p class="flow-out-h">'))).toBe("외부로 보냄");
+    const items = elementsOf(narrow, "<li>");
+    expect(items.map(textOf)).toEqual(out.map((node) => `${node.label}${node.data.join(", ")}`));
+    const pic = first(flow, '<div class="flow-pic">');
+    expect(flow.indexOf(narrow)).toBeLessThan(flow.indexOf(pic));
+    expect(pic).toMatch(/^<div class="flow-pic"><button type="button" class="link-btn flow-show" aria-expanded="false">그림 보기<\/button><figure class="flow">/);
+  });
+});
+
 describe("코드를 읽고 뺀 기능 (2026-11-25 오너 지시)", () => {
   it("본문에는 뺀 기능 칸과 'AI 가 더함' 꼬리표가 없고, 검증 정보 안의 접힌 한 줄로만 남는다. 펼치면 까닭과 인용", () => {
     const removed = review.profile.features.filter((feature) => feature.removed !== null);

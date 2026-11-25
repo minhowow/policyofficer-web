@@ -98,6 +98,10 @@
       "name": "웹 화면(접근성)"
     }
   ],
+  "map": {
+    "lawsRead": 206,
+    "features": 27
+  },
   "duties": [
     {
       "id": "pipa-29-1",

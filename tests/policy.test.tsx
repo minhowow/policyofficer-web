@@ -56,6 +56,7 @@ describe("조문 도감 (/policy): 의무 지도", () => {
     asked: number;
     notAsked: { total: number; status: number; other: number };
     features: { id: string; name: string }[];
+    map: { lawsRead: number; features: number };
     duties: Duty[];
   };
   // 쪽 안의 자리 이름: 영문자·숫자·빼기표 밖의 글자는 `_<16진 코드>_`.
@@ -78,7 +79,7 @@ describe("조문 도감 (/policy): 의무 지도", () => {
     expect(readFileSync(path.join(root, ".github/workflows/analyze.yml"), "utf8")).toContain(`CLI_COMMIT: ${map.cli.commit}\n`);
   });
 
-  it("한 줄: 몇 개를 묻고 나머지는 왜 묻지 않는지. 메타 줄은 CLI 커밋·AI 검토가 묻는 의무·법령·기능의 수", () => {
+  it("한 줄: 몇 개를 묻고 나머지는 왜 묻지 않는지. 메타 줄은 CLI 커밋·AI 검토가 묻는 의무·법령·기능의 수와 전체 지도의 범위", () => {
     expect(extra).toBeGreaterThan(0);
     expect(squash(index.lead)).toBe(
       squash(
@@ -88,8 +89,13 @@ describe("조문 도감 (/policy): 의무 지도", () => {
       ),
     );
     expect(squash(index.meta)).toBe(
-      squash(`CLI ${map.cli.commit.slice(0, 7)} AI 검토가 묻는 의무 ${map.asked} 법령 ${index.groups.length} 기능 ${map.features.length}`),
+      squash(
+        `CLI ${map.cli.commit.slice(0, 7)} AI 검토가 묻는 의무 ${map.asked}개 법령 ${index.groups.length} 기능 ${map.features.length} ` +
+          `(전체 지도: 법령 ${map.map.lawsRead} · 의무 ${map.total} · 기능 ${map.map.features})`,
+      ),
     );
+    // 전체 지도의 범위는 CLI 의 의무 지도 설명(읽은 법령 206개)과 기능 표(27가지)에서 옮긴 수다(2026-11-25 web16 d).
+    expect([map.map.lawsRead, map.total, map.map.features]).toEqual([206, 795, 27]);
     expect(html).not.toContain('class="lede"');
   });
 

@@ -79,6 +79,10 @@ describe("체크리스트 내보내기", () => {
       expect(text).toContain(run.commit.slice(0, 7));
       expect(text).toContain(`- ${SITE.prerun} ${run.ranOn}`);
       expect(text).toContain(`조사 ${review.run.models.investigate}`);
+      // 검증 정보의 말은 화면과 같다: '도구'·'없다 검색'(2026-11-25 web16 d. '검사기'·'부재 검색'을 쓰지 않는다).
+      expect(text).toContain(`- 인용: ${review.run.citations}개 · 도구가 받지 않음 ${review.run.citationsRejected}개`);
+      expect(text).toContain(`- 없다 검색: ${review.run.searches}개`);
+      expect(text).not.toMatch(/검사기|부재/);
       const todo = doc.groups.filter((group) => group.todo).reduce((n, group) => n + group.entries.length, 0);
       expect(text.match(/^- \[ \] /gm)?.length ?? 0).toBe(todo);
       for (const item of review.checklist) {

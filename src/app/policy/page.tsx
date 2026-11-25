@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "조문 도감" };
  * 조문 도감 = 의무 지도(2026-11-15 오너 결정). 빌드할 때 그린다.
  *
  * - 한 줄: 의무 지도의 몇 개를 AI 검토가 묻고, 나머지는 왜 묻지 않는지(`data/duty-map.json` 에서 센다).
- * - 메타 한 줄: 의무를 옮긴 CLI 커밋, AI 검토가 묻는 의무·법령·기능의 수.
+ * - 메타 한 줄: 의무를 옮긴 CLI 커밋, AI 검토가 묻는 의무·법령·기능의 수와 전체 지도의 범위(읽은 법령·의무·기능의 수. 2026-11-25 web16 d).
  * - 법령마다 AI 검토가 묻는 의무(`DutyMap`). 기능·법령·제재로 걸러 보고, 의무마다 법에 적힌 제재의 표지가 있다(위에 주의 문구 한 번).
  */
 export default function PolicyIndexPage() {
@@ -24,7 +24,10 @@ export default function PolicyIndexPage() {
         <span>
           CLI <code translate="no">{dutyMap.cli.commit.slice(0, 7)}</code>
         </span>{" "}
-        <span>AI 검토가 묻는 의무 {dutyMap.asked}</span> <span>법령 {groups.length}</span> <span>기능 {dutyMap.features.length}</span>
+        <span>AI 검토가 묻는 의무 {dutyMap.asked}개</span> <span>법령 {groups.length}</span> <span>기능 {dutyMap.features.length}</span>{" "}
+        <span>
+          (전체 지도: 법령 {dutyMap.map.lawsRead} · 의무 {dutyMap.total} · 기능 {dutyMap.map.features})
+        </span>
       </p>
       <p className="dm-lead">
         의무 지도 {dutyMap.total}개 가운데 AI 검토가 묻는 것은 검토 후보 {dutyMap.candidates}개

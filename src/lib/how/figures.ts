@@ -185,11 +185,11 @@ function reviewSimple(): Figure {
   const lx = c.swatch(16, 34, "model", "AI 가 말한 것", BIG.line);
   c.swatch(lx + 32, 34, "tool", "도구가 한 것", BIG.line);
   const steps: [string, string, Tone][] = [
-    ["무슨 서비스인지 파악", "AI 가 코드를 읽어 정함", "model"],
-    ["걸리는 법 의무 고르기", "AI 없이 정해 둔 규칙으로", "tool"],
-    ["의무마다 근거 찾기", "AI 가 코드를 읽고 답함", "model"],
-    ["다른 AI 가 반박", "본 것·충족만 다시 따짐", "model"],
-    ["도구가 직접 확인", "AI 답을 코드에서 대조", "tool"],
+    ["기능 파악", "AI 가 코드를 읽어 정함", "model"],
+    ["의무 고르기", "AI 없이 정해 둔 규칙으로", "tool"],
+    ["의무별 조사", "AI 가 코드를 읽고 답함", "model"],
+    ["반박", "다른 AI 가 본 것·충족을 따짐", "model"],
+    ["직접 대조", "도구가 AI 답을 코드에서 대조", "tool"],
     ["체크리스트", "사람이 확인할 목록", "keep"],
   ];
   const w = 214;
@@ -305,19 +305,19 @@ function traceFigure(source: TraceSource): Figure {
   const evidence = feature.evidence[0];
   const rows: Row[] = [
     {
-      title: "① 감지된 기능",
+      title: "① 기능 파악",
       who: "도구가 코드 신호로",
       tone: "tool",
       lines: [{ text: feature.name, bold: true }, { text: `신호: ${evidence.file}${evidence.line ? `:${evidence.line}` : ""} — ${evidence.what}` }],
     },
     {
-      title: "② 고른 의무",
+      title: "② 의무 고르기",
       who: "도구가 규칙으로",
       tone: "tool",
       lines: [{ text: lawArticle(item.law, item.article), bold: true }, ...wrap(item.duty_text, DW, 15, 2).map((text) => ({ text }))],
     },
     {
-      title: "③ AI 가 댄 근거",
+      title: "③ 의무별 조사",
       who: "AI (조사)",
       tone: "model",
       lines: [
@@ -336,7 +336,7 @@ function traceFigure(source: TraceSource): Figure {
       ].filter((line) => line.text),
     },
     {
-      title: "⑤ 도구가 직접 확인",
+      title: "⑤ 직접 대조",
       who: "조사 답을 받은 바로 뒤",
       tone: "tool",
       lines: [
@@ -353,7 +353,7 @@ function traceFigure(source: TraceSource): Figure {
       ].filter((line) => line.text),
     },
     {
-      title: "⑥ 체크리스트의 그 줄",
+      title: "⑥ 체크리스트",
       who: "사람이 확인할 것",
       tone: "keep",
       lines: [

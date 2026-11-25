@@ -3069,6 +3069,60 @@ details.ob[open] > summary::before {
   padding: var(--space-3);
 }
 
+/*
+ * 좁은 화면(640px 아래, 2026-11-25 web16 d): 그림 대신 '외부로 보냄' 세로 목록을 두고, 그림은 '그림 보기'(FlowToggle)를 눌러야 보인다.
+ * 넓은 화면에서는 목록과 단추가 없다.
+ */
+.flow-narrow,
+.flow-show {
+  display: none;
+}
+
+.flow-out-h {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+  color: var(--st-review);
+}
+
+.flow-out {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flow-out li {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--st-review-dot);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  background: var(--st-review-bg);
+}
+
+.flow-out li span {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+@media (max-width: 639px) {
+  .flow-narrow {
+    display: block;
+    margin-bottom: var(--space-3);
+  }
+
+  .flow-show {
+    display: inline-flex;
+    margin-bottom: var(--space-3);
+  }
+
+  .flow-pic:not(.on) > .flow {
+    display: none;
+  }
+}
+
 /* 넓은 화면에서는 상자 폭에 맞춰 키우고(발표 화면), 좁은 화면에서는 이 폭 아래로 줄이지 않고 상자 안에서 밀린다. */
 .flow-svg {
   display: block;

@@ -43,6 +43,8 @@ export interface DutyMap {
   asked: number;
   notAsked: { total: number; status: number; other: number };
   features: { id: string; name: string }[];
+  /** 전체 지도의 범위: 의무를 뽑으려고 읽은 법령 수(CLI 의 docs/lawmap/README.md), 프로필이 알아보는 기능 수(features.yaml). */
+  map: { lawsRead: number; features: number };
   duties: MapDuty[];
 }
 

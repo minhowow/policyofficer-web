@@ -111,6 +111,30 @@ describe("코드에서 확인된 것과 더 살펴볼 것: 첫 화면(web18)", (
     }
   });
 
+  it("개인정보 흐름: 640px 아래에서는 '외부로 보냄' 세로 목록이 보이고 그림은 '그림 보기'를 눌러야 보인다. 넓은 화면은 그림만(web16 d)", async () => {
+    const visible = (page: Page, selector: string) => page.locator(selector).first().isVisible();
+    for (const [width, height] of [
+      [390, 844],
+      [1280, 800],
+    ] as const) {
+      const { page } = await open(REVIEWED, { viewport: { width, height } });
+      await page.locator("#rv-flow > summary").click();
+      const narrow = width < 640;
+      expect(await visible(page, "#rv-flow .flow-narrow"), `${width}`).toBe(narrow);
+      expect(await visible(page, "#rv-flow .flow-show"), `${width}`).toBe(narrow);
+      expect(await visible(page, "#rv-flow figure.flow"), `${width}`).toBe(!narrow);
+      if (!narrow) continue;
+      expect(await page.locator("#rv-flow .flow-out li").count()).toBe(review.flow.nodes.filter((node) => node.kind === "external").length);
+      const toggle = page.getByRole("button", { name: "그림 보기" });
+      await toggle.click();
+      expect(await visible(page, "#rv-flow figure.flow")).toBe(true);
+      expect(await page.getByRole("button", { name: "그림 접기" }).getAttribute("aria-expanded")).toBe("true");
+      expect(await overflow(page, ".flow-scroll")).toMatchObject({ page: 0, over: [] });
+      await page.getByRole("button", { name: "그림 접기" }).click();
+      expect(await visible(page, "#rv-flow figure.flow")).toBe(false);
+    }
+  });
+
   it("행을 누르면 그 자리에서 펼쳐지고, 주소의 #의무id 로 들어오면 그 행이 펼쳐져 있다. 모두 펼치기·모두 접기", async () => {
     expect(CITED, "카드에 오르지 않고 인용이 둘 이상인 코드에서 본 것이 합성 예시에 없습니다").toBeDefined();
     expect(OTHER, "저장소 밖에서 확인할 것이 합성 예시에 없습니다").toBeDefined();

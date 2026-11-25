@@ -41,18 +41,18 @@
   <rect class="hw-box t-tool" x="172.89999999999998" y="50" width="28" height="19" rx="8"/>
   <text class="hw-tag t-tool" x="210.89999999999998" y="64" font-size="15" font-weight="700">도구가 한 것</text>
   <rect class="hw-box t-tool" x="16" y="90" width="260" height="70" rx="8" data-id="t1"/>
-  <text class="hw-title" x="30" y="117" font-size="17" font-weight="700" data-in="t1">① 감지된 기능</text>
+  <text class="hw-title" x="30" y="117" font-size="17" font-weight="700" data-in="t1">① 기능 파악</text>
   <text class="hw-line" x="30" y="142" font-size="14" data-in="t1">도구가 코드 신호로</text>
   <text class="hw-title" x="300" y="114" font-size="15" font-weight="700">외부 업체·국외로 개인정보 전송(외부 AI 포함)</text>
   <text class="hw-line" x="300" y="136" font-size="15">신호: backend/package.json:36 — package.json 의 dependencies 에 openai</text>
   <rect class="hw-box t-tool" x="16" y="184" width="260" height="70" rx="8" data-id="t2"/>
-  <text class="hw-title" x="30" y="211" font-size="17" font-weight="700" data-in="t2">② 고른 의무</text>
+  <text class="hw-title" x="30" y="211" font-size="17" font-weight="700" data-in="t2">② 의무 고르기</text>
   <text class="hw-line" x="30" y="236" font-size="14" data-in="t2">도구가 규칙으로</text>
   <text class="hw-title" x="300" y="208" font-size="15" font-weight="700">개인정보 보호법 제28조의8제1항(시행령 제29조의7)</text>
   <text class="hw-line" x="300" y="230" font-size="15">국외 제공(조회 포함)·처리위탁·보관은 별도 동의·법률·계약상 위탁+공개·인증·적정성 인정 중 하나일 때만</text>
   <path class="hw-edge t-plain" d="M76 160 L76 184" marker-end="url(#how-trace-head)"/>
   <rect class="hw-box t-model" x="16" y="278" width="260" height="80" rx="8" stroke-dasharray="7 5" data-id="t3"/>
-  <text class="hw-title" x="30" y="305" font-size="17" font-weight="700" data-in="t3">③ AI 가 댄 근거</text>
+  <text class="hw-title" x="30" y="305" font-size="17" font-weight="700" data-in="t3">③ 의무별 조사</text>
   <text class="hw-line" x="30" y="330" font-size="14" data-in="t3">AI (조사)</text>
   <text class="hw-title" x="300" y="302" font-size="14" font-weight="700" font-family="ui-monospace, SFMono-Regular, &apos;SF Mono&apos;, Menlo, Consolas, &apos;Liberation Mono&apos;, monospace">backend/src/controllers/chatController.ts:135</text>
   <text class="hw-code" x="300" y="324" font-size="14" font-family="ui-monospace, SFMono-Regular, &apos;SF Mono&apos;, Menlo, Consolas, &apos;Liberation Mono&apos;, monospace">const response = await openai.responses.create({</text>
@@ -65,13 +65,13 @@
   <text class="hw-line" x="300" y="428" font-size="15">반대 근거를 찾아봤지만 앞 판단을 그대로 둠</text>
   <path class="hw-edge t-plain" d="M76 358 L76 382" marker-end="url(#how-trace-head)"/>
   <rect class="hw-box t-tool" x="16" y="476" width="260" height="70" rx="8" data-id="t5"/>
-  <text class="hw-title" x="30" y="503" font-size="17" font-weight="700" data-in="t5">⑤ 도구가 직접 확인</text>
+  <text class="hw-title" x="30" y="503" font-size="17" font-weight="700" data-in="t5">⑤ 직접 대조</text>
   <text class="hw-line" x="30" y="528" font-size="14" data-in="t5">조사 답을 받은 바로 뒤</text>
   <text class="hw-title" x="300" y="500" font-size="15" font-weight="700">인용한 135줄·27줄 모두 그 파일에 글자 그대로 있음</text>
   <text class="hw-line" x="300" y="522" font-size="15">'없다'며 낸 검색 2개를 다시 돌려 줄 수만 맞춰 봄: 1줄·0줄, AI 가 적은 수와 같음</text>
   <path class="hw-edge t-plain" d="M76 452 L76 476" marker-end="url(#how-trace-head)"/>
   <rect class="hw-box t-keep" x="16" y="570" width="260" height="70" rx="8" data-id="t6"/>
-  <text class="hw-title" x="30" y="597" font-size="17" font-weight="700" data-in="t6">⑥ 체크리스트의 그 줄</text>
+  <text class="hw-title" x="30" y="597" font-size="17" font-weight="700" data-in="t6">⑥ 체크리스트</text>
   <text class="hw-line" x="30" y="622" font-size="14" data-in="t6">사람이 확인할 것</text>
   <text class="hw-title" x="300" y="594" font-size="15" font-weight="700">확인할 것 · 코드에서 본 것 — 개인정보 보호법 제28조의8제1항(시행령 제29조의7)</text>
   <text class="hw-line" x="300" y="616" font-size="15">없는 것: 국외 처리위탁에 대한 별도 동의, 또는 처리방침에 이전 국가·받는 자 등을 공개했다는 근거 처리가 코드에 없음</text>

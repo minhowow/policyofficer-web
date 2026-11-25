@@ -223,6 +223,10 @@ const duties = asked.map((r) => ({
 }));
 
 const rest = rows.filter((r) => !r.review_candidate && !r.krcore);
+// 전체 지도의 범위(조문 도감 머리의 괄호): 의무를 뽑으려고 읽은 법령 수는 CLI 의 의무 지도 설명(docs/lawmap/README.md 첫 문단)에만
+// 적혀 있어 그 글에서 숫자만 옮긴다. 기능 수는 features.yaml 의 기능(품목은 따로) 수다.
+const lawsRead = Number(/법률·시행령·시행규칙·고시 (\d+)개를 읽고/.exec(show("docs/lawmap/README.md"))?.[1]);
+if (!Number.isInteger(lawsRead) || lawsRead <= 0) throw new Error("docs/lawmap/README.md 에서 읽은 법령 수를 찾지 못했습니다");
 const out = {
   generated_by: "scripts/export-duty-map.mjs",
   cli: { commit, sanctions: table?.from ?? null },
@@ -237,6 +241,7 @@ const out = {
     other: rest.filter((r) => r.feature !== "status").length,
   },
   features: features.filter((f) => duties.some((d) => d.feature === f.id)),
+  map: { lawsRead, features: spec.features.length },
   duties,
 };
 if (out.notAsked.status + out.notAsked.other + out.asked !== out.total) throw new Error("수가 맞지 않습니다");

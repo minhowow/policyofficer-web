@@ -1,12 +1,29 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { Icon } from "@/components/Icon";
 import type { CodeSource } from "@/lib/service/href";
 import { Where } from "@/components/result/Where";
 import type { FlowEdge, FlowKind, FlowNode, ReviewCitation } from "@/lib/review";
 import type { FlowLayout } from "@/lib/review/flow";
 import { fileLink, shortCommit } from "@/lib/service/href";
+
+/**
+ * 좁은 화면(640px 아래)의 그림 상자(2026-11-25 web16 d). 그 화면에서는 위에 '외부로 보냄' 세로 목록을 두고 그림은 '그림 보기'를 눌러야
+ * 보인다(가로로 밀리는 그림의 '외부' 칸이 화면 밖에 있었다). 넓은 화면에서는 단추가 없고 그림이 늘 보인다(CSS). 스크립트가 붙기 전에는
+ * 좁은 화면에서 목록만 보인다.
+ */
+export function FlowToggle({ children }: { children: ReactNode }) {
+  const [on, setOn] = useState(false);
+  return (
+    <div className={`flow-pic${on ? " on" : ""}`}>
+      <button type="button" className="link-btn flow-show" aria-expanded={on} onClick={() => setOn(!on)}>
+        그림 {on ? "접기" : "보기"}
+      </button>
+      {children}
+    </div>
+  );
+}
 
 /** 마디 종류의 이름(화면 낭독기와 고른 마디의 머리). */
 const KIND_LABEL: Record<FlowKind, string> = { input: "받는 것", server: "처리", store: "저장", external: "외부" };

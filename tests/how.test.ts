@@ -5,6 +5,7 @@ import { figureSvg, type Figure } from "@/lib/how/draw";
 import { buildFigures, CLI_PIN, TRACE, traceData, traceSourceLine } from "@/lib/how/figures";
 import { REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { PRERUNS } from "@/lib/service/prerun";
+import { REVIEW_INNER, SCAN_PART_LABEL } from "@/lib/service/steps";
 import { SITE } from "@/lib/site";
 import { root } from "./helpers";
 
@@ -36,6 +37,15 @@ describe("구조 쪽의 그림", () => {
       ]);
       for (const text of [figure.title, ...texts(figure), ...figure.notes, ...listed]) expect(text, figure.file).not.toMatch(/정적|kr-core|Semgrep|\bscan\b/i);
     }
+  });
+
+  it("검토의 여섯 단계 이름이 쉬운 판·따라가 보기·진행 표시에서 같다(포스터와 같은 이름. 2026-11-25 web16 d)", () => {
+    const SIX = ["기능 파악", "의무 고르기", "의무별 조사", "반박", "직접 대조", "체크리스트"];
+    const flow = simple.find((figure) => figure.file === "analysis-flow-simple")!;
+    expect(flow.list[0].items.map((item) => item.title)).toEqual(SIX);
+    expect(trace.list.flatMap((section) => section.items.map((item) => item.title))).toEqual(SIX.map((name, i) => `${"①②③④⑤⑥"[i]} ${name}`));
+    expect(SCAN_PART_LABEL.profile).toBe(SIX[0]);
+    expect(REVIEW_INNER).toBe(SIX.slice(1, 5).join(" → "));
   });
 
   it("쉬운 판은 상자 7개 이하이고, 숫자·커밋·모델 이름·CLI 낱말이 없다(명령 이름은 작은 글씨로만)", () => {

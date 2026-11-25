@@ -17,7 +17,7 @@ import { fileLink, shortCommit } from "@/lib/service/href";
 import { secondsText } from "@/lib/service/steps";
 import { SITE } from "@/lib/site";
 import { ExpandAll, TierFilter } from "./ChecklistControls";
-import { CitedLines, FlowFigure } from "./FlowFigure";
+import { CitedLines, FlowFigure, FlowToggle } from "./FlowFigure";
 
 /** 확인할 것(세 갈래)의 수. 체크리스트 내보내기·목록 줄의 수와 같은 함수다(`lib/review/text.ts`). */
 export { checkCount };
@@ -85,7 +85,12 @@ export function ReviewView({
         {review.flow.nodes.length === 0 ? (
           <p className="tier-none">없음</p>
         ) : (
-          <FlowFigure layout={layoutFlow(review.flow.nodes, review.flow.edges)} nodes={review.flow.nodes} edges={review.flow.edges} code={code} />
+          <>
+            <FlowOut nodes={review.flow.nodes} />
+            <FlowToggle>
+              <FlowFigure layout={layoutFlow(review.flow.nodes, review.flow.edges)} nodes={review.flow.nodes} edges={review.flow.edges} code={code} />
+            </FlowToggle>
+          </>
         )}
       </Fold>
       <Fold id="rv-service" title="이 저장소가 하는 일" count={`기능 ${review.profile.features.filter((feature) => feature.removed === null).length}가지`}>
@@ -259,6 +264,28 @@ function More({
         {items.filter((item) => item.status === "unknown").length}건
       </p>
     </section>
+  );
+}
+
+/** 좁은 화면(640px 아래)에서 흐름 그림 대신 보이는 '외부로 보냄' 세로 목록: 외부 마디의 이름과 다루는 항목(2026-11-25 web16 d). */
+function FlowOut({ nodes }: { nodes: Review["flow"]["nodes"] }) {
+  const out = nodes.filter((node) => node.kind === "external");
+  return (
+    <div className="flow-narrow">
+      <p className="flow-out-h">외부로 보냄</p>
+      {out.length === 0 ? (
+        <p className="tier-none">없음</p>
+      ) : (
+        <ul className="flow-out">
+          {out.map((node) => (
+            <li key={node.id}>
+              <strong>{node.label}</strong>
+              {node.data.length > 0 && <span>{node.data.join(", ")}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

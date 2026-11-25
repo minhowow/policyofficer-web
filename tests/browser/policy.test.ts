@@ -92,10 +92,11 @@ const shownNames = (page: Page, selector: string) =>
   );
 
 describe("조문 도감의 글", () => {
-  it("메타 한 줄은 CLI 커밋과 AI 검토가 묻는 의무·법령·기능의 수다. 정적 규칙(정책 쪽 링크, #status·#scope, 정적 규칙 블록)은 없다", async () => {
+  it("메타 한 줄은 CLI 커밋과 AI 검토가 묻는 의무·법령·기능의 수, 전체 지도의 범위다. 정적 규칙(정책 쪽 링크, #status·#scope, 정적 규칙 블록)은 없다", async () => {
     const { page } = await open(INDEX);
     expect((await page.locator(".pi-meta").textContent())?.replace(/\s+/g, " ").trim()).toBe(
-      `CLI ${dutyMap.cli.commit.slice(0, 7)} AI 검토가 묻는 의무 ${dutyMap.asked} 법령 ${groups.length} 기능 ${dutyMap.features.length}`,
+      `CLI ${dutyMap.cli.commit.slice(0, 7)} AI 검토가 묻는 의무 ${dutyMap.asked}개 법령 ${groups.length} 기능 ${dutyMap.features.length} ` +
+        `(전체 지도: 법령 ${dutyMap.map.lawsRead} · 의무 ${dutyMap.total} · 기능 ${dutyMap.map.features})`,
     );
     await openAll(page);
     expect(await page.locator("main").textContent()).not.toContain("정적 규칙");

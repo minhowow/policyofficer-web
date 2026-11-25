@@ -138,8 +138,8 @@ export function verificationRows(run: Review["run"]): [string, string][] {
   const sum = (record: Record<string, number>) => Object.values(record).reduce((a, b) => a + b, 0);
   const notAsked = sum(run.notAsked);
   return [
-    ["인용", `${run.citations}개 · 검사기가 거절 ${run.citationsRejected}개`],
-    ["부재 검색", `${run.searches}개 · 건수가 맞지 않음 ${run.searchesRejected}개`],
+    ["인용", `${run.citations}개 · 도구가 받지 않음 ${run.citationsRejected}개`],
+    ["없다 검색", `${run.searches}개 · 건수가 맞지 않음 ${run.searchesRejected}개`],
     ["반박", rebutLine(run)],
     ["가린 비밀값", `${sum(run.masked)}개`],
     ...(notAsked > 0 ? [["묻지 않은 의무", `${notAsked}개`] as [string, string]] : []),

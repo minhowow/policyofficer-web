@@ -167,6 +167,8 @@ class Scans {
     await page.evaluate(() => {
       for (const details of document.querySelectorAll("details")) details.open = true;
     });
+    // 좁은 화면(640px 아래)의 흐름 그림은 '그림 보기'를 눌러야 보인다(web16 d). 펼친 채로 잴 때는 그것도 누른다.
+    for (const show of await page.locator(".flow-pic:not(.on) > .flow-show").all()) if (await show.isVisible()) await show.click();
     await this.count(page, openParts);
     this.add(`${where} (펼친 채)`, await textContrast(page));
     await page.evaluate(() => {

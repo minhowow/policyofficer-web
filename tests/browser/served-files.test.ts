@@ -261,7 +261,10 @@ describe("빌드된 사이트의 조문 도감(/policy/, 의무 지도)", () => 
     expect(rows.map((row) => row.id).sort()).toEqual(dutyMap.duties.map((duty) => dutyAnchor(duty.id)).sort());
     expect(rows).toHaveLength(dutyMap.asked);
     expect(index.groups.map((group) => group.name)).toEqual(lawGroups().map((group) => group.name));
-    expect(index.meta).toBe(`CLI ${dutyMap.cli.commit.slice(0, 7)} AI 검토가 묻는 의무 ${dutyMap.asked} 법령 ${lawGroups().length} 기능 ${dutyMap.features.length}`);
+    expect(index.meta).toBe(
+      `CLI ${dutyMap.cli.commit.slice(0, 7)} AI 검토가 묻는 의무 ${dutyMap.asked}개 법령 ${lawGroups().length} 기능 ${dutyMap.features.length} ` +
+        `(전체 지도: 법령 ${dutyMap.map.lawsRead} · 의무 ${dutyMap.total} · 기능 ${dutyMap.map.features})`,
+    );
     expect(index.lead).toContain(`의무 지도 ${dutyMap.total}개`);
   });
 
