@@ -104,7 +104,10 @@ for (const r of REPOSITORIES) {
 }
 /** 첫 화면(진행 중·대기 줄), 검색 빈 상태, 결과, 0건(한글 자판으로 친 질의). */
 const FRONT_PAGES = ["/", "/search/", "/search/?q=example", "/search/?q=ㅁㅁ"];
-/** AI 검토 결과가 있는 끝난 분석(생성형 AI 채팅 합성 저장소): 요약, 제재 거르개 단추, 의무 체크리스트, 흐름 그림, 검증 정보. */
+/**
+ * AI 검토 결과가 있는 끝난 분석(생성형 AI 채팅 합성 저장소): 한 줄, 코드에서 확인된 것(카드), 더 살펴볼 것(제재 거르개 단추, 행 목록),
+ * 접어 둔 흐름 그림·하는 일·닫은 의무·검증 정보.
+ */
 const REVIEWED = ANALYSES.find((a) => a.pathname === analysisHref("example-studio", "genai-chat", "4qqa6fdx2h"))!.pathname;
 /** 검토 결과가 없는 끝난 분석(광고 푸시): 프로필과 걸리는 의무까지만. */
 const PROFILED = ANALYSES.find((a) => a.pathname === analysisHref("example-org", "night-push", "64y4jdtazh"))!.pathname;
@@ -148,7 +151,7 @@ class Scans {
     if (scan.lowCount > scan.low.length) this.low.push(`${where}: 그 밖에 ${scan.lowCount - scan.low.length}곳`);
   }
 
-  /** 그 쪽에 그려진 부품을 센다(아래 `expectParts` 가 본다). */
+  /** 그 쪽에 지금 그려진 부품을 센다(아래 `expectParts` 가 본다). */
   async count(page: Page, parts: string[]): Promise<void> {
     const counts = await drawnCounts(page, parts);
     parts.forEach((part, i) => this.parts.set(part, (this.parts.get(part) ?? 0) + counts[i]));
@@ -156,14 +159,15 @@ class Scans {
 
   /**
    * 접힌 채로 한 번 재고, 접어 둔 것을 모두 펼친 채로 한 번 더 잰다. 잰 뒤에 머리글의 펼치는 메뉴는 다시 닫는다(열린 메뉴가 본문의
-   * 위쪽을 덮는다). `parts` 는 이 쪽에서 셀 부품이다(접힌 채로 센다).
+   * 위쪽을 덮는다). `parts` 는 이 쪽에서 셀 부품이다(접힌 채로 센다). `openParts` 는 접어 둔 것 안에만 있는 부품이다(펼친 채로 센다).
    */
-  async both(page: Page, where: string, parts: string[] = []): Promise<void> {
+  async both(page: Page, where: string, parts: string[] = [], openParts: string[] = []): Promise<void> {
     await this.count(page, parts);
     this.add(`${where} (접힌 채)`, await textContrast(page));
     await page.evaluate(() => {
       for (const details of document.querySelectorAll("details")) details.open = true;
     });
+    await this.count(page, openParts);
     this.add(`${where} (펼친 채)`, await textContrast(page));
     await page.evaluate(() => {
       for (const menu of document.querySelectorAll<HTMLDetailsElement>("details.menu")) menu.open = false;
@@ -197,9 +201,10 @@ function expectReadable(scans: Scans, what: string): void {
 /** 첫 화면·검색·저장소 쪽: 최근 분석 줄의 상태 점과 단계 점, 합성 예시 이름표, 검색 결과 줄, 0건 화면, 최신 분석 상자, 배지 넷, 아이콘. */
 const FRONT_PARTS = [".act-mark", ".act-trail", ".tag", ".sr-list", ".empty-block", ".latest", ".badge", ".badge-running", ".badge-failed", ".badge-queued", "svg.ic"];
 /**
- * 분석 쪽: 배지 넷, 이름표, 진행 상자의 단계 점, 멈춘 분석의 0의 뜻(굵게), 아이콘. AI 검토 결과(요약의 큰 수, 제재 거르개 단추 셋,
- * 체크리스트 묶음 머리와 행, 행의 제재 표지, 흐름 그림의 마디, 검증 정보)와, 검토 결과가 없는 분석의 세 단(맨 위 요약, 단의 머리,
- * 기능 이름, 걸리는 의무의 묶음 머리와 그 수).
+ * 분석 쪽: 배지 넷, 이름표, 진행 상자의 단계 점, 멈춘 분석의 0의 뜻(굵게), 아이콘. AI 검토 결과(2026-11-25 web18: 한 줄의 하는 일과
+ * 실행 정보, 두 구획의 머리, 카드의 사실·'도구가 파일에서 확인함'·확인할 질문, 제재 주의 문구, 제재 거르개 단추 셋, 체크리스트 묶음
+ * 머리와 행, 행의 제재 표지, 접어 둔 구획의 머리)와, 검토 결과가 없는 분석의 세 단(맨 위 요약, 단의 머리, 기능 이름, 걸리는 의무의
+ * 묶음 머리와 그 수).
  */
 const ANALYSIS_PARTS = [
   ".badge",
@@ -210,19 +215,26 @@ const ANALYSIS_PARTS = [
   ".step-dot",
   ".zero-line",
   "svg.ic",
-  ".rv-big",
+  ".rv-what",
+  ".rv-run",
+  ".rv-sec-h",
+  ".rv-fact",
+  ".rv-checked",
+  ".rv-card-q",
+  ".sanc-caution",
   ".sanc-filter",
   ".ck-hd",
   ".rv-row > summary",
   ".sanc",
-  ".flow-node",
-  ".info",
+  ".rv-fold-h",
   ".overview",
   ".tier-hd",
   ".ft-name",
   ".ob > summary",
   ".ob-n",
 ];
+/** 분석 쪽에서 접어 둔 것 안에만 있는 부품(펼친 채로 센다): AI 검토 결과의 흐름 그림의 마디, 검증 정보의 문장과 회색 한 줄. */
+const ANALYSIS_OPEN_PARTS = [".flow-node", ".rv-verify-say", ".rv-verify-meta"];
 /** 조문 도감: 메타 한 줄, 한 줄 풀이, 제재 주의 문구, 걸러 보기, 법령 묶음의 수, 의무 줄, 제재 표지의 세 무게와 느낌표, 아이콘. */
 const POLICY_PARTS = [".pi-meta", ".dm-lead", ".sanc-caution", ".dm-filter", ".dm-n", ".count", ".duty-row > summary", ".sanc-0", ".sanc-1", ".sanc-2", ".sanc-mark", "svg.ic"];
 
@@ -247,10 +259,10 @@ describe("두 테마의 명도 대비: 그려진 글자마다 4.5:1 이상", () 
     await expectScheme(page, scheme);
     for (const { pathname, status } of ANALYSES) {
       if (pathname !== ANALYSES[0].pathname) await go(page, pathname);
-      await scans.both(page, `${scheme} ${width} ${pathname} (${status})`, ANALYSIS_PARTS);
+      await scans.both(page, `${scheme} ${width} ${pathname} (${status})`, ANALYSIS_PARTS, ANALYSIS_OPEN_PARTS);
     }
     expectReadable(scans, `${scheme} ${width}`);
-    scans.expectParts(ANALYSIS_PARTS, `${scheme} ${width}`);
+    scans.expectParts([...ANALYSIS_PARTS, ...ANALYSIS_OPEN_PARTS], `${scheme} ${width}`);
   });
 
   it.each(EVERY)("%s %ipx: 조문 도감(의무 지도), 없는 주소의 쪽(404)", async (scheme, width) => {
@@ -340,7 +352,7 @@ describe("누르거나 고르는 것의 테두리", () => {
   // 고르기 상자, 거르개 단추, 검색창은 사이트의 색으로 그린다(9번 전에는 고르기 상자가 브라우저의 기본 모양이었다). 테두리는 나누는
   // 선(--rule)보다 짙은 --control-line 이다. 나누는 선으로 그리면 바탕과 1.3~1.6:1 이라 테두리로는 단추인 줄 보이지 않는다.
   // (D3·D4) 첫 화면의 검색창(.find), 검색 쪽의 검색창(돋보기 단추), 머리글의 검색창(넓은 화면)도 잰다. 조문 도감의 걸러 보기
-  // 고르기 상자(기능, 법령, 제재)와 AI 검토 결과 요약의 제재 거르개 단추 셋(2026-11-24)도 잰다.
+  // 고르기 상자(기능, 법령, 제재)와 AI 검토 결과의 제재 거르개 단추 셋(2026-11-24. web18 부터 '더 살펴볼 것'의 머리)도 잰다.
   const CONTROLS: Record<string, string[]> = {
     "/": [".find"],
     // 검색 쪽의 입력창과 돋보기 단추는 붙인 한 덩어리다(입력창의 오른쪽 테두리가 없다). 같은 색의 테두리를 단추의 네 변으로 잰다.
@@ -495,7 +507,7 @@ describe("강제 색 모드(윈도의 고대비 테마 등)", () => {
    */
   async function sanctionButtons(scheme: Scheme) {
     const page = await forced(REVIEWED, scheme, 375);
-    const SELECTOR = ".rv-sum .sanc-filter";
+    const SELECTOR = ".rv-more .sanc-filter";
     const count = await page.locator(SELECTOR).count();
     expect(count).toBe(3);
     const buttons: { pressed: boolean; name: string; fill: string; ink: number }[] = [];
@@ -657,7 +669,7 @@ describe("강제 색 모드(윈도의 고대비 테마 등)", () => {
       ["/policy/", '.hdr-nav a[href="/how/"]', '.hdr-nav a[href="/how/"]', 1280],
       ["/policy/", ".dm-filter select", ".dm-filter select", 1280],
       ["/policy/", ".duty-row > summary", ".duty-row > summary", 1280],
-      [REVIEWED, ".rv-sum .sanc-filter", ".rv-sum .sanc-filter", 1280],
+      [REVIEWED, ".rv-more .sanc-filter", ".rv-more .sanc-filter", 1280],
       [REVIEWED, ".rv-export .link-btn", ".rv-export .link-btn", 1280],
       [REVIEWED, ".rv-row > summary", ".rv-row > summary", 1280],
       [repoHref("example-org", "night-push"), ".latest a", ".latest a", 1280],
@@ -670,10 +682,15 @@ describe("강제 색 모드(윈도의 고대비 테마 등)", () => {
     for (const [pathname, selector, ringed, width] of targets) {
       const page = await forced(pathname, scheme, width);
       const el = page.locator(selector).first();
-      await el.scrollIntoViewIfNeeded();
+      // 재는 띠(상자 바깥 4px 까지)가 창 안에 들게 요소를 창 가운데로 옮긴다. 창 끝에 걸친 채로 찍으면 그림이 잘린다(web18 에서 제재
+      // 거르개 단추와 모두 펼치기가 1280×720 창의 아래 끝에 걸렸다).
+      await el.evaluate((node) => node.scrollIntoView({ block: "center", inline: "nearest" }));
       const rect = await rectOf(page, ringed);
       const clip = snap({ x: rect.x - OUT, y: rect.y - OUT, width: rect.width + OUT * 2, height: rect.height + OUT * 2 });
+      const viewport = page.viewportSize()!;
+      expect(clip.y + clip.height <= viewport.height && clip.x + clip.width <= viewport.width, `${width}px ${pathname} ${selector}: 재는 띠가 창 밖에 걸침`).toBe(true);
       const blurred = await pixelsOf(page, clip);
+      expect(blurred.length, `${width}px ${pathname} ${selector}`).toBe(clip.width * clip.height);
       // 키보드로 옮긴 뒤의 초점이라야 :focus-visible 이다. Tab 을 한 번 누른 뒤 그 요소로 옮긴다.
       await page.keyboard.press("Tab");
       await el.focus();

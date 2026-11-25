@@ -3259,52 +3259,163 @@ details.ob[open] > summary::before {
   font-size: var(--text-sm);
 }
 
-/* 요약(쪽 첫 화면 안): 큰 글씨 확인할 것 N건과 제재 단추 셋, 회색 한 줄, 주의 문구. */
-.rv-sum {
+/*
+ * 결과 쪽(2026-11-25 web18): 한 줄 → 코드에서 확인된 것(크게, 카드) → 더 살펴볼 것(작게, 한 줄 행 목록) → 접어 둔 구획들.
+ */
+.review {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-6);
   min-width: 0;
 }
 
-.rv-sum-top {
+.rv-lead {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.rv-what {
+  max-width: var(--measure);
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: var(--leading-loose);
+}
+
+.rv-run {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.rv-sec-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+}
+
+.rv-confirmed,
+.rv-more {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* 코드에서 확인된 것: 카드 하나가 '코드에서 본 사실 → 인용 → 걸릴 수 있는 의무 → 확인할 질문'으로 읽힌다. 넓으면 셋이 나란히. */
+.rv-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-card {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rv-fact {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.rv-card-cite {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.rv-checked {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.rv-card-duty {
+  display: grid;
+  gap: 2px;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--rule-muted);
+}
+
+.rv-card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+}
+
+.rv-card-missing {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.rv-card details.f-more > summary {
+  margin: 0;
+}
+
+.rv-card .rv-body {
+  padding: var(--space-2) 0 0;
+}
+
+/* 더 살펴볼 것의 머리: 이름과 수, 제재 거르개, 모두 펼치기·내보내기. 좁으면 줄을 바꾼다. */
+.rv-more-top {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-4);
 }
 
-.rv-big {
-  margin: 0;
-  font-size: var(--text-h1);
-  line-height: var(--leading-tight);
+/* 쪽 아래 접어 둔 구획(개인정보 흐름, 이 저장소가 하는 일, 닫은 의무, 검증 정보). */
+details.rv-fold {
+  border-top: 1px solid var(--rule);
 }
 
-.rv-big b {
+details.rv-fold > summary {
+  padding: var(--space-3) 0 var(--space-3) 20px;
+}
+
+details.rv-fold > summary::before {
+  top: calc(var(--space-3) + 0.75em - 4px);
+}
+
+details.rv-fold[open] > summary::before {
+  top: calc(var(--space-3) + 0.75em - 5px);
+}
+
+.rv-fold-h {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-lg);
   font-weight: 600;
-  font-variant-numeric: tabular-nums;
 }
 
-.rv-meta {
-  margin: 0;
-  font-size: var(--text-sm);
-  color: var(--muted);
-}
-
-.rv-down {
-  text-decoration: none;
+.rv-fold-body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  padding-bottom: var(--space-4);
 }
 
 .rv-unseen {
   font-size: var(--text-xs);
-}
-
-/* 머리 오른쪽의 것(체크리스트의 펼치기·내보내기 링크). 좁으면 머리 아래로. */
-.tier-top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-1) var(--space-4);
 }
 
 /* 링크처럼 보이는 단추(모두 펼치기). */

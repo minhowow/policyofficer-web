@@ -7,6 +7,7 @@ import { analysisHref, repoHref } from "@/lib/service/href";
 import type { Analysis } from "@/lib/service/types";
 import { dutyFeatureHref, dutyMap } from "@/lib/duties";
 import { reviewFactsOf } from "@/lib/review";
+import { confirmedItems } from "@/lib/review/pick";
 import { SITE } from "@/lib/site";
 import { closeChrome, launchChrome, NO_STORAGE, openPage, overflow, serveSite, stored, type Site } from "./site";
 
@@ -71,8 +72,10 @@ const rowNames = (page: Page) => page.locator(".repo-row .repo-link").allTextCon
 
 /** review 가 있는 끝난 합성 분석(생성형 AI 채팅 합성 저장소)과 그 확인할 것의 수. 합성 review 는 커밋을 가리지 않는다. */
 const REVIEWED = analysisHref("example-studio", "genai-chat", "4qqa6fdx2h");
-const reviewed = await store.getReview("example-studio", "genai-chat", "5d34db91055d0cacd81e5aa655a6ae2a04cc7007");
-const CHECK = reviewFactsOf(reviewed!).check;
+const reviewed = (await store.getReview("example-studio", "genai-chat", "5d34db91055d0cacd81e5aa655a6ae2a04cc7007"))!;
+const CHECK = reviewFactsOf(reviewed).check;
+/** 그 분석 쪽 맨 위의 코드에서 확인된 것(카드) 수. 분석 쪽은 다시 검토 중인 의무를 넘기지 않는다(`AnalysisDashboard`). */
+const CARDS = confirmedItems(reviewed, reviewed.checklist).length;
 /** 검토 결과가 없는 끝난 합성 분석(광고 푸시). 프로필의 하는 일과 걸리는 의무까지 보인다. */
 const PROFILED = analysisHref("example-org", "night-push", "64y4jdtazh");
 /** 목록 줄의 끝난 분석의 말: 확인할 것 N건, 또는 검토 결과가 없는 까닭(셋). 정적 검사의 발견 수는 없다. */
@@ -345,26 +348,60 @@ describe("분석 쪽의 세 상태", () => {
       "3의무체크리스트",
     ]);
     expect(await page.locator(".tier-none").last().textContent()).toBe(SITE.service.reviewNone);
-    // review 화면(요약, 체크리스트)과 규칙 검사의 결과 화면·조문별 검사 기록은 없다(2026-11-25 web17).
-    expect(await page.locator(".rv-sum, #rv-checklist, .report, .record, .record-btn").count()).toBe(0);
+    // review 화면(코드에서 확인된 것, 체크리스트)과 규칙 검사의 결과 화면·조문별 검사 기록은 없다(2026-11-25 web17).
+    expect(await page.locator(".review, .rv-confirmed, #rv-checklist, .report, .record, .record-btn").count()).toBe(0);
     expect(await page.locator("main").innerText()).not.toContain("정적 검사");
     const log = page.locator("details.an-steps");
     expect(await log.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(false);
     expect((await log.locator("> summary").innerText()).replace(/\s+/g, " ")).toBe("진행 기록 4단계");
   });
 
-  it("끝남(검토 결과 있음): 요약(확인할 것 N건)과 의무 체크리스트, 하는 일, 개인정보 흐름, 검증 정보, 접어 둔 진행 기록", async () => {
+  it("끝남(검토 결과 있음): 한 줄 → 코드에서 확인된 것 → 더 살펴볼 것 → 접어 둔 개인정보 흐름·하는 일·닫은 의무·검증 정보 → 접어 둔 진행 기록", async () => {
     const { page } = await open(REVIEWED, 1280);
-    expect((await page.locator(".rv-sum .rv-big").innerText()).replace(/\s+/g, " ").trim()).toBe(`확인할 것 ${CHECK}건`);
-    expect(await page.locator("#rv-checklist li.rv-item > details.rv-row").count()).toBeGreaterThanOrEqual(CHECK);
-    expect(await page.locator(".tier-hd").evaluateAll((heads) => heads.map((head) => (head.textContent ?? "").replace(/\s+/g, "")))).toEqual([
-      "1의무체크리스트",
-      "2이저장소가하는일",
-      "3개인정보흐름",
+    // 맨 위 한 줄: 하는 일(AI 설명의 첫 문장)과 실행 정보.
+    expect(await page.locator(".review > .rv-lead > .rv-what").count()).toBe(1);
+    expect(await page.locator(".review > .rv-lead > .rv-run").innerText()).toMatch(/^조사 .+ · 반박 .+ · .+$/);
+    // 카드(3건 안팎)와 더 살펴볼 것의 행을 합하면 확인할 것 모두다.
+    expect(CARDS).toBeGreaterThan(0);
+    expect(await page.locator(".rv-confirmed > ol.rv-cards > li.rv-card").count()).toBe(CARDS);
+    const rows = await page.locator("#rv-checklist li.rv-item > details.rv-row").count();
+    expect(CARDS + rows).toBe(CHECK);
+    expect(await page.locator(".review .rv-sec-h").evaluateAll((heads) => heads.map((head) => (head.textContent ?? "").replace(/\s+/g, " ").trim()))).toEqual([
+      `코드에서 확인된 것 ${CARDS}건`,
+      `더 살펴볼 것 ${rows}건`,
     ]);
-    expect(await page.locator(".rv-verify").isVisible()).toBe(true);
-    // 검토 결과가 없는 분석의 한 줄(.overview)과 셋째 단의 말은 없다.
-    expect(await page.locator(".overview, .tier-none").count()).toBe(0);
+    // 차례: 한 줄 → 코드에서 확인된 것 → 더 살펴볼 것 → 접어 둔 넷. 세 단의 머리·옛 요약·검증 정보 상자는 없다.
+    expect(await page.locator(".review > *").evaluateAll((children) => children.map((el) => `${el.tagName.toLowerCase()}.${el.classList[0]}${el.id ? `#${el.id}` : ""}`))).toEqual([
+      "div.rv-lead",
+      "section.rv-confirmed",
+      "section.rv-more",
+      "details.rv-fold#rv-flow",
+      "details.rv-fold#rv-service",
+      "details.rv-fold#rv-closed",
+      "details.rv-fold#rv-verify",
+    ]);
+    expect(await page.locator(".tier-hd, .rv-sum, .rv-big, .rv-meta, .rv-verify, .overview, .tier-none").count()).toBe(0);
+    // 주의 문구는 카드 아래에 한 번.
+    expect(await page.locator(".sanc-caution").count()).toBe(1);
+    expect(await page.locator(".rv-confirmed > .sanc-caution").count()).toBe(1);
+    // 접어 둔 넷: 이름(과 수)이 보이고 닫혀 있다.
+    const kept = reviewed.profile.features.filter((feature) => feature.removed === null).length;
+    const folds = await page.locator("details.rv-fold").evaluateAll((all) =>
+      all.map((el) => {
+        const head = el.querySelector(":scope > summary > h2.rv-fold-h")!;
+        const count = head.querySelector(".ck-n");
+        return [(head.firstChild?.textContent ?? "").trim(), count?.textContent ?? null, (el as HTMLDetailsElement).open];
+      }),
+    );
+    expect(folds).toEqual([
+      ["개인정보 흐름", null, false],
+      ["이 저장소가 하는 일", `기능 ${kept}가지`, false],
+      ["닫은 의무", `${reviewed.checklist.length - CHECK}건`, false],
+      ["검증 정보", null, false],
+    ]);
+    expect(await page.locator("#rv-verify > summary").isVisible()).toBe(true);
+    // 흐름 그림은 접어 둔 개인정보 흐름 안에 있다.
+    expect(await page.locator("#rv-flow .flow-scroll").count()).toBe(1);
     // 진행 기록은 맨 아래에 접혀 있다.
     const last = await page.locator(".tiers > *").last().evaluate((el) => [el.tagName.toLowerCase(), el.className, (el as HTMLDetailsElement).open]);
     expect(last).toEqual(["details", "lg an-steps", false]);
@@ -397,13 +434,12 @@ describe("분석 쪽의 세 상태", () => {
 });
 
 describe("분석 쪽의 첫 화면", () => {
-  /** 맨 위 요약(검토 결과가 없으면 한 줄, 있으면 요약)과 세 단의 머리, 셋째 단의 말의 아래 끝(처음 화면, 스크롤 전). */
+  /** 검토 결과가 없는 분석의 맨 위 한 줄과 세 단의 머리, 셋째 단의 말의 아래 끝(처음 화면, 스크롤 전). */
   const layout = (page: Page) =>
     page.evaluate(() => ({
-      top: document.querySelector(".overview, .rv-sum")!.getBoundingClientRect().bottom,
+      top: document.querySelector(".overview")!.getBoundingClientRect().bottom,
       tiers: [...document.querySelectorAll(".tier-hd")].map((el) => el.getBoundingClientRect().bottom),
       none: [...document.querySelectorAll(".tier-none")].at(-1)?.getBoundingClientRect().bottom ?? null,
-      firstRow: document.querySelector("#rv-checklist .rv-item > details > summary")?.getBoundingClientRect().bottom ?? null,
       height: document.documentElement.scrollHeight,
     }));
 
@@ -425,16 +461,24 @@ describe("분석 쪽의 첫 화면", () => {
   it.each([
     [1280, 900],
     [390, 844],
-  ] as const)("검토 결과 있음 %i×%i: 요약과 의무 체크리스트의 머리·첫 행이 첫 화면에 있다", async (width, height) => {
+  ] as const)("검토 결과 있음 %i×%i: 한 줄, 코드에서 확인된 것의 머리와 첫 카드의 사실이 첫 화면에 있고, 구획이 차례대로다", async (width, height) => {
+    // 카드마다 어디까지 첫 화면에 드는지(web18 의 받아들일 조건)는 tests/browser/web16.test.ts 가 본다.
     const { page } = await openPage(browser, site, REVIEWED, { viewport: { width, height }, contexts, problems });
-    const at = await layout(page);
-    expect(at.top).toBeLessThanOrEqual(height);
-    expect(at.tiers).toHaveLength(3);
-    expect(at.tiers[0]).toBeLessThanOrEqual(height);
-    expect(at.firstRow).not.toBeNull();
-    expect(at.firstRow!).toBeLessThanOrEqual(height);
-    // 세 단은 차례대로다(의무 체크리스트 → 하는 일 → 개인정보 흐름).
-    expect([...at.tiers].sort((a, b) => a - b)).toEqual(at.tiers);
+    const at = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)?.getBoundingClientRect() ?? null;
+      return {
+        lead: box(".rv-lead")?.bottom ?? null,
+        head: box("#rv-confirmed-h")?.bottom ?? null,
+        fact: box(".rv-card .rv-fact")?.bottom ?? null,
+        tops: [".rv-lead", ".rv-confirmed", ".rv-more", "#rv-flow", "#rv-service", "#rv-closed", "#rv-verify", "details.an-steps"].map((selector) => box(selector)?.top ?? null),
+      };
+    });
+    for (const bottom of [at.lead, at.head, at.fact]) {
+      expect(bottom).not.toBeNull();
+      expect(bottom!).toBeLessThanOrEqual(height);
+    }
+    expect(at.tops.every((top) => top !== null)).toBe(true);
+    expect([...(at.tops as number[])].sort((a, b) => a - b)).toEqual(at.tops);
     expect(await overflow(page, ".flow-scroll")).toMatchObject({ page: 0, over: [] });
   });
 });

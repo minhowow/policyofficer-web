@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { SANCTION_TEXT } from "@/lib/duties/sanction";
 import { moveTo } from "@/lib/scroll";
@@ -121,24 +121,5 @@ export function ExpandAll({ target }: { target: string }) {
     <button type="button" className="link-btn" aria-controls={target} aria-expanded={all} onClick={toggle}>
       {all ? "모두 접기" : "모두 펼치기"}
     </button>
-  );
-}
-
-/**
- * 같은 쪽의 자리로 내려가는 링크(요약 줄의 '외부로 보냄 ↓'). 해시 링크를 브라우저에 맡기면 Next 의 뒤로 가기가 깨지므로(`lib/scroll.ts`
- * 의 `moveTo`) 누르면 그 자리로 옮기기만 하고 주소·방문 기록은 건드리지 않는다. 스크립트가 붙기 전에는 해시 링크 그대로 듣는다.
- */
-export function DownLink({ target, className, children }: { target: string; className?: string; children: ReactNode }) {
-  const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    const element = document.getElementById(target);
-    if (!element) return;
-    event.preventDefault();
-    moveTo(element);
-  };
-  return (
-    <a href={`#${target}`} className={className} onClick={onClick}>
-      {children}
-    </a>
   );
 }

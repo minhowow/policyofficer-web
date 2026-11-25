@@ -47,26 +47,30 @@ describe("review 결과 (2판)", () => {
     expect(layout.paths.filter((p) => p.outward).map((p) => `${p.from}>${p.to}`).sort()).toEqual(["n3>n8", "n4>n7"]);
   });
 
-  it("체크리스트: 확인할 것의 세 갈래는 열린 목록(의무 한 건이 접힌 두 줄 행), 나머지 갈래는 그 아래에 접는다. 해당 없음은 찾아본 말과 다시 센 건수를 펼치면 보인다", () => {
+  it("체크리스트: 카드에 오르지 않은 확인할 것의 세 갈래는 열린 목록(의무 한 건이 접힌 두 줄 행), 나머지 갈래는 쪽 아래 '닫은 의무'에 접는다. 해당 없음은 찾아본 말과 다시 센 건수를 펼치면 보인다", () => {
     const html = renderToStaticMarkup(<ReviewView review={parseReview(sample())!} />);
+    // 코드에서 본 것 여섯 가운데 셋은 '코드에서 확인된 것' 카드다(반박을 견디고 인용이 받아진 것, web18). 나머지 셋이 행이다.
+    expect(elementsOf(html, '<li class="rv-card"')).toHaveLength(3);
     // 세 갈래는 섹션(접히지 않음)이고, 머리는 짧은 이름과 수다. 행은 저마다 접혀 있다.
-    for (const [status, n] of [["seen-in-code", 6], ["check-outside", 1], ["check-applicability", 1]] as const) {
+    for (const [status, n] of [["seen-in-code", 3], ["check-outside", 1], ["check-applicability", 1]] as const) {
       const section = elementsOf(html, `<section class="ck ck-check rv-${status}">`)[0];
       expect(textOf(elementsOf(section, '<h3 class="ck-hd ck-hd-check">')[0]), status).toBe(`${shortStatus(status)} ${n}건`);
       expect(elementsOf(section, '<li class="rv-item"'), status).toHaveLength(n);
       expect(elementsOf(section, '<details class="rv-row"'), status).toHaveLength(n);
       expect(section, status).not.toContain("rv-group");
     }
+    const closed = elementsOf(html, '<details class="rv-fold" id="rv-closed">')[0];
+    expect(closed).toContain('<div class="rv-check rv-folded">');
     for (const status of ["unknown", "evidence-found", "likely-not-applicable", "not-applicable"] as const) {
-      const at = html.indexOf(`<details class="rv-group rv-${status}">`);
-      expect(at, status).toBeGreaterThan(html.indexOf('<div class="rv-folded">'));
-      expect(textOf(elementsOf(html.slice(at), "<summary>")[0])).toBe(`${REVIEW_STATUS_LABEL[status]} 1건`);
+      const at = closed.indexOf(`<details class="rv-group rv-${status}">`);
+      expect(at, status).toBeGreaterThan(-1);
+      expect(textOf(elementsOf(closed.slice(at), "<summary>")[0])).toBe(`${REVIEW_STATUS_LABEL[status]} 1건`);
     }
-    const na = html.slice(html.indexOf('<details class="rv-group rv-not-applicable">'));
+    const na = closed.slice(closed.indexOf('<details class="rv-group rv-not-applicable">'));
     expect(textOf(na)).toContain("찾아본 말 1개");
     expect(textOf(na)).toContain("다시 센 줄 0줄");
-    // 검증 정보: 결과에 실린 수 그대로.
-    const info = textOf(elementsOf(html, '<section class="box info rv-verify"')[0]);
+    // 검증 정보(쪽 맨 아래 접은 구획): 결과에 실린 수 그대로.
+    const info = textOf(elementsOf(html, '<div class="rv-verify-in">')[0]);
     expect(info).toContain("인용 31줄 중 29줄을 파일에서 글자 그대로 확인, 2줄은 받지 않음");
     // 반박은 '코드에서 본 것'·'충족 근거 있음'에만 건다(실행기의 --rebut-scope found, 2026-11-15). 나머지는 '반박 안 함'으로 센다.
     expect(info).toContain(
@@ -156,13 +160,16 @@ describe("review 결과 (2판)", () => {
     }
   });
 
-  it("다시 검토 중: 짚은 의무는 상태·까닭·인용 없이 이름만 맨 아래에 접고, 갈래 수와 맨 위 한 줄의 수에서 뺀다", () => {
+  it("다시 검토 중: 짚은 의무는 상태·까닭·인용 없이 이름만 닫은 의무의 맨 아래에 접고, 갈래 수에서 뺀다", () => {
     const review = parseReview(sample())!;
     const held = review.checklist.find((item) => item.status === "not-applicable")!;
     const html = renderToStaticMarkup(<ReviewView review={review} recheck={[held.duty]} />);
     expect(html).not.toContain('<details class="rv-group rv-not-applicable">');
     const at = html.indexOf('<details class="rv-group rv-recheck">');
     expect(at).toBeGreaterThan(-1);
+    // 닫은 의무(쪽 아래 접은 구획)의 맨 끝 묶음이다.
+    const closed = elementsOf(html, '<details class="rv-fold" id="rv-closed">')[0];
+    expect(closed).toContain('<details class="rv-group rv-recheck">');
     const fold = elementAt(html, at);
     expect(textOf(elementsOf(fold, "<summary>")[0])).toBe(`${REVIEW_RECHECK_LABEL} 1건`);
     expect(textOf(fold)).toContain(held.dutyText);
@@ -231,12 +238,17 @@ describe("review 결과 (2판)", () => {
     const html = renderToStaticMarkup(<ReviewView review={review} code={{ htmlUrl: "https://github.com/o/r", commit: "a".repeat(40) }} />);
     const text = textOf(html);
     for (const raw of ["goods-not-detected", "cost-cap", "applies", "condition", "충족 근거 있음"]) expect(text, raw).not.toContain(raw);
-    // 품목 묶음: 목록 아래 접어 둔 갈래 가운데 한 줄. 맨 위 요약의 확인할 것은 품목 의무를 빼고 센다(4건).
+    // 품목 묶음: 쪽 아래 닫은 의무 안의 첫 묶음 한 줄. 더 살펴볼 것은 품목 의무를 빼고 센다(4건). 인용이 기능 신호뿐인 항목(gate-name)은
+    // 도구가 받은 코드 줄이 없어 카드에 오르지 않는다.
     const at = html.indexOf('<details class="rv-group rv-goods">');
     expect(at).toBeGreaterThan(html.indexOf('<section class="ck ck-check rv-check-applicability">'));
+    expect(at).toBeGreaterThan(html.indexOf('<details class="rv-fold" id="rv-closed">'));
     expect(textOf(elementsOf(html.slice(at), "<summary>")[0])).toBe(`${REVIEW_GOODS_LABEL} 2건`);
     expect(textOf(elementAt(html, at))).toContain("주류도 판매하나요?");
-    expect(textOf(elementsOf(html, '<p class="rv-big">')[0])).toBe("확인할 것 4건");
+    expect(textOf(elementsOf(html, '<h2 class="rv-sec-h" id="rv-confirmed-h">')[0])).toBe("코드에서 확인된 것 0건");
+    expect(textOf(elementsOf(html, '<h2 class="rv-sec-h" id="rv-more-h">')[0])).toBe("더 살펴볼 것 4건");
+    // 닫은 의무: 품목 둘과 모름 하나.
+    expect(textOf(elementsOf(elementsOf(html, '<details class="rv-fold" id="rv-closed">')[0], "<summary>")[0])).toBe("닫은 의무3건");
     expect(textOf(elementsOf(html, '<section class="ck ck-check rv-check-applicability">')[0]).startsWith(`${shortStatus("check-applicability")} 3건`)).toBe(true);
     // CLI 2a24d94 의 까닭도 이 사이트의 말로(메모를 그대로 싣지 않는다).
     expect(text).toContain("AI 가 걸리는지 모른다고 답해 '해당 여부부터 확인할 것'으로 옮겼습니다.");
@@ -256,15 +268,16 @@ describe("review 결과 (2판)", () => {
     expect(text).toContain("저장소당 금액 상한에 걸려 묻지 못했습니다");
   });
 
-  it("확인할 것이 0건이면 맨 위 요약의 그 수 바로 아래에 0의 뜻을 둔다(목록 줄과 같은 수, docs/commitments.md 의 1)", () => {
+  it("확인할 것이 0건이면 맨 위 한 줄 바로 아래(코드에서 확인된 것보다 먼저)에 0의 뜻을 둔다(목록 줄과 같은 수, docs/commitments.md 의 1)", () => {
     const data = sample();
     const all = (data.checklist as Record<string, unknown>[]).map((item) => ({ ...item, status: "not-applicable" }));
     const zero = parseReview({ ...data, checklist: all })!;
     const html = renderToStaticMarkup(<ReviewView review={zero} />);
-    expect(textOf(elementsOf(html, '<p class="rv-big">')[0])).toBe("확인할 것 0건");
     expect(html).toContain(`<p class="hint zero-note">${SITE.zeroCheckIsNotClearance}</p>`);
-    expect(html.indexOf("zero-note")).toBeGreaterThan(html.indexOf('<p class="rv-big">'));
-    expect(html.indexOf("zero-note")).toBeLessThan(html.indexOf('<p class="rv-meta">'));
+    expect(html).toMatch(/^<div class="review"><div class="rv-lead">.*?<\/div><p class="hint zero-note">/);
+    expect(html.indexOf("zero-note")).toBeLessThan(html.indexOf('<section class="rv-confirmed"'));
+    expect(textOf(elementsOf(html, '<h2 class="rv-sec-h" id="rv-confirmed-h">')[0])).toBe("코드에서 확인된 것 0건");
+    expect(textOf(elementsOf(html, '<h2 class="rv-sec-h" id="rv-more-h">')[0])).toBe("더 살펴볼 것 0건");
     // 0이 아니면 두지 않는다.
     expect(renderToStaticMarkup(<ReviewView review={parseReview(data)!} />)).not.toContain("zero-note");
   });
@@ -288,17 +301,19 @@ describe("미리 돌려 넣은 분석: jobtalk(CLI handoff-w13-1, 2026-11-24)", 
     expect(review.run.stageUsd).not.toBeNull();
   });
 
-  it("갈래별 수: 확인할 것 16건(코드에서 본 것 11, 저장소 밖에서 1, 해당 여부부터 4), 나머지는 접는다", () => {
-    expect(textOf(elementsOf(html, '<p class="rv-big">')[0])).toBe("확인할 것 16건");
-    for (const [status, n] of [["seen-in-code", 11], ["check-outside", 1], ["check-applicability", 4]] as const) {
+  it("갈래별 수: 확인할 것 16건(코드에서 본 것 11, 저장소 밖에서 1, 해당 여부부터 4) 가운데 카드 3건, 더 살펴볼 것 13건. 나머지는 닫은 의무에 접는다", () => {
+    expect(elementsOf(html, '<li class="rv-card"')).toHaveLength(3);
+    expect(textOf(elementsOf(html, '<h2 class="rv-sec-h" id="rv-more-h">')[0])).toBe("더 살펴볼 것 13건");
+    for (const [status, n] of [["seen-in-code", 8], ["check-outside", 1], ["check-applicability", 4]] as const) {
       const section = elementsOf(html, `<section class="ck ck-check rv-${status}">`)[0];
       expect(textOf(elementsOf(section, '<h3 class="ck-hd ck-hd-check">')[0]), status).toBe(`${shortStatus(status)} ${n}건`);
       expect(elementsOf(section, '<li class="rv-item"'), status).toHaveLength(n);
     }
+    const closed = elementsOf(html, '<details class="rv-fold" id="rv-closed">')[0];
     for (const [status, n] of [["likely-not-applicable", 1], ["not-applicable", 13]] as const) {
-      const at = html.indexOf(`<details class="rv-group rv-${status}">`);
-      expect(at, status).toBeGreaterThan(html.indexOf('<div class="rv-folded">'));
-      expect(textOf(elementsOf(html.slice(at), "<summary>")[0])).toBe(`${REVIEW_STATUS_LABEL[status]} ${n}건`);
+      const at = closed.indexOf(`<details class="rv-group rv-${status}">`);
+      expect(at, status).toBeGreaterThan(-1);
+      expect(textOf(elementsOf(closed.slice(at), "<summary>")[0])).toBe(`${REVIEW_STATUS_LABEL[status]} ${n}건`);
     }
     for (const status of ["unknown", "evidence-found"] as const) expect(html, status).not.toContain(`rv-group rv-${status}"`);
     expect(html).not.toContain("rv-goods");

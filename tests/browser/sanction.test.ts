@@ -3,12 +3,14 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { dutyMap, sanctionOf } from "@/lib/duties";
 import { SANCTION_TIERS } from "@/lib/duties/sanction";
 import { parseReview } from "@/lib/review";
+import { confirmedItems } from "@/lib/review/pick";
 import { analysisHref, checklistHref } from "@/lib/service/href";
 import genaiChatReview from "@contract/review/genai-chat.review.json";
 import { closeChrome, launchChrome, openPage, overflow, serveSite, type OpenOptions, type Site } from "./site";
 
-// 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 실제 브라우저로 본다: review 가 있는 합성 분석 쪽의 맨 위 요약(누르면 그 항목만
-// 남고 첫 항목으로 옮겨 가며 '모두 보기'로 돌아온다), 좁은 화면에서 표지가 제목 아래로 내려가고 가로로 넘치지 않는지(두 테마), 조문
+// 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 실제 브라우저로 본다: review 가 있는 합성 분석 쪽의 '더 살펴볼 것' 머리의 제재
+// 거르개(2026-11-25 web18 에서 맨 위 요약에서 옮겼다. 누르면 그 무게의 행만 남고 목록 머리의 띠로 옮겨 가며 '모두 보기'로 돌아온다.
+// 수는 더 살펴볼 것의 행만 센다), 좁은 화면에서 표지가 제목 아래로 내려가고 가로로 넘치지 않는지(두 테마), 조문
 // 도감의 제재 거르개가 기능 거르개(?f=)와 함께 듣는지, 인쇄용 보기의 표지가 흑백(검은 선·기호)으로 찍히는지. 의무 지도에 제재가 없는
 // 판이면 그 어느 것도 화면에 없어야 한다. 2026-11-25 web17 에서 사례 쪽을 걷어, 사례 쪽에서 보던 것을 합성 분석 쪽으로 옮겼다.
 // 합성 예시의 의무 id 는 대부분 의무 지도에 없어 제재가 붙지 않는다. 그래서 무게마다의 수는 적어 두지 않고 review 와 의무 지도에서 센다.
@@ -46,18 +48,23 @@ const REVIEWED = analysisHref("example-studio", "genai-chat", "4qqa6fdx2h");
 const PRINT = checklistHref("example-studio", "genai-chat", "4qqa6fdx2h");
 const review = parseReview(genaiChatReview)!;
 const CHECKS = ["seen-in-code", "check-outside", "check-applicability"];
-/** 확인할 것 가운데 강조 무게(징역·과징금)의 제재가 걸리는 항목. */
+/** 코드에서 확인된 것(맨 위 카드)의 의무 id. 거르개는 그 아래 '더 살펴볼 것'의 행만 거른다. 분석 쪽은 다시 검토 중인 의무를 넘기지 않는다. */
+const cards = confirmedItems(review, review.checklist).map((item) => item.duty);
+/** 더 살펴볼 것(카드에 오르지 않은 확인할 것) 가운데 강조 무게(징역·과징금)의 제재가 걸리는 항목. */
 const heavy = review.checklist.filter((item) => {
   const sanction = sanctionOf(item.duty);
-  return sanction !== null && ["징역", "과징금"].includes(sanction.class) && CHECKS.includes(item.status) && item.group !== "goods";
+  return sanction !== null && ["징역", "과징금"].includes(sanction.class) && CHECKS.includes(item.status) && item.group !== "goods" && !cards.includes(item.duty);
 });
 
 describe.runIf(sanctioned)("제재가 있는 판", () => {
-  it("분석 쪽: 요약의 제재 단추를 누르면 그 자리에서 그 무게의 행만 남고 목록 머리에 띠가 붙는다. 화면과 초점은 움직이지 않는다. '모두 보기'로 돌아온다", async () => {
-    // 합성 예시에 강조 무게의 확인할 것이 없으면 이 시험은 볼 것이 없다.
-    expect(heavy.length, "합성 예시의 확인할 것 가운데 징역·과징금이 걸리는 항목이 없습니다").toBeGreaterThan(0);
+  it("분석 쪽: 더 살펴볼 것 머리의 제재 단추를 누르면 그 자리에서 그 무게의 행만 남고 목록 머리에 띠가 붙는다. 화면과 초점은 움직이지 않는다. '모두 보기'로 돌아온다", async () => {
+    // 합성 예시의 더 살펴볼 것에 강조 무게의 항목이 없으면 이 시험은 볼 것이 없다.
+    expect(heavy.length, "합성 예시의 더 살펴볼 것 가운데 징역·과징금이 걸리는 항목이 없습니다").toBeGreaterThan(0);
     const { page } = await open(REVIEWED);
-    const button = page.locator(".rv-sum .sanc-filter.sf-0");
+    // 거르개는 더 살펴볼 것의 머리에 하나뿐이다(맨 위 요약은 없다).
+    expect(await page.locator(".sanc-filter").count()).toBe(SANCTION_TIERS.length);
+    expect(await page.locator(".rv-more > .rv-more-top .sanc-filter").count()).toBe(SANCTION_TIERS.length);
+    const button = page.locator(".rv-more .sanc-filter.sf-0");
     await expect.poll(() => button.textContent()).toBe(`!${SANCTION_TIERS[0].label} ${heavy.length}`);
     const visible = () =>
       page.evaluate(() => [...document.querySelectorAll("#rv-checklist .rv-item")].filter((item) => item.checkVisibility()).map((item) => item.getAttribute("data-tier")));
@@ -72,9 +79,11 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
     expect(await button.getAttribute("aria-pressed")).toBe("true");
     const band = page.locator("#rv-checklist-band .rv-band");
     expect(await band.textContent()).toBe(`${SANCTION_TIERS[0].label} ${heavy.length}건만 보는 중 · 모두 보기`);
-    // 거르는 동안 갈래의 수(거르지 않은 수)와 접어 둔 나머지 갈래는 감춘다.
+    // 거르는 동안 갈래의 수(거르지 않은 수)는 감춘다.
     expect(await page.locator("#rv-checklist .ck-n").evaluateAll((nodes) => nodes.filter((node) => (node as HTMLElement).checkVisibility()).length)).toBe(0);
-    expect(await page.locator("#rv-checklist .rv-folded").isVisible()).toBe(false);
+    // 맨 위의 코드에서 확인된 것(카드)은 거르지 않는다.
+    expect(cards.length).toBeGreaterThan(0);
+    expect(await page.locator(".rv-confirmed li.rv-card").evaluateAll((items) => items.filter((item) => item.checkVisibility()).length)).toBe(cards.length);
     await band.getByRole("button", { name: "모두 보기" }).focus();
     await page.keyboard.press("Enter");
     await expect.poll(async () => (await visible()).length).toBeGreaterThan(heavy.length);

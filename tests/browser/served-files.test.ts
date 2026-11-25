@@ -201,12 +201,30 @@ describe("빌드된 사이트가 내주는 것", () => {
     expect(links).toBeGreaterThan(dutyMap.asked);
   });
 
-  it("쪽 안의 링크(#…)와 다른 쪽의 자리로 가는 링크가 가리키는 자리가 그 쪽에 있다", () => {
+  it("쪽 안의 링크(#…)·다른 쪽의 자리로 가는 링크와, id 로 가리키는 속성(aria-labelledby·aria-controls·aria-describedby·for)이 가리키는 자리가 그 쪽에 있다", () => {
     const links = htmlPages().flatMap(({ file, text }) =>
       [...text.matchAll(/<a [^>]*href="((?:\/[^"#]*)?)#([^"]+)"/g)].map((match) => ({ file, pathname: decodeEntities(match[1]), id: decodeEntities(match[2]) })),
     );
-    // 결과 쪽(review)의 요약이 셋째 단으로 옮겨 가는 링크가 있다.
-    expect(links.length).toBeGreaterThan(0);
+    // id 로 가리키는 속성. 쪽을 옮겨 올 때 쓰는 내용(스크립트 안)은 빼고 태그만 읽는다.
+    const refs = htmlPages().flatMap(({ file, text }) =>
+      [...text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, "").matchAll(/<[a-z][^>]*>/g)].flatMap(([tag]) =>
+        [...tag.matchAll(/\s(aria-labelledby|aria-controls|aria-describedby|for)="([^"]*)"/g)].flatMap((match) =>
+          decodeEntities(match[2])
+            .split(/\s+/)
+            .filter(Boolean)
+            .map((id) => ({ file, attr: match[1], id })),
+        ),
+      ),
+    );
+    // 빈 것끼리 견준 것이 아니다. 2026-11-25 web18 에서 결과 쪽 요약의 ↓ 링크가 빠져 쪽 안의 링크는 없을 수 있다. 결과 쪽(review)에는
+    // 두 구획의 머리(aria-labelledby)와, 제재 거르개·모두 펼치기가 가리키는 체크리스트(aria-controls)가 있다.
+    const reviewed = pageFile(analysisHref("example-studio", "genai-chat", "4qqa6fdx2h"), "html");
+    expect(refs.filter((ref) => ref.file === reviewed).map((ref) => `${ref.attr} ${ref.id}`)).toEqual(
+      expect.arrayContaining(["aria-labelledby rv-confirmed-h", "aria-labelledby rv-more-h", "aria-controls rv-checklist"]),
+    );
+    for (const { file, attr, id } of refs) {
+      expect(contents.find((entry) => entry.file === file)!.text, `${file}: ${attr}="${id}"`).toContain(` id="${id}"`);
+    }
     for (const { file, pathname, id } of links) {
       const target = pathname === "" ? contents.find((entry) => entry.file === file) : contents.find((entry) => entry.file === pageFile(pathname, "html"));
       // 다른 쪽이면 끝에 빗금이 있는 주소다(next.config 의 trailingSlash). 그 쪽을 받아 두었다.

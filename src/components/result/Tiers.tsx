@@ -28,18 +28,11 @@ function TierHead({ n, name }: { n: number; name: string }) {
   );
 }
 
-/** 단 하나: 머리와 안쪽. `aside` 는 머리 오른쪽(좁은 화면에서는 아래)에 두는 것(체크리스트의 펼치기·내보내기 링크). */
-export function Tier({ n, name, children, aside }: { n: number; name: string; children: ReactNode; aside?: ReactNode }) {
+/** 단 하나: 머리와 안쪽. */
+export function Tier({ n, name, children }: { n: number; name: string; children: ReactNode }) {
   return (
     <section className="tier" aria-labelledby={`tier-${n}`}>
-      {aside ? (
-        <div className="tier-top">
-          <TierHead n={n} name={name} />
-          {aside}
-        </div>
-      ) : (
-        <TierHead n={n} name={name} />
-      )}
+      <TierHead n={n} name={name} />
       {children}
     </section>
   );

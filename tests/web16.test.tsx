@@ -2,16 +2,17 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ReviewView } from "@/components/review/ReviewView";
 import { dutyAnchor } from "@/lib/duties";
-import { SANCTION_TEXT } from "@/lib/duties/sanction";
 import { parseReview } from "@/lib/review";
 import { costText, modelLabel, toolCheck } from "@/lib/review/text";
 import { checklistHref, checklistMarkdownHref } from "@/lib/service/href";
 import { PRERUNS } from "@/lib/service/prerun";
 import { elementsOf, readJson, textOf } from "./helpers";
 
-// 결과 쪽을 "요약 → 한 줄 목록 → 누르면 펼침"으로(2026-11-25 web16, SOFTCON 심사 대비). 자료는 미리 돌려 넣은 분석 jobtalk
-// (src/lib/service/prerun.ts, CLI handoff-w13-1 로 2026-11-24 에 돌린 것)과 합성 예시(contract/review/genai-chat.review.json)다. 제재는
-// 실제 의무 지도(data/duty-map.json)의 것이다. 분석 쪽처럼 코드 링크와 내보내기 주소를 주고 그린다.
+// 결과 쪽을 "요약 → 한 줄 목록 → 누르면 펼침"으로(2026-11-25 web16, SOFTCON 심사 대비). 맨 위 요약은 web18 에서 '코드에서 확인된 것'
+// 카드로 바뀌었고(tests/web18.test.tsx), 여기는 그 뒤에도 남은 것(쳐내기, 한 줄 행, 펼친 상세의 차례, 도구 확인, 검증 정보)을 본다.
+// 자료는 미리 돌려 넣은 분석 jobtalk(src/lib/service/prerun.ts, CLI handoff-w13-1 로 2026-11-24 에 돌린 것)과 합성 예시
+// (contract/review/genai-chat.review.json)다. 제재는 실제 의무 지도(data/duty-map.json)의 것이다. 분석 쪽처럼 코드 링크와 내보내기 주소를
+// 주고 그린다.
 
 const prerun = PRERUNS[0];
 const review = parseReview(prerun.review)!;
@@ -60,51 +61,21 @@ describe("a. 쳐내기", () => {
   });
 });
 
-describe("b. 요약과 목록", () => {
-  it("차례: 요약 → 1 의무 체크리스트 → 2 이 저장소가 하는 일 → 3 개인정보 흐름 → 검증 정보", () => {
-    const at = (needle: string) => {
-      const i = html.indexOf(needle);
-      expect(i, needle).toBeGreaterThan(-1);
-      return i;
-    };
-    const order = [at('<section class="rv-sum"'), at('id="tier-1">'), at('id="tier-2">'), at('id="tier-3">'), at('<section class="box info rv-verify"')];
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
-    const heads = elementsOf(html, '<h2 class="tier-hd"').map(textOf);
-    expect(heads).toEqual(["1의무 체크리스트", "2이 저장소가 하는 일", "3개인정보 흐름"]);
-  });
-
-  it("요약: 큰 글씨 확인할 것 N건, 회색 한 줄(감지된 기능 · 걸릴 수 있는 의무 · 외부로 보냄 ↓), 주의 문구 한 번. 점수·비율·예상 금액은 없다", () => {
-    const sum = elementsOf(html, '<section class="rv-sum"')[0];
-    // 코드에서 본 것 11, 저장소 밖에서 1, 해당 여부부터 4.
-    expect(textOf(elementsOf(sum, '<p class="rv-big">')[0])).toBe("확인할 것 16건");
-    // 실제 의무 지도의 제재로 센 무게별 수(합은 16).
-    expect(elementsOf(sum, "<button").map(textOf)).toEqual(["!징역·과징금 7", "벌금·과태료 3", "명령·없음 6"]);
-    const meta = elementsOf(sum, '<p class="rv-meta">')[0];
-    expect(textOf(meta)).toBe("감지된 기능 6가지 · 걸릴 수 있는 의무 111개 중 · 외부로 보냄: OpenAI Responses API (외부 AI) ↓개인정보 흐름으로");
-    expect(meta).toContain('href="#tier-3"');
-    expect(sum.split(SANCTION_TEXT.note)).toHaveLength(2);
-    expect(textOf(sum)).not.toMatch(/점|%|등급|원|가장/);
-  });
-
-  it("'외부로 보냄'은 화살표가 들어오는 외부 마디만이다(외부에서 받기만 하는 마디는 넣지 않고, 없으면 그 조각이 없다)", () => {
-    const sample = readJson("contract", "review", "genai-chat.review.json") as { data_flow: { nodes: { id: string; kind: string; label: string }[]; edges: { from: string; to: string }[] } };
-    const flow = sample.data_flow;
-    const outward = flow.nodes.filter((node) => node.kind === "external" && flow.edges.some((edge) => edge.to === node.id)).map((node) => node.label);
-    expect(outward.length).toBeGreaterThan(0);
-    const meta = (data: unknown) => textOf(elementsOf(renderToStaticMarkup(<ReviewView review={parseReview(data)!} />), '<p class="rv-meta">')[0]);
-    expect(meta(sample)).toContain(`외부로 보냄: ${outward.join(" · ")}`);
-    // 외부 마디로 들어오는 화살표를 모두 뒤집으면(외부에서 받기만 한다) 그 조각이 없다.
-    const inbound = { ...sample, data_flow: { ...flow, edges: flow.edges.map((edge) => (flow.nodes.find((node) => node.id === edge.to)?.kind === "external" ? { ...edge, from: edge.to, to: edge.from } : edge)) } };
-    expect(meta(inbound)).not.toContain("외부로 보냄");
-  });
-
+describe("b. 한 줄 목록", () => {
+  // 2026-11-25 web18 부터 맨 위 요약(확인할 것 N건, 회색 한 줄의 '외부로 보냄', 번호 붙은 단)은 없다. 행 목록은 '더 살펴볼 것'과 접어 둔
+  // '닫은 의무'에 있고, 코드에서 확인된 것은 카드다(tests/web18.test.tsx).
   it("행: 접힌 두 줄(어기면 칸 · 짧은 제목 · 인용한 자리 / 조문 · 제재)이고, 주소의 자리는 의무 id 다. 목록 아래 보지 못한 것 한 줄", () => {
+    // 카드(코드에서 확인된 것 3건)에 오른 의무는 행이 아니다.
+    const cards = elementsOf(html, '<li class="rv-card"');
+    expect(cards).toHaveLength(3);
     const rows = elementsOf(html, '<li class="rv-item"');
-    expect(rows).toHaveLength(review.checklist.length);
-    const row = rowOf("pipa-28-8-1");
-    expect(row).toMatch(/^<li class="rv-item" data-tier="0"><details class="rv-row" id="duty-pipa-28-8-1"><summary>/);
-    expect(textOf(elementsOf(row, '<span class="rv-r1">')[0])).toBe("!과징금국외 제공·처리위탁·보관은 별도 동의·처리방침 공개 등 근거가 있을 때만chatController.ts:135");
-    expect(textOf(elementsOf(row, '<span class="rv-r2">')[0])).toBe("개인정보 보호법 제28조의8제1항(시행령 제29조의7) · 어기면 · 과징금 매출 3%");
+    expect(rows).toHaveLength(review.checklist.length - cards.length);
+    const row = rowOf("safety-std-7-4");
+    expect(row).toMatch(/^<li class="rv-item" data-tier="0"><details class="rv-row" id="duty-safety-std-7-4"><summary>/);
+    expect(textOf(elementsOf(row, '<span class="rv-r1">')[0])).toBe("!과징금인터넷 구간으로 개인정보를 주고받을 땐 암호화(TLS)axiosInstance.ts:4");
+    expect(textOf(elementsOf(row, '<span class="rv-r2">')[0])).toBe(
+      "개인정보의 안전성 확보조치 기준 제7조제4항(영 제30조제1항제4호다목) · 어기면 · 과태료 3천만원 · 유출되면 과징금 매출 3%",
+    );
     // 해당 여부부터 확인할 항목: 제재 앞에 '해당되면'.
     const child = rowOf("pipa-22-2-1");
     expect(textOf(elementsOf(child, '<span class="rv-r2">')[0])).toMatch(/ · 해당되면 · 어기면 · 징역 5년 · 과징금 매출 3%$/);
@@ -112,12 +83,24 @@ describe("b. 요약과 목록", () => {
     expect(textOf(elementsOf(rowOf("tcra-3-2"), '<span class="rv-r1">')[0])).toBe("과태료계약 때 약관을 분명히 보여주고 사본 제공Register.tsx:793");
     const unseen = textOf(elementsOf(html, '<p class="hint rv-unseen">')[0]);
     expect(unseen).toBe("이번 검토가 보지 못한 것 — 저장소 밖(처리방침·약관·배포 설정) · 읽지 않는 파일(.env 등) · 판단 못 한 의무 0건");
-    // 목록 위: 모두 펼치기 · 마크다운으로 받기 · 인쇄용 보기(분석 쪽처럼 내보내기 주소를 주었을 때).
-    const exported = elementsOf(html, '<p class="rv-export">')[0];
+    // 목록 머리: 제재 거르개 셋(더 살펴볼 것의 행만 센다. 실제 의무 지도의 제재, 합은 13) · 모두 펼치기 · 마크다운으로 받기 · 인쇄용 보기.
+    const top = elementsOf(html, '<div class="rv-more-top">')[0];
+    expect(elementsOf(top, "<button").filter((b) => b.includes("sanc-filter")).map(textOf)).toEqual(["!징역·과징금 4", "벌금·과태료 3", "명령·없음 6"]);
+    const exported = elementsOf(top, '<p class="rv-export">')[0];
     expect(textOf(exported)).toBe("모두 펼치기마크다운으로 받기인쇄용 보기");
     expect(exported).toContain(`href="${checklistMarkdownHref(prerun.id)}"`);
     // 내보내기 주소가 없으면 모두 펼치기만.
     expect(textOf(elementsOf(renderToStaticMarkup(<ReviewView review={review} />), '<p class="rv-export">')[0])).toBe("모두 펼치기");
+  });
+
+  it("없어진 것: 맨 위 요약(rv-sum·rv-big·rv-meta), '외부로 보냄' 줄, 번호 붙은 단 머리, 상자 모양의 검증 정보", () => {
+    for (const gone of ['class="rv-sum"', 'class="rv-big"', 'class="rv-meta"', 'class="tier-hd"', 'class="box info rv-verify"']) {
+      expect(html, gone).not.toContain(gone);
+    }
+    // '외부로 보냄'은 접어 둔 흐름 그림의 단 이름에만 있다.
+    const flow = elementsOf(html, '<details class="rv-fold" id="rv-flow">')[0];
+    expect(flow).toContain("저장 · 외부로 보냄");
+    expect(html.replace(flow, "")).not.toContain("외부로 보냄");
   });
 });
 
@@ -166,8 +149,9 @@ describe("c. 펼친 카드의 차례와 '도구 확인' 줄", () => {
     expect(textOf(elementsOf(body, '<p class="ask-line rv-tool">')[0])).toBe("도구 확인 인용 2줄이 파일에 그대로 있음 · '없다' 검색 1개를 다시 돌려 같음 · 반박 후 유지");
   });
 
-  it("첫 인용은 펼치자마자 보인다: 파일:줄, 코드 한 줄, 커밋 고정 링크(따라가 보기의 의무 pipa-28-8-1)", () => {
-    const body = elementsOf(rowOf("pipa-28-8-1"), '<div class="rv-body">')[0];
+  it("첫 인용은 펼치자마자 보인다: 파일:줄, 코드 한 줄, 커밋 고정 링크(따라가 보기의 의무 pipa-28-8-1. web18 부터 카드라 '자세히' 안의 상세)", () => {
+    const card = elementsOf(html, '<li class="rv-card"').find((li) => li.includes(`id="${dutyAnchor("pipa-28-8-1")}"`))!;
+    const body = elementsOf(card, '<div class="rv-body">')[0];
     expect(textOf(elementsOf(body, '<p class="ask-line rv-tool">')[0])).toBe("도구 확인 인용 2줄이 파일에 그대로 있음 · '없다' 검색 2개를 다시 돌려 같음 · 반박 후 유지");
     const first = elementsOf(body, '<ul class="cites">')[0];
     expect(textOf(first)).toContain("backend/src/controllers/chatController.ts:135");
@@ -177,8 +161,8 @@ describe("c. 펼친 카드의 차례와 '도구 확인' 줄", () => {
     expect(body).not.toContain("<summary>자세히</summary>");
   });
 
-  it("검증 정보는 문장으로, 그 아래 회색 한 줄에 모델·비용(구성)·시간. CLI 판과 판정 규칙의 줄은 없다", () => {
-    const verify = elementsOf(html, '<section class="box info rv-verify"')[0];
+  it("검증 정보는 문장으로, 그 아래 회색 한 줄에 모델·비용(구성)·시간. CLI 판과 판정 규칙의 줄은 없다(쪽 맨 아래 접은 구획)", () => {
+    const verify = elementsOf(elementsOf(html, '<details class="rv-fold" id="rv-verify">')[0], '<div class="rv-verify-in">')[0];
     expect(textOf(elementsOf(verify, '<p class="rv-verify-say">')[0])).toBe(
       "인용 54줄 중 53줄을 파일에서 글자 그대로 확인, 1줄은 받지 않음 · '없다' 검색 57개를 도구가 다시 돌림 → 51개 같음, 6개는 달라 '해당 없음'으로 쓰지 않음 · 반박 유지 11 · 뒤집음 0 · 반박 안 함 19 (반박은 '코드에서 본 것'·'지킨 근거 있음'에만)",
     );

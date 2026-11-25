@@ -103,6 +103,8 @@ export interface ReviewItem {
   verificationWhy: string;
   /** 걸리는 조건은 있는데 찾지 못한 지킨 처리(CLI f4967db 부터, 없으면 빈 글). */
   missing: string;
+  /** 조사 답이 적은 걸리는 조건(`first.condition`, 코드가 실제로 하는 일을 평범한 말로). 없으면 빈 글. */
+  condition: string;
   /** 한 줄로 묶어 보일 묶음(`goods`: 품목 신호가 없어 묻지 않은 품목 의무). 없으면 null. */
   group: string | null;
   /**
@@ -113,7 +115,11 @@ export interface ReviewItem {
 }
 
 export interface Review {
-  summary: { counts: Partial<Record<ReviewStatus, number>>; top: string[] };
+  /**
+   * `highlights` 는 CLI 가 고른 '먼저 볼 것'의 의무 id(handoff-w13-5 부터. 코드에서 본 것 가운데 반박을 견디고 인용이 받아진 것, 무거운
+   * 제재 순, 기능마다 하나 먼저). 그 판 전의 결과에는 없다(null).
+   */
+  summary: { counts: Partial<Record<ReviewStatus, number>>; top: string[]; highlights: string[] | null };
   profile: {
     commit: string | null;
     platforms: string[];
@@ -262,6 +268,7 @@ export function parseReview(data: unknown): Review | null {
       // 조건은 있는데 찾지 못한 지킨 처리. '충족'이라 답하며 남은 부족한 점을 적어 옮긴 항목(gate remaining-gap, handoff-w11-13)은
       // missing 이 비었으면 그 남은 부족한 점이다.
       missing: str(it.missing)?.trim() || (gate && str(gate.why) === "remaining-gap" ? remainingOf(it.first) : ""),
+      condition: isObj(it.first) ? (str(it.first.condition)?.trim() ?? "") : "",
       group: str(it.group),
       gate: gated ? (str(gate.why) ?? null) : null,
     });
@@ -273,7 +280,13 @@ export function parseReview(data: unknown): Review | null {
     ? { service: profile.files.service as number, testOrConfig: profile.files.test_or_config as number }
     : null;
   return {
-    summary: { counts: counts(summary.counts) as Partial<Record<ReviewStatus, number>>, top: strs(summary.top) },
+    summary: {
+      counts: counts(summary.counts) as Partial<Record<ReviewStatus, number>>,
+      top: strs(summary.top),
+      highlights: Array.isArray(summary.highlights)
+        ? summary.highlights.flatMap((h) => (typeof h === "string" ? [h] : isObj(h) && str(h.duty) !== null ? [h.duty as string] : []))
+        : null,
+    },
     profile: {
       commit: str(profile.commit),
       platforms: strs(profile.platforms),

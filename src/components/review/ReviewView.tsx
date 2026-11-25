@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Icon } from "@/components/Icon";
 import type { CodeSource } from "@/lib/service/href";
 import { SanctionBadge, SanctionDetails } from "@/components/result/Sanction";
-import { Tier } from "@/components/result/Tiers";
 import { Where } from "@/components/result/Where";
 import { keepParticles } from "@/components/text";
 import { dutyAnchor, dutyTitle, sanctionOf } from "@/lib/duties";
@@ -11,40 +10,39 @@ import { lawArticle } from "@/lib/duties/article";
 import { byWeight, SANCTION_TEXT, SANCTION_TIERS, sanctionTier, type Sanction } from "@/lib/duties/sanction";
 import { REVIEW_STATUSES, type Review, type ReviewCitation, type ReviewItem, type ReviewStatus } from "@/lib/review";
 import { layoutFlow } from "@/lib/review/flow";
-import { CHECKS, checkCount, costText, firstSentence, gateText, notAnsweredText, SANCTION, shortStatus, toolCheck, verifySentence } from "@/lib/review/text";
+import { confirmedItems } from "@/lib/review/pick";
+import { CHECKS, checkCount, costText, firstSentence, gateText, modelLabel, notAnsweredText, SANCTION, shortStatus, toolCheck, verifySentence } from "@/lib/review/text";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { fileLink, shortCommit } from "@/lib/service/href";
+import { secondsText } from "@/lib/service/steps";
 import { SITE } from "@/lib/site";
-import { DownLink, ExpandAll, TierFilter } from "./ChecklistControls";
+import { ExpandAll, TierFilter } from "./ChecklistControls";
 import { CitedLines, FlowFigure } from "./FlowFigure";
 
 /** 확인할 것(세 갈래)의 수. 체크리스트 내보내기·목록 줄의 수와 같은 함수다(`lib/review/text.ts`). */
 export { checkCount };
 
 /**
- * review 결과(policyofficer review 2판)의 화면. 2026-11-25 web16(SOFTCON 심사 대비, 오너가 2026-11-11 의 하는 일 → 흐름 → 체크리스트
- * 차례를 '과감하게' 바꾸라고 했다)부터 위에서부터:
+ * review 결과(policyofficer review 2판)의 화면. 2026-11-25 web18(오너 지시: "확실한 것만 내세워서 비중을 크게 잡아 밀어야 한다")부터
+ * 위에서부터:
  *
- * - 요약(쪽 첫 화면 안): 큰 글씨 '확인할 것 N건'과 제재 단추 셋(누르면 그 무게의 행만), 회색 한 줄(감지된 기능 · 걸릴 수 있는 의무 ·
- *   외부로 보냄), 주의 문구 한 번. 점수·비율·등급·예상 금액·'가장 무거운 것'은 두지 않는다.
- * - 1 의무 체크리스트: 확인할 것의 세 갈래는 열린 목록이고 의무 한 건이 두 줄 행이다(어기면 칸 · 짧은 제목 · 인용한 자리 / 조문 ·
- *   제재). 행을 누르면 그 자리에서 펼쳐진다. 나머지 갈래는 목록 아래에 접는다. 목록 아래에 이번 검토가 보지 못한 것 한 줄.
- * - 2 이 저장소가 하는 일, 3 개인정보 흐름 그림, 그리고 검증 정보.
+ * 1. 한 줄: 이 저장소가 하는 일(AI 설명의 첫 문장)과 실행 정보 한 줄.
+ * 2. 코드에서 확인된 것(크게, 3건 안팎, `confirmedItems`): 코드에서 본 것 가운데 반박을 견디고 도구가 인용을 받은 것만. 카드 하나는
+ *    코드에서 본 사실(조사 답의 `condition`, 없으면 까닭의 첫 문장) → 인용 한 줄과 '도구가 파일에서 확인함' → 걸릴 수 있는 의무(법·조문·
+ *    짧은 제목·제재 표지) → 확인할 질문(찾지 못한 것은 그 아래 작게) 차례다. 그 아래 주의 문구 한 번. 후보가 없으면 없다고 적는다.
+ * 3. 더 살펴볼 것(작게, 한 줄 행 목록): 나머지 코드에서 본 것 → 저장소 밖에서 → 해당 여부부터. 행을 누르면 그 자리에서 펼쳐진다.
+ *    제재 거르개 셋과 모두 펼치기·내보내기는 이 목록 머리에 둔다. 목록 아래 이번 검토가 보지 못한 것 한 줄.
+ * 4. 그 아래는 모두 접는다: 개인정보 흐름, 이 저장소가 하는 일(감지된 기능), 닫은 의무(지킨 근거 있음·걸리지 않는 것으로 보임·해당 없음·
+ *    모름·품목·다시 검토 중), 검증 정보.
  *
- * `exportLinks` 를 주면 체크리스트 머리 오른쪽에 마크다운으로 받기와 인쇄용 보기 링크를 둔다(내보낸 것은 지금처럼 다 펼친 모양).
+ * 인용은 관문을 통과한 것(`ok`)만 보인다. 의무 한 줄에 처분의 말이 들면 그 줄은 싣지 않는다(docs/commitments.md 1장). 행·카드의 제목은
+ * 의무 지도의 짧은 제목(조문 도감과 같은 글)이고, 없으면 의무 한 줄, 그것도 없으면 조문이다. 점수·비율·등급·예상 금액은 두지 않는다.
  *
- * 인용은 관문을 통과한 것(`ok`)만 보인다. 의무 한 줄에 처분의 말이 들면 그 줄은 싣지 않는다(docs/commitments.md 1장). 행의 제목은 의무
- * 지도의 짧은 제목(조문 도감과 같은 글)이고, 없으면 의무 한 줄, 그것도 없으면 조문이다.
+ * `recheck` 는 사람이 답을 읽고 말이 안 된다고 짚은 의무(2026-11-12 오너 결정)다. 그 상태는 보이지 않고 수에서도 빼며, 닫은 의무 안의
+ * "다시 검토 중 N건"에 의무 이름만 접어 둔다. 품목 신호가 없어 묻지 않은 품목 의무(묶음 goods)는 확인할 것의 수에 넣지 않는다.
  *
- * `recheck` 는 사람이 답을 읽고 말이 안 된다고 짚은 의무(2026-11-12 오너 결정)다. 그 상태는 보이지 않고 갈래 수에서도
- * 빼며, 맨 아래 "다시 검토 중 N건"에 의무 이름만 접어 둔다.
- *
- * 품목 신호가 없어 묻지 않은 품목 의무(묶음 goods)는 "특정 품목을 판다면 확인할 것" 한 줄로 접고 확인할 것의 수에 넣지 않는다. 프로필
- * 신호 인용(`why` profile)은 코드 줄이 아니라 기능이 있다는 파일이라 인용한 줄과 따로 적는다.
- *
- * 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 의무 id 로 의무 지도에서 찾아(`sanctionOf`. 이미 저장된 분석에도 그대로
- * 붙는다) 행의 어기면 칸과 둘째 줄, 펼친 상세에 적고, 갈래 안을 무거운 차례로 늘어놓는다(`byWeight`. 같은 무게는 지금 차례). 해당
- * 여부부터 확인할 항목의 제재 앞에는 '해당되면'을 둔다. 제재 표가 없는 판이면 단추·칸·주의 문구가 없다.
+ * 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 의무 id 로 의무 지도에서 찾아(`sanctionOf`) 카드·행·펼친 상세에 적는다. 해당 여부부터
+ * 확인할 항목의 제재 앞에는 '해당되면'을 둔다. 제재 표가 없는 판이면 거르개·표지·주의 문구가 없다.
  */
 export function ReviewView({
   review,
@@ -61,53 +59,50 @@ export function ReviewView({
   const held = review.checklist.filter((item) => recheck.includes(item.duty));
   const items = review.checklist.filter((item) => !recheck.includes(item.duty));
   const sanctioned = review.checklist.some((item) => sanctionOf(item.duty) !== null);
+  const cards = confirmedItems(review, items);
+  const closed = items.filter((item) => !CHECKS.includes(item.status) || item.group === "goods").length + held.length;
   return (
-    <div className="tiers review">
-      <Summary review={review} items={items} sanctioned={sanctioned} />
-      <Tier
-        n={1}
-        name="의무 체크리스트"
-        aside={
-          <p className="rv-export">
-            <ExpandAll target={CHECKLIST_ID} />
-            {exportLinks && (
-              <>
-                <a href={exportLinks.markdown} download>
-                  마크다운으로 받기
-                </a>
-                <Link href={exportLinks.print}>인쇄용 보기</Link>
-              </>
-            )}
-          </p>
-        }
-      >
-        <Checklist review={review} items={items} held={held} code={code} />
-        <p className="hint rv-unseen">
-          이번 검토가 보지 못한 것 — 저장소 밖(처리방침·약관·배포 설정) · 읽지 않는 파일(.env 등) · 판단 못 한 의무{" "}
-          {items.filter((item) => item.status === "unknown").length}건
-        </p>
-      </Tier>
-      <ServiceTier review={review} code={code} />
-      <Tier n={3} name="개인정보 흐름">
+    <div className="review">
+      <Lead review={review} />
+      {checkCount(items) === 0 && <p className="hint zero-note">{SITE.zeroCheckIsNotClearance}</p>}
+      <section className="rv-confirmed" aria-labelledby="rv-confirmed-h">
+        <h2 className="rv-sec-h" id="rv-confirmed-h">
+          코드에서 확인된 것 <span className="ck-n">{cards.length}건</span>
+        </h2>
+        {cards.length > 0 ? (
+          <ol className="rv-cards">
+            {cards.map((item) => (
+              <Card key={item.duty} item={item} code={code} />
+            ))}
+          </ol>
+        ) : (
+          <p className="tier-none">없음</p>
+        )}
+        {sanctioned && <p className="hint sanc-caution">{SANCTION_TEXT.note}</p>}
+      </section>
+      <More items={items.filter((item) => !cards.includes(item))} review={review} code={code} sanctioned={sanctioned} exportLinks={exportLinks} />
+      <Fold id="rv-flow" title="개인정보 흐름">
         {review.flow.nodes.length === 0 ? (
           <p className="tier-none">없음</p>
         ) : (
           <FlowFigure layout={layoutFlow(review.flow.nodes, review.flow.edges)} nodes={review.flow.nodes} edges={review.flow.edges} code={code} />
         )}
-      </Tier>
-      <Verification review={review} />
+      </Fold>
+      <Fold id="rv-service" title="이 저장소가 하는 일" count={`기능 ${review.profile.features.filter((feature) => feature.removed === null).length}가지`}>
+        <ServiceBody review={review} code={code} />
+      </Fold>
+      <Fold id="rv-closed" title="닫은 의무" count={`${closed}건`}>
+        <Closed items={items} held={held} code={code} />
+      </Fold>
+      <Fold id="rv-verify" title="검증 정보">
+        <Verification review={review} />
+      </Fold>
     </div>
   );
 }
 
-/** 체크리스트를 감싼 요소의 id(맨 위 요약의 걸러 보기가 가리킨다. 쪽에 체크리스트는 하나다). 띠는 `{id}-band` 에 붙는다. */
+/** 체크리스트(더 살펴볼 것의 행 목록)를 감싼 요소의 id(제재 거르개가 가리킨다. 쪽에 하나다). 띠는 `{id}-band` 에 붙는다. */
 const CHECKLIST_ID = "rv-checklist";
-
-/** 개인정보 흐름 단의 자리(요약 줄의 '외부로 보냄 ↓'가 가리킨다). */
-const FLOW_ANCHOR = "tier-3";
-
-/** 확인할 것(세 갈래, 묻지 않은 품목 빼고). 맨 위 요약의 수와 제재 단추가 센다. */
-const isCheck = (item: ReviewItem) => CHECKS.includes(item.status) && item.group !== "goods";
 
 /** 의무의 제재와 그 무게(없으면 null). */
 function weightOf(item: ReviewItem): { sanction: Sanction; tier: number } | null {
@@ -115,51 +110,165 @@ function weightOf(item: ReviewItem): { sanction: Sanction; tier: number } | null
   return sanction ? { sanction, tier: sanctionTier(sanction) } : null;
 }
 
-/**
- * 요약(쪽 첫 화면 안, 2026-11-25 web16): 큰 글씨 '확인할 것 N건'과 그 옆 제재 단추 셋(조문 도감의 제재 거르개와 같은 세 무게, 첫 단추는
- * 채운 강조), 회색 한 줄(감지된 기능 · 걸릴 수 있는 의무 · 외부로 보냄과 흐름으로 내려가는 ↓), 주의 문구 한 번. '외부로 보냄'은 흐름
- * 그림의 외부 마디 가운데 화살표가 들어오는 것(이 저장소가 보내는 곳)이고, 없으면 그 조각을 두지 않는다. 개수만 센다.
- */
-function Summary({ review, items, sanctioned }: { review: Review; items: ReviewItem[]; sanctioned: boolean }) {
-  const check = checkCount(items);
-  const checks = items.filter(isCheck);
-  const tiers = SANCTION_TIERS.map((tier, i) => ({ label: tier.label, count: checks.filter((item) => weightOf(item)?.tier === i).length }));
-  const sentTo = review.flow.nodes.filter((node) => node.kind === "external" && review.flow.edges.some((edge) => edge.to === node.id));
+/** 접어 둔 구획 하나(쪽 아래의 흐름·하는 일·닫은 의무·검증 정보). 이름 옆에 수를 둘 수 있다. */
+function Fold({ id, title, count, children }: { id: string; title: string; count?: string; children: ReactNode }) {
   return (
-    <section className="rv-sum" aria-label="요약">
-      <div className="rv-sum-top">
-        <p className="rv-big">
-          확인할 것 <b>{check}건</b>
-        </p>
-        {sanctioned && <TierFilter target={CHECKLIST_ID} tiers={tiers} />}
-      </div>
-      {/* 확인할 것이 0건이어도 법적 문제가 없다는 뜻이 아니다(docs/commitments.md 의 1. 보이는 0 바로 아래). */}
-      {check === 0 && <p className="hint zero-note">{SITE.zeroCheckIsNotClearance}</p>}
-      <p className="rv-meta">
-        감지된 기능 {review.profile.features.filter((feature) => feature.removed === null).length}가지 · 걸릴 수 있는 의무{" "}
-        {review.obligations.listed}개 중
-        {sentTo.length > 0 && (
-          <>
-            {" · "}외부로 보냄: {sentTo.map((node) => node.label).join(" · ")}{" "}
-            <DownLink target={FLOW_ANCHOR} className="rv-down">
-              <span aria-hidden="true">↓</span>
-              <span className="visually-hidden">개인정보 흐름으로</span>
-            </DownLink>
-          </>
-        )}
+    <details className="rv-fold" id={id}>
+      <summary>
+        <h2 className="rv-fold-h">
+          {title}
+          {count && <span className="ck-n">{count}</span>}
+        </h2>
+      </summary>
+      <div className="rv-fold-body">{children}</div>
+    </details>
+  );
+}
+
+/** 1. 한 줄: 이 저장소가 하는 일(AI 설명의 첫 문장)과 실행 정보(조사·반박 모델, 걸린 시간). */
+function Lead({ review }: { review: Review }) {
+  const [what] = firstSentence(review.profile.summary);
+  const { run } = review;
+  return (
+    <div className="rv-lead">
+      {what && <p className="rv-what">{keepParticles(what)}</p>}
+      <p className="rv-run">
+        조사 {modelLabel(run.models.investigate)} · 반박 {modelLabel(run.models.verify)} · {secondsText(run.seconds)}
       </p>
-      {sanctioned && <p className="hint sanc-caution">{SANCTION_TEXT.note}</p>}
+    </div>
+  );
+}
+
+/**
+ * 2. 코드에서 확인된 것 카드 하나: 코드에서 본 사실(가장 큰 글. 조사 답의 걸리는 조건, 없으면 까닭의 첫 문장), 첫 인용(파일:줄, 코드 한
+ * 줄, 커밋 고정 링크)과 '도구가 파일에서 확인함', 걸릴 수 있는 의무(조문·법제처, 짧은 제목, 제재 표지), 확인할 질문, 찾지 못한 것(작게).
+ * 나머지(본 것, 인용 더, 도구 확인, 어기면, 찾아본 말, 자세히)는 '자세히' 안에 둔다. 글은 결과에 실린 그대로다.
+ */
+function Card({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
+  const cites = item.citations.filter((cite) => cite.ok && cite.why !== "profile");
+  const fact = item.condition || firstSentence(item.reason)[0];
+  const sanction = sanctionOf(item.duty);
+  return (
+    <li className="rv-card" id={dutyAnchor(item.duty)}>
+      <p className="rv-fact">{keepParticles(fact)}</p>
+      <div className="rv-card-cite">
+        <CitedLines citations={cites.slice(0, 1)} code={code} />
+        <p className="rv-checked">도구가 파일에서 확인함</p>
+      </div>
+      <div className="rv-card-duty">
+        <p className="rv-law">
+          <span>{lawArticle(item.law, item.article)}</span>
+          {item.url && (
+            <a className="ob-ext" href={item.url} target="_blank" rel="noopener noreferrer">
+              법제처
+              <Icon name="external" />
+              <span className="visually-hidden">{`(새 창, ${lawArticle(item.law, item.article)})`}</span>
+            </a>
+          )}
+        </p>
+        <p className="rv-card-title">
+          <span className="rv-duty">{keepParticles(titleOf(item))}</span>
+          {sanction && " "}
+          {sanction && <SanctionBadge sanction={sanction} />}
+        </p>
+      </div>
+      {item.question && (
+        <p className="ask-line rv-card-q">
+          <span className="lbl">확인할 질문</span> {item.question}
+        </p>
+      )}
+      {item.missing && (
+        <p className="ask-line rv-card-missing">
+          <span className="lbl">찾지 못한 것</span> {item.missing}
+        </p>
+      )}
+      <details className="f-more">
+        <summary>자세히</summary>
+        <div className="rv-body">
+          <ItemBody item={item} code={code} />
+        </div>
+      </details>
+    </li>
+  );
+}
+
+/**
+ * 3. 더 살펴볼 것: 카드에 오르지 않은 확인할 것을 코드에서 본 것 → 저장소 밖에서 → 해당 여부부터 차례로, 한 줄 행 목록으로. 갈래 안은
+ * 무거운 제재 차례(`byWeight`. 같은 무게는 결과에 실린 차례, 코드에서 본 것은 요약이 고른 것 먼저). 머리에 제재 거르개 셋(그 무게의
+ * 행만 남긴다)과 모두 펼치기·내보내기 링크. 목록 아래 이번 검토가 보지 못한 것 한 줄.
+ */
+function More({
+  items,
+  review,
+  code,
+  sanctioned,
+  exportLinks,
+}: {
+  items: ReviewItem[];
+  review: Review;
+  code: CodeSource | null;
+  sanctioned: boolean;
+  exportLinks?: { markdown: string; print: string };
+}) {
+  const weigh = (list: ReviewItem[]) => byWeight(list, (item) => sanctionOf(item.duty));
+  const raw = items.filter((item) => item.status === "seen-in-code" && item.group !== "goods");
+  const top = review.summary.top.flatMap((duty) => raw.filter((item) => item.duty === duty));
+  const listOf = (status: ReviewStatus) =>
+    status === "seen-in-code" ? weigh([...top, ...raw.filter((item) => !top.includes(item))]) : weigh(items.filter((item) => item.status === status && item.group !== "goods"));
+  const groups = CHECKS.map((status) => ({ status, list: listOf(status) })).filter((group) => group.list.length > 0);
+  const rows = groups.flatMap((group) => group.list);
+  const tiers = SANCTION_TIERS.map((tier, i) => ({ label: tier.label, count: rows.filter((item) => weightOf(item)?.tier === i).length }));
+  return (
+    <section className="rv-more" aria-labelledby="rv-more-h">
+      <div className="rv-more-top">
+        <h2 className="rv-sec-h" id="rv-more-h">
+          더 살펴볼 것 <span className="ck-n">{rows.length}건</span>
+        </h2>
+        {sanctioned && rows.length > 0 && <TierFilter target={CHECKLIST_ID} tiers={tiers} />}
+        <p className="rv-export">
+          {rows.length > 0 && <ExpandAll target={CHECKLIST_ID} />}
+          {exportLinks && (
+            <>
+              <a href={exportLinks.markdown} download>
+                마크다운으로 받기
+              </a>
+              <Link href={exportLinks.print}>인쇄용 보기</Link>
+            </>
+          )}
+        </p>
+      </div>
+      {rows.length > 0 && (
+        <div className="rv-check" id={CHECKLIST_ID}>
+          <div id={`${CHECKLIST_ID}-band`} className="rv-band-slot" />
+          {groups.map(({ status, list }) => (
+            <section key={status} className={`ck ck-check rv-${status}`}>
+              <h3 className="ck-hd ck-hd-check">
+                {shortStatus(status)} <span className="ck-n">{list.length}건</span>
+              </h3>
+              <ol className="rv-items">
+                {list.map((item) => (
+                  <Item key={item.duty} item={item} code={code} />
+                ))}
+              </ol>
+            </section>
+          ))}
+        </div>
+      )}
+      <p className="hint rv-unseen">
+        이번 검토가 보지 못한 것 — 저장소 밖(처리방침·약관·배포 설정) · 읽지 않는 파일(.env 등) · 판단 못 한 의무{" "}
+        {items.filter((item) => item.status === "unknown").length}건
+      </p>
     </section>
   );
 }
 
-/** 2단: 서비스 설명, 플랫폼, 감지된 기능(AI 가 뺀 기능은 접어 둔다). */
-function ServiceTier({ review, code }: { review: Review; code: CodeSource | null }) {
+/** 접어 둔 '이 저장소가 하는 일': 서비스 설명, 플랫폼, 감지된 기능(AI 가 뺀 기능은 접어 둔다). */
+function ServiceBody({ review, code }: { review: Review; code: CodeSource | null }) {
   const kept = review.profile.features.filter((feature) => feature.removed === null);
   const removed = review.profile.features.filter((feature) => feature.removed !== null);
   const PLATFORM: Record<string, string> = { web: "웹", mobile: "모바일 앱", server: "서버" };
   return (
-    <Tier n={2} name="이 저장소가 하는 일">
+    <>
       {review.profile.summary && <p className="rv-summary">{keepParticles(review.profile.summary)}</p>}
       {review.profile.platforms.length > 0 && (
         <p className="hint tier-note">
@@ -196,7 +305,7 @@ function ServiceTier({ review, code }: { review: Review; code: CodeSource | null
           </ul>
         </details>
       )}
-    </Tier>
+    </>
   );
 }
 
@@ -324,6 +433,15 @@ function DutyLine({ item }: { item: ReviewItem }) {
  * 6 확인할 질문, 7 어기면(조문 줄과 법제처 링크, 원문은 접힘), 8 찾아본 말 · 자세히(접힘). 글은 결과에 실린 그대로다.
  */
 function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
+  return (
+    <Row item={item}>
+      <ItemBody item={item} code={code} />
+    </Row>
+  );
+}
+
+/** 펼친 상세의 글(행과 카드의 '자세히'가 함께 쓴다). */
+function ItemBody({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   // 관문이 답을 바꾼 항목은 그 까닭을 첫 줄에, 모델의 말은 모두 '자세히'에 둔다.
   const gate = gateText(item);
   const [seen, rest] = gate ? [gate, item.reason] : firstSentence(item.reason);
@@ -333,7 +451,7 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   const sanction = sanctionOf(item.duty);
   const checked = toolCheck(item);
   return (
-    <Row item={item}>
+    <>
       <LawLine item={item} overturned={item.verification === "overturned"} />
       <DutyLine item={item} />
       {seen &&
@@ -391,7 +509,7 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
           <p className="rv-rest">{keepParticles(rest)}</p>
         </details>
       )}
-    </Row>
+    </>
   );
 }
 
@@ -416,81 +534,56 @@ function HeldItem({ item, ask = false }: { item: ReviewItem; ask?: boolean }) {
 }
 
 /**
- * 의무 체크리스트: 확인할 것의 세 갈래(코드에서 본 것, 저장소 밖에서, 해당 여부부터)는 열린 목록이고, 나머지 갈래는 그 아래에 접는다.
- * 갈래 안의 차례는 무거운 제재 먼저(`byWeight`), 같은 무게끼리는 결과에 실린 그대로(코드에서 본 것은 요약이 고른 것 먼저)다. 목록
- * 머리(`{id}-band`)는 제재 단추를 누른 동안의 띠 자리다.
+ * 접어 둔 닫은 의무: 품목 의무(특정 품목을 판다면 확인할 것), 모름, 지킨 근거 있음, 걸리지 않는 것으로 보임, 해당 없음, 다시 검토 중.
+ * 갈래마다 접고, 갈래 안은 무거운 제재 차례다. 행 모양은 더 살펴볼 것과 같다.
  */
-function Checklist({ review, items, held, code }: { review: Review; items: ReviewItem[]; held: ReviewItem[]; code: CodeSource | null }) {
+function Closed({ items, held, code }: { items: ReviewItem[]; held: ReviewItem[]; code: CodeSource | null }) {
   const weigh = (list: ReviewItem[]) => byWeight(list, (item) => sanctionOf(item.duty));
   const goods = weigh(items.filter((item) => item.group === "goods"));
-  const by = (status: ReviewStatus) => weigh(items.filter((item) => item.status === status && item.group !== "goods"));
-  const raw = items.filter((item) => item.status === "seen-in-code" && item.group !== "goods");
-  const top = review.summary.top.flatMap((duty) => raw.filter((item) => item.duty === duty));
-  const listOf = (status: ReviewStatus) => (status === "seen-in-code" ? weigh([...top, ...raw.filter((item) => !top.includes(item))]) : by(status));
-  const heldItems = weigh(held);
   const rest = REVIEW_STATUSES.filter((status) => !CHECKS.includes(status));
+  const heldItems = weigh(held);
   return (
-    <div className="rv-check" id={CHECKLIST_ID}>
-      <div id={`${CHECKLIST_ID}-band`} className="rv-band-slot" />
-      {CHECKS.map((status) => {
-        const list = listOf(status);
-        return (
-          <section key={status} className={`ck ck-check rv-${status}`}>
-            <h3 className="ck-hd ck-hd-check">
-              {shortStatus(status)} <span className="ck-n">{list.length}건</span>
-            </h3>
-            {list.length > 0 && (
-              <ol className="rv-items">
-                {list.map((item) => (
-                  <Item key={item.duty} item={item} code={code} />
-                ))}
-              </ol>
-            )}
-          </section>
+    <div className="rv-check rv-folded">
+      {goods.length > 0 && (
+        <details className="rv-group rv-goods">
+          <summary>
+            {REVIEW_GOODS_LABEL} <span className="ck-n">{goods.length}건</span>
+          </summary>
+          <ol className="rv-items">
+            {goods.map((item) => (
+              <HeldItem key={item.duty} item={item} ask />
+            ))}
+          </ol>
+        </details>
+      )}
+      {rest.map((status) => {
+        const list = weigh(items.filter((item) => item.status === status && item.group !== "goods"));
+        return list.length === 0 ? null : (
+          <details key={status} className={`rv-group rv-${status}`}>
+            <summary>
+              {REVIEW_STATUS_LABEL[status]} <span className="ck-n">{list.length}건</span>
+            </summary>
+            <ol className="rv-items">
+              {list.map((item) => (
+                <Item key={item.duty} item={item} code={code} />
+              ))}
+            </ol>
+          </details>
         );
       })}
-      <div className="rv-folded">
-        {goods.length > 0 && (
-          <details className="rv-group rv-goods">
-            <summary>
-              {REVIEW_GOODS_LABEL} <span className="ck-n">{goods.length}건</span>
-            </summary>
-            <ol className="rv-items">
-              {goods.map((item) => (
-                <HeldItem key={item.duty} item={item} ask />
-              ))}
-            </ol>
-          </details>
-        )}
-        {rest.map((status) => {
-          const list = by(status);
-          return list.length === 0 ? null : (
-            <details key={status} className={`rv-group rv-${status}`}>
-              <summary>
-                {REVIEW_STATUS_LABEL[status]} <span className="ck-n">{list.length}건</span>
-              </summary>
-              <ol className="rv-items">
-                {list.map((item) => (
-                  <Item key={item.duty} item={item} code={code} />
-                ))}
-              </ol>
-            </details>
-          );
-        })}
-        {held.length > 0 && (
-          <details className="rv-group rv-recheck">
-            <summary>
-              {REVIEW_RECHECK_LABEL} <span className="ck-n">{held.length}건</span>
-            </summary>
-            <p className="hint">CLI 를 고친 다음 판에서 다시 돌립니다.</p>
-            <ol className="rv-items">
-              {heldItems.map((item) => (
-                <HeldItem key={item.duty} item={item} />
-              ))}
-            </ol>
-          </details>
-        )}
-      </div>
+      {held.length > 0 && (
+        <details className="rv-group rv-recheck">
+          <summary>
+            {REVIEW_RECHECK_LABEL} <span className="ck-n">{held.length}건</span>
+          </summary>
+          <p className="hint">CLI 를 고친 다음 판에서 다시 돌립니다.</p>
+          <ol className="rv-items">
+            {heldItems.map((item) => (
+              <HeldItem key={item.duty} item={item} />
+            ))}
+          </ol>
+        </details>
+      )}
     </div>
   );
 }
@@ -506,11 +599,7 @@ function Verification({ review }: { review: Review }) {
   const masked = sum(run.masked);
   const notAsked = sum(run.notAsked);
   return (
-    <section className="box info rv-verify" aria-labelledby="rv-verify-title">
-      <div className="box-hd">
-        <h3 id="rv-verify-title">검증 정보</h3>
-      </div>
-      <div className="box-in rv-verify-in">
+    <div className="rv-verify-in">
         <p className="rv-verify-say">{verifySentence(run).join(" · ")}</p>
         <p className="rv-verify-meta">
           <span>
@@ -526,7 +615,6 @@ function Verification({ review }: { review: Review }) {
           {masked > 0 && <span>가린 비밀값 {masked}개</span>}
           {notAsked > 0 && <span>묻지 않은 의무 {notAsked}개</span>}
         </p>
-      </div>
-    </section>
+    </div>
   );
 }

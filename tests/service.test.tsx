@@ -554,17 +554,18 @@ describe("대시보드", () => {
   const notes = (html: string) => elementsOf(html, '<p class="tier-none">').map(textOf);
   const STATIC = /정적 검사|사람이 볼 곳|판정자|AI 가 푼 경고|발견/;
 
-  it("review 가 있으면 review 화면(요약 → 의무 체크리스트 → 하는 일 → 흐름 → 검증 정보)이고 그 아래에 진행 기록을 둔다. 검토가 없다는 말은 없다", () => {
+  it("review 가 있으면 review 화면(한 줄 → 코드에서 확인된 것 → 더 살펴볼 것 → 접은 구획)이고 그 아래에 진행 기록을 둔다. 검토가 없다는 말은 없다", () => {
     const progress = <details className="an-progress-test" />;
     const links = { markdown: "/api/analyses/4qqa6fdx2h/checklist/", print: "/r/example-studio/genai-chat/a/4qqa6fdx2h/checklist/" };
     const html = renderToStaticMarkup(
       <AnalysisDashboard code={null} review={syntheticReview} profile={profileOf("genai-chat.main")} reviewPlan="run" progress={progress} exportLinks={links} />,
     );
-    // review 화면 그대로다(프로필의 단을 따로 그리지 않는다).
-    expect(html).toContain('<div class="tiers review">');
-    expect(heads(html)).toEqual(heads(renderToStaticMarkup(<ReviewView review={syntheticReview} code={null} />)));
-    expect(heads(html)).not.toContain("2걸리는 의무");
-    expect(html.indexOf('<div class="tiers review">')).toBeLessThan(html.indexOf("an-progress-test"));
+    // review 화면 그대로다(프로필의 단을 따로 그리지 않고, 번호 붙은 단 머리도 없다. 2026-11-25 web18).
+    const view = renderToStaticMarkup(<ReviewView review={syntheticReview} code={null} exportLinks={links} />);
+    expect(html.startsWith(`<div class="tiers">${view}`)).toBe(true);
+    expect(heads(html)).toEqual([]);
+    expect(html).not.toContain('<p class="overview">');
+    expect(html.indexOf('<div class="review">')).toBeLessThan(html.indexOf("an-progress-test"));
     for (const note of [SITE.service.reviewMissing, SITE.service.reviewLimit, SITE.service.reviewNone]) expect(textOf(html)).not.toContain(note);
     expect(html).toContain(`href="${links.markdown}"`);
     expect(html).toContain(linked(links.print));
