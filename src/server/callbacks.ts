@@ -1,48 +1,46 @@
 import "server-only";
 import { featureNames, parseProfile } from "@/lib/profile";
 import { parseReview } from "@/lib/review";
-import { parseReportText } from "@/lib/report/parse";
-import { serviceFindingCount } from "@/lib/report/types";
 import { repoKey } from "@/lib/service/href";
 import { isAnalysisId } from "@/lib/service/id";
 import { isRepoFullName } from "@/lib/service/names";
 import { STEP_ORDER } from "@/lib/service/steps";
 import type { AnalysisStep, ScanPart, StepName } from "@/lib/service/types";
 import type { Database, Queryable } from "./db";
-import { sweepStale, tidyQueue, type PumpDeps, type QueueLimits } from "./queue";
+import { storedReviewExists, sweepStale, tidyQueue, type PumpDeps, type QueueLimits } from "./queue";
 import { COLUMNS, readSteps, rowToAnalysis, type Row } from "./store/rows";
 
 /**
  * 실행기 콜백이 분석 행을 바꾸는 규칙(설계 6). route handler(`src/app/api/runner/`)는 서명을 본 뒤 이것만 부른다.
  *
- * 받는 것(본문 JSON). 모두 `"target": { "owner", "repo", "commit" }`(실행기가 검사하는 저장소·커밋)을 함께 싣는다. 서명한 본문
+ * 받는 것(본문 JSON). 모두 `"target": { "owner", "repo", "commit" }`(실행기가 검토하는 저장소·커밋)을 함께 싣는다. 서명한 본문
  * 안에 있으므로, 이것이 분석 행의 저장소(대소문자 가리지 않음)·커밋과 다르면 409 로 받지 않는다(워크플로를 다른 저장소로 부른
  * 실행의 결과를 이 분석에 붙이지 못하게).
  *
  * - `{ "event": "step", "step": "fetch" | "scan" | "finish", "run"?: { "id", "url" } }`: 그 단계를 시작했다.
- * - `{ "event": "result", "output": "<CLI 가 낸 JSON 글 그대로>", "profile"?: { …policyofficer profile 의 JSON… },
- *   "review"?: { …policyofficer review 의 JSON… } }`: 정리 단계에서 결과를 보낸다. 저장소 프로필과 review 결과는 있을 때만 싣는다
- *   (2026-11-11). 읽히지 않거나 없으면 비워 두고, 그 때문에 분석을 실패로 적지 않는다.
+ * - `{ "event": "result", "profile"?: { …policyofficer profile 의 JSON… }, "review"?: { …policyofficer review 의 JSON… } }`: 정리
+ *   단계에서 결과를 보낸다. 읽히지 않으면 비운다. 둘 다 없고 같은 커밋의 review 도 없으면 분석을 실패로 적는다(2026-11-25 부터 규칙
+ *   검사를 돌리지 않는다. 그 전의 실행이 함께 보내는 `output` 은 쓰지 않는다).
  * - `{ "event": "fail", "step": …, "reason": "…" }`: 그 단계에서 멈췄다.
- * - `{ "event": "part", "part": "profile" | "review" }`: 검사 단계 안에서 다음 CLI 명령(저장소 프로필, review)을 시작했다
+ * - `{ "event": "part", "part": "profile" | "review" }`: 검토 단계 안에서 다음 CLI 명령(저장소 프로필, review)을 시작했다
  *   (2026-11-13). 단계가 아니다. 실행기는 이 알림을 best-effort 로 보낸다(받지 않아도 분석을 멈추지 않는다).
  *
  * 상태 전이만 허용한다.
  * - 끝난(succeeded·failed) 분석은 다시 바꾸지 못한다(409). 시간을 넘긴 분석은 먼저 '시간 초과'로 끝낸 뒤 본다.
  * - 아직 실행기에 보내지 않은(대기열에 있는) 분석의 알림은 받지 않는다(409). 실행기는 보낸 분석만 안다.
  * - 한 분석에는 실행 하나만 붙인다. 이미 다른 실행(run id)을 적었으면 다른 실행의 단계 알림은 받지 않는다(409).
- * - 단계는 차례대로 하나씩 간다(대기 → 저장소 받기·도구 설치 → 검사 → 정리). 지금 단계를 다시 알리면 바꾸지 않고 받는다(같은
+ * - 단계는 차례대로 하나씩 간다(대기 → 저장소 받기·도구 설치 → 검토 → 정리). 지금 단계를 다시 알리면 바꾸지 않고 받는다(같은
  *   콜백을 다시 보낸 것). 건너뛰거나 뒤로 가면 409.
  * - 결과는 정리 단계에서만 받는다. CLI 의 결과로 읽히면 끝남(도구·팩 판을 결과에서 적는다), 읽히지 않으면 받은 글을 그대로 두고
  *   실패('결과를 읽지 못함')로 적는다.
  * - 실패는 지금 단계나 그다음 단계(시작을 알리기 전에 멈춤)에서만 받는다.
- * - 검사 단계 안의 일(part)은 검사 단계가 지금 단계이고 끝나지 않았을 때만 받는다. 앞으로만 간다(프로필 → review). 같은 일을
+ * - 검토 단계 안의 일(part)은 검토 단계가 지금 단계이고 끝나지 않았을 때만 받는다. 앞으로만 간다(프로필 → review). 같은 일을
  *   다시 알리면 바꾸지 않고 받고, 뒤로 가면 409. review 는 이 분석에 review 를 맡겼을 때(`review_plan` 이 run)만 받는다.
  *
  * 시각은 이 서버가 콜백을 받은 때다(실행기가 보낸 시각을 믿지 않는다).
  */
 
-/** 실행기가 검사하는 저장소·커밋. 모든 콜백에 싣는다(서명한 본문 안). 분석 행의 것과 다르면 받지 않는다. */
+/** 실행기가 검토하는 저장소·커밋. 모든 콜백에 싣는다(서명한 본문 안). 분석 행의 것과 다르면 받지 않는다. */
 export interface RunnerTarget {
   owner: string;
   repo: string;
@@ -51,7 +49,7 @@ export interface RunnerTarget {
 
 export type RunnerEvent = { target: RunnerTarget } & (
   | { event: "step"; step: Exclude<StepName, "queued">; run: { id: string; url: string } | null }
-  | { event: "result"; output: string; profile: unknown; review: unknown }
+  | { event: "result"; profile: unknown; review: unknown }
   | { event: "fail"; step: Exclude<StepName, "queued">; reason: string }
   | { event: "part"; part: ScanPart["name"] }
 );
@@ -62,7 +60,7 @@ export interface EventOutcome {
 }
 
 const RUNNER_STEPS = STEP_ORDER.filter((name): name is Exclude<StepName, "queued"> => name !== "queued");
-/** 검사 단계 안의 일. 이 차례로만 간다. */
+/** 검토 단계 안의 일. 이 차례로만 간다. */
 const SCAN_PARTS: ScanPart["name"][] = ["profile", "review"];
 /** 실패 까닭의 길이 상한(글자). 넘는 것은 자른다. */
 export const MAX_REASON_LENGTH = 500;
@@ -70,6 +68,12 @@ const RUN_ID = /^\d{1,20}$/;
 const RUN_URL = /^https:\/\/github\.com\/[A-Za-z0-9_.-]{1,100}\/[A-Za-z0-9_.-]{1,100}\/actions\/runs\/\d{1,20}$/;
 /** 판 문자열(도구 판, 팩 지문)로 받는 모양. 그 밖이면 판을 적지 않는다. */
 const VERSION = /^[A-Za-z0-9._+-]{1,64}$/;
+
+/** CLI 결과(프로필·review)의 `tool.version`. 꼴이 맞지 않으면 null. */
+function toolVersion(value: unknown): string | null {
+  const tool = typeof value === "object" && value !== null ? (value as { tool?: { version?: unknown } }).tool : undefined;
+  return typeof tool?.version === "string" && VERSION.test(tool.version) ? tool.version : null;
+}
 
 const SHA = /^[0-9a-f]{40}$/;
 
@@ -95,8 +99,9 @@ export function readEvent(data: unknown): RunnerEvent | null {
     if (!RUN_ID.test(run.id) || !RUN_URL.test(run.url)) return null;
     return { event: "step", step, run: { id: run.id, url: run.url }, target };
   }
-  if (value.event === "result" && typeof value.output === "string") {
-    return { event: "result", output: value.output, profile: value.profile ?? null, review: value.review ?? null, target };
+  // 2026-11-25 부터 실행기는 규칙 검사(scan)를 돌리지 않는다. 그 전의 실행이 보낸 `output` 은 받되 쓰지 않는다.
+  if (value.event === "result") {
+    return { event: "result", profile: value.profile ?? null, review: value.review ?? null, target };
   }
   const part = SCAN_PARTS.find((name) => name === value.part);
   if (value.event === "part" && part) return { event: "part", part, target };
@@ -170,16 +175,16 @@ export async function applyRunnerEvent(
     }
 
     if (event.event === "part") {
-      if (STEP_ORDER[current] !== "scan" || steps[current].endedAt) return refuse(409, "검사 단계 안의 일은 검사 단계에서만 받습니다.");
+      if (STEP_ORDER[current] !== "scan" || steps[current].endedAt) return refuse(409, "검토 단계 안의 일은 검토 단계에서만 받습니다.");
       if (event.part === "review" && row.review_plan !== "run") return refuse(409, "이 분석에는 review 를 맡기지 않았습니다.");
       const before = row.scan_part ? SCAN_PARTS.indexOf(row.scan_part) : -1;
       const after = SCAN_PARTS.indexOf(event.part);
       if (after === before) {
         return { status: 200, body: { ok: true, message: "이미 알린 일입니다.", status: analysis.status, unchanged: true } };
       }
-      if (after < before) return refuse(409, "검사 단계 안의 일의 차례가 맞지 않습니다.");
+      if (after < before) return refuse(409, "검토 단계 안의 일의 차례가 맞지 않습니다.");
       await tx.query("UPDATE analyses SET scan_part = $2, scan_part_at = $3 WHERE id = $1", [id, event.part, options.now]);
-      return { status: 200, body: { ok: true, message: "검사 단계 안의 일을 적었습니다.", status: analysis.status } };
+      return { status: 200, body: { ok: true, message: "검토 단계 안의 일을 적었습니다.", status: analysis.status } };
     }
 
     if (event.event === "fail") {
@@ -201,32 +206,23 @@ export async function applyRunnerEvent(
     // 프로필과 review 결과는 읽히는 것만 둔다(받은 그대로의 글). 읽히지 않으면 비운다.
     const profile = parseProfile(event.profile);
     const review = parseReview(event.review);
-    await tx.query("INSERT INTO results (analysis_id, json, profile, review) VALUES ($1, $2, $3, $4)", [
+    await tx.query("INSERT INTO results (analysis_id, json, profile, review) VALUES ($1, NULL, $2, $3)", [
       id,
-      event.output,
       profile ? JSON.stringify(event.profile) : null,
       review ? JSON.stringify(event.review) : null,
     ]);
-    const parsed = parseReportText(event.output);
-    if (!parsed.ok) {
-      const why = parsed.errors[0] ?? "";
-      const reason = `결과를 읽지 못함: 실행기가 보낸 결과가 CLI 의 결과 JSON 으로 읽히지 않았습니다.${why ? ` (${why})` : ""}`.slice(
-        0,
-        MAX_REASON_LENGTH,
-      );
+    // 끝남: 프로필이나 review 를 받았거나, 같은 커밋의 review 가 이미 있을 때(실행기는 그때 review 를 돌리지 않는다). 셋 다 아니면
+    // 보일 것이 없으므로 실패로 적는다.
+    if (!profile && !review && !(await storedReviewExists(tx, repoKey(row.owner, row.repo), row.commit_sha))) {
+      const reason = "결과를 받지 못함: 기능 파악과 AI 검토의 결과가 모두 없습니다.";
       await write(", status = 'failed', failure_step = 'finish', failure_reason = $3, finished_at = $4", [reason, options.now]);
-      return { status: 200, body: { ok: true, message: "결과를 읽지 못해 실패로 적었습니다.", status: "failed" } };
+      return { status: 200, body: { ok: true, message: "결과가 없어 실패로 적었습니다.", status: "failed" } };
     }
-    const tool = parsed.report.tool.version;
-    const pack = parsed.report.run.pack_digest;
-    // 발견 수는 쪽이 목록에 쓴다. 결과를 받을 때 한 번 세어 둔다(쪽이 결과 전체를 다시 읽지 않게). 결과 화면의 "사람이 볼 곳"과
-    // 같은 수다: 시험·예시·설정 파일의 발견은 빼고 센다(2026-11-11 오너 지시).
-    // 감지된 기능의 이름도 목록이 쓴다. 프로필이 없으면 비운다(모름).
-    await write(", status = 'succeeded', finished_at = $3, tool_version = $4, pack_digest = $5, finding_count = $6, feature_names = $7", [
+    const tool = (review ? toolVersion(event.review) : null) ?? (profile ? toolVersion(event.profile) : null);
+    // 감지된 기능의 이름은 목록이 쓴다. 프로필이 없으면 비운다(모름).
+    await write(", status = 'succeeded', finished_at = $3, tool_version = $4, feature_names = $5", [
       options.now,
-      VERSION.test(tool) ? tool : null,
-      VERSION.test(pack) ? pack : null,
-      serviceFindingCount(parsed.report.findings),
+      tool,
       profile ? JSON.stringify(featureNames(profile)) : null,
     ]);
     return { status: 200, body: { ok: true, message: "결과를 적었습니다.", status: "succeeded" } };

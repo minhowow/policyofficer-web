@@ -2,7 +2,8 @@ import "server-only";
 import { readdirSync, readFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { readConfig } from "../config";
+import { readConfig, usesFakeGitHub } from "../config";
+import { seedPreruns } from "./seed";
 
 /**
  * DB 층. 운영은 Postgres(`DATABASE_URL` 이 있으면 `pg` 의 Pool), 로컬 개발과 시험은 PGlite(같은 Postgres 를 WebAssembly 로
@@ -162,10 +163,20 @@ export function getDatabase(): Promise<Database> {
   const holder = globalThis as Holder;
   if (!holder[SHARED]) {
     const config = readConfig();
-    holder[SHARED] = openDatabase({ databaseUrl: config.databaseUrl, pgliteDir: config.pgliteDir }).catch((error) => {
-      delete holder[SHARED];
-      throw error;
-    });
+    holder[SHARED] = openDatabase({ databaseUrl: config.databaseUrl, pgliteDir: config.pgliteDir })
+      .then(async (db) => {
+        // 미리 돌린 분석은 실제 GitHub 에 묻는 서버에만 넣는다(가짜 GitHub 의 저장소는 합성이다). 넣지 못해도 DB 는 쓴다.
+        if (!usesFakeGitHub(config)) {
+          await seedPreruns(db).catch((error: unknown) => {
+            console.error(`미리 돌린 분석을 넣지 못함: ${error instanceof Error ? error.name : "알 수 없는 오류"}`);
+          });
+        }
+        return db;
+      })
+      .catch((error) => {
+        delete holder[SHARED];
+        throw error;
+      });
   }
   return holder[SHARED];
 }

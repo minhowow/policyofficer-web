@@ -14,7 +14,7 @@ import { root, walk } from "../helpers";
 // 서버는 기본으로 합성 저장소(SERVICE_STORE=synthetic)로 돈다. 이 컴퓨터의 환경 변수(DATABASE_URL, 토큰 등)는 넘기지 않는다
 // (시험이 실제 DB·GitHub 을 부르지 않게). GitHub API 의 바탕 주소도 닿지 않는 로컬 주소로 둔다.
 //
-// 아래쪽은 쪽을 열고 재는 준비 코드다. 시험 파일 넷(view·demo·policy·record)이 함께 쓴다: 창을 만들며 요청을 가로채고
+// 아래쪽은 쪽을 열고 재는 준비 코드다. 시험 파일들이 함께 쓴다: 창을 만들며 요청을 가로채고
 // 오류를 적는 것(`newPage`. 시험이 쓰는 창은 모두 이것으로 만든다), 그 창에서 쪽을 여는 것(`openPage`), 요청이 잦아들기를
 // 기다리는 것(`settle`), 넘침(`overflow`), 명도 대비(`contrast`), 브라우저 저장소(`stored`), 끝까지 내리기(`scrollThrough`),
 // 글이 그려지는지(`undrawn`), CSS 가 그린 글(`cssDrawn`), Chrome 의 접근성 트리에 드러나는 role 과 이름(`accessibleNodes`,
@@ -23,8 +23,11 @@ import { root, walk } from "../helpers";
 /** `next build` 가 만든 폴더. */
 export const nextDir = path.join(root, ".next");
 
-/** 빌드에 들어가는 것. 이 가운데 빌드보다 새로 고친 파일이 있으면 낡은 빌드를 보는 것이다. */
-const BUILD_INPUTS = ["src", "data", ...["cli-current", "samples-v1-draft", "fixtures"].map((dir) => path.join("contract", dir))];
+/**
+ * 빌드에 들어가는 것. 이 가운데 빌드보다 새로 고친 파일이 있으면 낡은 빌드를 보는 것이다. contract/ 에서는 소스가 불러오는 저장소
+ * 프로필(cli-current)과 합성 review 예시(review)만 빌드에 든다(2026-11-25 web17 에서 정적 검사 수집본과 데모를 걷었다).
+ */
+const BUILD_INPUTS = ["src", "data", ...["cli-current", "review"].map((dir) => path.join("contract", dir))];
 
 /** 빌드가 없거나 소스보다 낡았으면 시험을 돌리지 않고 까닭을 알린다. 낡은 빌드로 통과한 시험은 아무것도 말해 주지 않는다. */
 export function assertFreshBuild(): void {
@@ -116,7 +119,8 @@ export async function serveSite(env: Record<string, string> = {}): Promise<Site>
   for (;;) {
     if (child.exitCode !== null) throw new Error(`next start 가 끝나 버렸습니다: ${log.join("").slice(-2000)}`);
     try {
-      const response = await fetch(`http://127.0.0.1:${port}/view/`, { signal: AbortSignal.timeout(2_000) });
+      // 빌드할 때 그려 둔 쪽(구조)으로 뜬 것을 본다. DB 도 저장소도 부르지 않는다.
+      const response = await fetch(`http://127.0.0.1:${port}/how/`, { signal: AbortSignal.timeout(2_000) });
       await response.arrayBuffer();
       if (response.ok) break;
     } catch {
@@ -632,7 +636,7 @@ export const NO_STORAGE = { localStorage: 0, sessionStorage: 0, cookie: "", inde
  * 닫힌 details 안의 것도 함께 잰다. Chrome 은 그 안을 그리지만 않고 상자는 펼쳤을 때의 크기로 잡아 둔다(닫힌 조문 원문
  * 상자가 375px 에서 335×2398px 로 읽혔다. 8번에서 Chrome 155 로 다시 봤다). 그래서 닫힌 채로 재도 펼쳤을 때 넘칠 것이 걸린다.
  *
- * `scrollers` 는 제 안에서 가로로 밀리는 스크롤 상자다(데모의 코드 상자). 그 안의 것은 상자에 가려지므로 재지 않고, 상자
+ * `scrollers` 는 제 안에서 가로로 밀리는 스크롤 상자다(개인정보 흐름 그림, 구조 쪽의 목록). 그 안의 것은 상자에 가려지므로 재지 않고, 상자
  * 자신은 잰다.
  */
 export async function overflow(page: Page, scrollers = ""): Promise<{ page: number; limit: number; over: string[] }> {
@@ -763,8 +767,6 @@ export interface ContrastScan {
   lowCount: number;
   /** 잰 것 가운데 가장 낮은 대비. */
   lowest: number;
-  /** 그려진 상태 칩의 상태(`chip-<상태>` 의 <상태>). */
-  chips: string[];
 }
 
 export interface ContrastOptions {
@@ -984,10 +986,7 @@ export const textContrast = (page: Page, options: ContrastOptions = {}) =>
           }
         }
         for (const entry of unreadable) low.push({ what: "색을 읽지 못함", text: entry, color: "", background: "", ratio: 0 });
-        const chips = [...document.querySelectorAll(".chip")]
-          .filter((chip) => drawnEl(chip) && chip.getBoundingClientRect().width > 1)
-          .flatMap((chip) => [...chip.classList].filter((c) => c.startsWith("chip-")).map((c) => c.slice("chip-".length)));
-        return { measured, low: low.slice(0, 10), lowCount: low.length, lowest: Math.round(lowest * 100) / 100, chips: [...new Set(chips)].sort() };
+        return { measured, low: low.slice(0, 10), lowCount: low.length, lowest: Math.round(lowest * 100) / 100 };
       },
       { root: options.root ?? "body", minimum: options.minimum ?? 4.5, paper: options.paper ?? null },
     ),
@@ -1003,8 +1002,7 @@ export const focusRingContrast = (page: Page) =>
     page.evaluate(() => {
       const el = document.activeElement;
       if (!el || el === document.body) return { what: "(초점 없음)", ratio: 0, color: "", background: "" };
-      // 데모의 코드 상자는 둘레선을 상자 전체(.codeblock)의 바깥에 그린다(globals.css).
-      const ringed = getComputedStyle(el).outlineStyle === "none" && el.closest(".codeblock") ? el.closest(".codeblock")! : el;
+      const ringed = el;
       const style = getComputedStyle(ringed);
       // 첫 화면의 큰 검색창(재디자인 D3)은 둘레선 대신 그 상자(.find)의 테두리와 그림자(2px, 강조색)로 초점을 보인다. 초점이 없을
       // 때도 테두리는 있고 그 색(--control-line)도 바탕과 3:1 을 넘으므로, 테두리가 아니라 초점일 때만 그리는 바깥 그림자(테두리 바로
@@ -1240,7 +1238,7 @@ export interface UndrawnOptions {
  * - 글자가 있다: 크기가 `minFont` 이상이고 색이 비치지 않는다.
  * - 글의 상자가 있고(크기 0 이 아니다) 화면 옆으로 나가 있지 않다.
  * - 그 자리를 짚으면 그 요소가 나온다. 잘렸거나(1px 로 자르기, overflow, clip-path) 다른 요소에 덮였으면 나오지 않는다.
- *   글이 가로로 밀리는 스크롤 상자(데모의 코드 상자) 안에 있으면 그 상자를 밀어 글을 상자 가운데로 가져온 뒤 짚는다.
+ *   글이 가로로 밀리는 스크롤 상자(개인정보 흐름 그림 등) 안에 있으면 그 상자를 밀어 글을 상자 가운데로 가져온 뒤 짚는다.
  *
  * 닫힌 details 의 내용은 그려지지 않는 것이 맞으므로 뺀다. 그 details 의 이름(summary)은 닫혀 있어도 보여야 한다.
  * 일부러 화면에서만 가린 것(`veiled`)도 뺀다. 그것이 몇 곳인지는 HTML 을 읽는 시험과 표의 시험이 본다. 제 요소가 스스로
@@ -1314,64 +1312,6 @@ export const undrawn = (page: Page, options: UndrawnOptions) =>
     return { texts, undrawn: found.slice(0, 8) };
   }, { root: options.root, veiled: options.veiled, min: options.minFont ?? 10 }));
 
-/**
- * 볼 곳의 요소에 붙은 속성 가운데 허용하지 않은 것(`태그.class[속성]`). 없어야 한다. 조문 도감의 쪽을 읽는 도구가 아는
- * 요소와 속성만 받는 것(`tests/policy-page.ts` 의 `assertKnownMarkup`)을 브라우저가 그린 쪽으로 넓힌 것이다. 글이 아닌 것으로
- * 가리거나(hidden, style, aria-hidden, inert) 보이지 않는 글을 싣는(title, aria-label, alt) 길을 막는다. 브라우저에서 도는
- * 코드가 붙은 뒤에 더한 속성도 걸린다. `allowed` 는 속성 이름에서 그 속성이 붙어도 되는 요소의 선택자로 가는 표다.
- */
-export const unknownAttributes = (page: Page, root: string, allowed: Record<string, string>) =>
-  within("속성 읽기", page.evaluate(
-    ({ root, allowed }) => {
-      const found = new Set<string>();
-      for (const scope of document.querySelectorAll(root)) {
-        for (const el of [scope, ...scope.querySelectorAll("*")]) {
-          for (const { name } of el.attributes) {
-            const where = allowed[name];
-            if (where === undefined || !el.matches(where)) found.add(`${el.tagName.toLowerCase()}.${el.getAttribute("class") ?? ""}[${name}]`);
-          }
-        }
-      }
-      return [...found];
-    },
-    { root, allowed },
-  ));
-
-/**
- * 결과 화면(`.report`)에 붙는 속성. 표의 role(좁은 화면에서도 표로 읽히게), 정책 상자의 id(곁칸·데모의 표에서 옮겨 온다), 경로의
- * 줄바꿈 자리(wbr)와 곁칸의 상태 점의 aria-hidden, 충족 근거 목록의 이름(aria-label), 구획과 그 머리를 잇는 id·aria-labelledby,
- * 식별자(규칙·대안 id, 인용한 글, 판정 경로)의 translate="no", 커밋 고정 링크(분석 쪽)의 새 창(target, rel)과 그 안의 선 아이콘
- * (svg 와 path·circle 의 그리는 속성). 그 밖의 속성은 없다. (D5) 상태 칩의 title 을 걷었다(docs/redesign.md 2.1).
- */
-export const RESULT_ATTRIBUTES: Record<string, string> = {
-  class: "*",
-  role: "table, thead, tbody, tr, th, td",
-  scope: "th",
-  id: "article.policy, h2, p.warn-hd",
-  href: "a",
-  open: "details",
-  "aria-hidden": "wbr, span.dot, svg",
-  "aria-label": "ul.evidence",
-  "aria-labelledby": "article.policy, section, table",
-  translate: "code, ol.path",
-  target: "a.gh",
-  rel: "a.gh",
-  // 선 아이콘(components/Icon.tsx): 새 창 링크(분석 쪽의 GitHub 링크)에만 있다.
-  width: "svg",
-  height: "svg",
-  viewBox: "svg",
-  fill: "svg",
-  stroke: "svg",
-  "stroke-width": "svg",
-  "stroke-linecap": "svg",
-  "stroke-linejoin": "svg",
-  focusable: "svg",
-  d: "svg path",
-  cx: "svg circle",
-  cy: "svg circle",
-  r: "svg circle",
-};
-
 /** 그려도 되는 CSS 의 글 하나: 그 선택자에 맞는 요소의 그 자리(`::before` 등)가 그 속성들의 값을 빈칸으로 이어 그린 것. */
 export interface DrawnFromAttributes {
   selector: string;
@@ -1387,8 +1327,7 @@ export interface CssDrawnOptions {
   /** `within` 안에서 빼고 볼 곳(그 요소와 그 안). */
   except?: string;
   /**
-   * 꾸밈의 규칙 가운데 볼 것. 없으면 이 쪽에 있는 class 의 규칙 전부(다른 쪽의 꾸밈은 뺀다). 주면 선택자에 그 글이 든 규칙만
-   * (조문별 검사 기록의 `record`).
+   * 꾸밈의 규칙 가운데 볼 것. 없으면 이 쪽에 있는 class 의 규칙 전부(다른 쪽의 꾸밈은 뺀다). 주면 선택자에 그 글이 든 규칙만 본다.
    */
   selectorHas?: string;
   /** 그려도 되는 목록 표시(`list-style-type`). 기본은 점, 없음, 접어 둔 것의 세모. */

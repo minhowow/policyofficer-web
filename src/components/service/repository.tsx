@@ -1,17 +1,11 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { keepArticle } from "@/components/text";
-import { policyCardId } from "@/lib/pack/href";
-import { scopeLabel } from "@/lib/report/scope";
-import { AI_CLEARED, AI_DISMISSED } from "@/lib/report/record";
-import { CHECKLIST_LABEL, STATUS_LABEL } from "@/lib/report/status";
-import { aiReviewRan, type LocationView, type PolicyView, type ReportView } from "@/lib/report/view-model";
+import { CHECKLIST_LABEL } from "@/lib/report/status";
 import { analysisHref, shortCommit } from "@/lib/service/href";
 import { duration, finishedAt, formatKst } from "@/lib/service/steps";
 import type { Analysis, Repository, ReviewFacts } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
-import { AnalysisBadge, FeatureLine, findingCount, REVIEW_NOT_RECEIVED, REVIEW_NOT_RUN } from "./parts";
-import { staticParts } from "./static-parts";
+import { AnalysisBadge, FeatureLine, REVIEW_NONE, REVIEW_NOT_RECEIVED, REVIEW_NOT_RUN } from "./parts";
 
 /** 최신 분석 상자의 감지된 기능 한 줄(있을 때만). review 가 있으면 review 가 정한 기능이다. */
 const featureLineOf = (features: string[] | null, review: ReviewFacts | null) =>
@@ -22,51 +16,29 @@ const featureLineOf = (features: string[] | null, review: ReviewFacts | null) =>
   ) : null;
 
 /**
- * review 가 있는 분석의 정적 검사 한 줄: '보조: 정적 검사 발견 N건'에, AI 판정자가 푼 경고와 적용 질문으로 빠진 판정이 있으면 그 수를
- * 덧붙인다(0건이면 적지 않는다. 분석 쪽의 접힌 보조 줄 안에는 모두 있다).
- */
-function staticAux(view: ReportView | null): string[] {
-  if (!view) return [`보조: 정적 검사 ${findingCount(null)}`];
-  const [first, ...rest] = staticParts(view);
-  return [`보조: ${first}`, ...rest];
-}
-
-/** 최신 분석 상자에 보이는 발견 줄의 수. 나머지는 "결과 보기"의 분석 쪽에 있다. */
-export const LATEST_FINDINGS = 5;
-
-/**
- * 저장소 쪽의 "최신 분석" 상자(docs/redesign.md 3장 "저장소", 목업 repo). 가장 나중에 끝난 분석 하나를, 이미 저장된 CLI 결과를
- * 결과 화면과 같은 파서·화면 구조(`view`)로 읽어 요약한다. 새로 꾸미는 정보는 없다.
+ * 저장소 쪽의 "최신 분석" 상자(docs/redesign.md 3장 "저장소", 목업 repo). 가장 나중에 끝난 분석 하나를 요약한다. 새로 꾸미는 정보는
+ * 없다.
  *
  * - 머리 줄: 배지, 분석 id, 커밋, 요청 시각(KST), 걸린 시간(단계의 시각에서만), 그 커밋의 review 가 있으면 체크리스트의 확인할 것
- *   N건(AI 검토가 본체, 2026-11-15), 정적 검사의 사람이 볼 곳 N건, 결과 보기. 판정자를 켠
- *   분석이면 AI 가 푼 경고 수(`run.ai_cleared`)와 적용 질문으로 빠진 판정 수(`run.ai_dismissed`. 목록이 없으면 알 수 없음)를
- *   더한다.
- * - 본문: 발견이 있는 정책마다 제목·대표 조문·상태 칩, 그 아래 발견 줄(첫 미확인 대안의 메시지 그대로, `경로:줄`, 판정 범위).
- *   발견 줄은 모두 합해 `LATEST_FINDINGS` 개까지다. 발견이 0이면 0의 뜻을 둔다.
- * - 결과를 읽지 못했으면(`view` 가 null) 발견 수를 모른다고 적고 0 이라고 하지 않는다.
+ *   N건, 없으면 그 까닭(받지 못함, 오늘 한도로 하지 않음, 검토 결과 없음), 결과 보기.
+ * - 본문: 감지된 기능 한 줄. 확인할 것이 0이면 0의 뜻을 둔다.
  */
 export function LatestAnalysis({
   repository,
   analysis,
-  view,
   features = null,
   review = null,
 }: {
   repository: Repository;
   analysis: Analysis;
-  view: ReportView | null;
   /** 그 커밋의 review 의 확인할 것 수와 기능(`ServiceStore.reviewFacts`). review 가 없으면 null. */
   review?: ReviewFacts | null;
-  /** 그 분석에서 감지된 기능(`ServiceStore.featureNames`). 머리 줄 아래에 짧게 적는다(발견 0건이어도 빈 상자가 아니게). */
+  /** 그 분석에서 감지된 기능(`ServiceStore.featureNames`). 머리 줄 아래에 짧게 적는다. */
   features?: string[] | null;
 }) {
   const href = analysisHref(repository.owner, repository.name, analysis.id);
   const started = analysis.steps[0]?.startedAt ?? null;
   const ended = finishedAt(analysis);
-  const policies = view ? view.policies.filter((policy) => policy.locations.length > 0) : [];
-  // 정책 차례로 발견 줄을 나눠 준다(모두 합해 LATEST_FINDINGS 개까지).
-  const before = policies.map((_, i) => policies.slice(0, i).reduce((sum, policy) => sum + policy.locations.length, 0));
   return (
     <section className="box latest" aria-labelledby="latest-title">
       <div className="box-hd latest-hd">
@@ -88,42 +60,11 @@ export function LatestAnalysis({
             </span>
           )}
           {review ? (
-            <>
-              <span className="nw">
-                {CHECKLIST_LABEL.check} <span className="v">{review.check}건</span>
-              </span>
-              {/* review 가 있으면 정적 검사는 보조 한 줄(2026-11-16 오너 지시). AI 가 푼 경고·빠진 판정은 있을 때만 덧붙인다(숨기지 않는다).
-                  조각마다 따로 묶어 좁은 화면에서 조각 사이로 줄이 바뀐다(잘리지 않게). */}
-              {staticAux(view).map((part) => (
-                <span key={part} className="nw latest-aux">
-                  {part}
-                </span>
-              ))}
-            </>
+            <span className="nw">
+              {CHECKLIST_LABEL.check} <span className="v">{review.check}건</span>
+            </span>
           ) : (
-            <>
-              {analysis.review === "run" && <span className="nw">{REVIEW_NOT_RECEIVED}</span>}
-              {analysis.review === "limit" && <span className="nw">{REVIEW_NOT_RUN}</span>}
-              {view ? (
-                <span className="nw">
-                  정적 검사 사람이 볼 곳 <span className="v">{view.findingCount}건</span>
-                </span>
-              ) : (
-                <span className="nw">{findingCount(null)}</span>
-              )}
-            </>
-          )}
-          {!review && view && aiReviewRan(view) && (
-            <>
-              <span className="nw">
-                {AI_CLEARED} <span className="v">{view.aiCleared.length}건</span>
-              </span>
-              {/* 적용 질문으로 빠진 판정도 숨기지 않는다(docs/commitments.md). 결과에 그 목록이 없으면 수를 모른다고 적는다. */}
-              <span className="nw">
-                {AI_DISMISSED}{" "}
-                <span className="v">{view.aiDismissedKnown ? `${view.aiDismissed.length}건` : STATUS_LABEL["pack-unknown"]}</span>
-              </span>
-            </>
+            <span className="nw">{analysis.review === "run" ? REVIEW_NOT_RECEIVED : analysis.review === "limit" ? REVIEW_NOT_RUN : REVIEW_NONE}</span>
           )}
         </span>
         <Link href={href} className="box-end">
@@ -131,70 +72,8 @@ export function LatestAnalysis({
         </Link>
       </div>
       {featureLineOf(features, review)}
-      {review ? (
-        // review 가 있으면 본문에 정적 검사의 발견 줄을 싣지 않는다(확인할 것으로 읽히지 않게. 결과 보기의 넷째 단에 있다). 0의 뜻은
-        // 확인할 것이 0일 때만(확인할 것이 있는데 '0이어도'가 붙으면 모순으로 읽힌다. 2026-11-16 오너 지시).
-        review.check === 0 && <p className="box-in zero-note">{SITE.zeroCheckIsNotClearance}</p>
-      ) : !view ? (
-        <p className="box-in notice notice-warn">이 분석의 결과를 읽지 못했습니다.</p>
-      ) : view.findingCount === 0 ? (
-        <p className="box-in zero-note">{SITE.zeroIsNotClearance}</p>
-      ) : (
-        <ul className="latest-rows">
-          {policies.map((policy, i) => {
-            const shown = policy.locations.slice(0, Math.max(0, LATEST_FINDINGS - before[i]));
-            return (
-              <li key={policy.id} className="latest-policy">
-                <PolicyLine policy={policy} />
-                {shown.length > 0 && (
-                  <ul>
-                    {shown.map((location) => (
-                      <li key={`${location.rule}:${location.fingerprint}`}>
-                        <FindingLine location={location} href={`${href}#${policyCardId(policy.id)}`} />
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      {/* 0의 뜻은 확인할 것이 0일 때만(확인할 것이 있는데 '0이어도'가 붙으면 모순으로 읽힌다. 2026-11-16 오너 지시). */}
+      {review?.check === 0 && <p className="box-in zero-note">{SITE.zeroCheckIsNotClearance}</p>}
     </section>
-  );
-}
-
-/** 정책 줄: 제목, 대표 조문, 상태 칩. 칩에는 title 을 달지 않는다(뜻은 조문 도감과 분석 쪽에 있다). */
-function PolicyLine({ policy }: { policy: PolicyView }) {
-  return (
-    <div className="latest-pol">
-      <span className="latest-pol-t">
-        {policy.title}
-        {policy.law && <span className="latest-law">{keepArticle(policy.law)}</span>}
-      </span>
-      <span className={`chip chip-${policy.status}`}>{STATUS_LABEL[policy.status]}</span>
-    </div>
-  );
-}
-
-/**
- * 발견 줄: 첫 미확인 대안의 메시지(CLI 가 낸 그대로. 값이 '모름'이면 앞에 이름표), 없으면 규칙 id. 둘째 줄은 `경로:줄` 과
- * 판정 범위(`scopeLabel` 글 그대로). 줄 전체가 분석 쪽의 그 정책으로 가는 링크다.
- */
-function FindingLine({ location, href }: { location: LocationView; href: string }) {
-  const first = location.finding.unsatisfied_alternatives[0];
-  const where = location.line === null ? location.file : `${location.file}:${location.line}`;
-  return (
-    <Link href={href} className="latest-fd">
-      <span className="latest-msg">
-        {first?.value === "unknown" && <span className="unk">모름</span>}
-        {first?.message ?? <code translate="no">{location.rule}</code>}
-      </span>
-      <span className="latest-loc">
-        <code translate="no">{where}</code>
-        <span>{scopeLabel(location.scope)}</span>
-      </span>
-      <Icon name="chevron-right" />
-    </Link>
   );
 }

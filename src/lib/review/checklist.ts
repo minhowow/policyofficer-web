@@ -62,7 +62,7 @@ export interface ChecklistDoc {
   run: Review["run"];
 }
 
-/** 결과 하나의 사실(내보낸 파일의 머리에 적는다). 무엇을 적는지는 부르는 쪽(분석 쪽, 사례 쪽)이 정한다. */
+/** 결과 하나의 사실(내보낸 파일의 머리에 적는다). 무엇을 적는지는 부르는 쪽(분석 쪽)이 정한다. */
 export interface ChecklistSource {
   /** owner/name. */
   repo: string;
@@ -98,7 +98,7 @@ function entryOf(item: ReviewItem, held = false): ChecklistEntry {
   };
 }
 
-/** 체크리스트를 내보낼 모양으로. `recheck` 는 사람이 짚어 상태를 싣지 않는 의무(사례 쪽). */
+/** 체크리스트를 내보낼 모양으로. `recheck` 는 사람이 짚어 상태를 싣지 않는 의무. */
 export function checklistDoc(review: Review, recheck: readonly string[] = []): ChecklistDoc {
   const items = review.checklist.filter((item) => !recheck.includes(item.duty));
   const held = review.checklist.filter((item) => recheck.includes(item.duty));
@@ -173,7 +173,7 @@ export function checklistFileName(source: ChecklistSource): string {
   return `checklist-${source.repo.replace("/", "-")}-${source.commit.slice(0, 7)}.md`.replace(/[^A-Za-z0-9._-]/g, "-");
 }
 
-/** 마크다운 파일. 맨 위에 법률 자문도 인증도 아니라는 말(조문별 검사 기록과 같다), 저장소·커밋·사실 줄, 요약, 갈래마다의 의무. */
+/** 마크다운 파일. 맨 위에 법률 자문도 인증도 아니라는 말, 저장소·커밋·사실 줄, 요약, 갈래마다의 의무. */
 export function checklistMarkdown(doc: ChecklistDoc, source: ChecklistSource): string {
   const out: string[] = [];
   out.push(`# 의무 체크리스트 · ${md(source.repo)}`, "");

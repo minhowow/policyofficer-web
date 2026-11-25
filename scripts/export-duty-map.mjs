@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 // 조문 도감(/policy/)의 의무 지도 데이터를 만든다(2026-11-15 오너 결정): CLI 의 기능–의무 표(src/policyofficer/profile/duties.jsonl,
 // handoff-w13-3 전의 판은 src/policypack/profile/)와
-// 검토 후보 표(lawmap/review-candidates.csv), 기능 이름(src/policyofficer/profile/features.yaml), 정책 팩의 정책–의무 연결
-// (policies/kr-core/pack.yaml 의 duties)을 실행기가 설치하는 CLI 커밋(.github/workflows/analyze.yml 의 CLI_COMMIT)에서 읽어
+// 검토 후보 표(lawmap/review-candidates.csv), 기능 이름(src/policyofficer/profile/features.yaml)을 실행기가 설치하는 CLI 커밋
+// (.github/workflows/analyze.yml 의 CLI_COMMIT)에서 읽어
 // data/duty-map.json 에 쓴다. 옆 폴더의 CLI 저장소는 `git show <커밋>:<경로>` 로 읽기만 한다(작업 폴더를 바꾸지 않는다).
 // 모델을 부르지 않는다.
 //
 //   node scripts/export-duty-map.mjs   (CLI 저장소: POLICYOFFICER_FROM(앞선 이름 POLICYPACK_FROM)이 폴더면 그것, 아니면 ../Plitsoft-SDP)
 //
-// 옮기는 것은 AI 검토(review)가 묻는 의무(검토 후보와 kr-core 의무)의 법·조문·제목·의무 한 줄·걸리는 때·법제처 주소·기능이고,
-// 나머지는 갈래별 수만 옮긴다. 조문 인용(quote)과 어긴·지킨 코드의 예, 의무를 지는 자는 옮기지 않는다(조문은 팩 메타데이터의 원문만
-// 싣는다. docs/commitments.md). 제목 끝의 [ … ] 는 처분·액수를 적은 조사자 메모라 떼고(의무 한 줄 끝의 벌칙 메모도), 떼고도 화면에 쓰지 않는 말(tests/wording.ts)이
+// 옮기는 것은 AI 검토(review)가 묻는 의무(검토 후보와, 의무 표의 krcore 칸으로 CLI 가 따로 정해 함께 묻는 의무)의 법·조문·제목·의무
+// 한 줄·걸리는 때·법제처 주소·기능이고, 나머지는 갈래별 수만 옮긴다. 조문 인용(quote)과 어긴·지킨 코드의 예, 의무를 지는 자는 옮기지
+// 않는다(docs/commitments.md). CLI handoff-w13-4 부터 정책 팩(policies/kr-core)이 없어 정책–의무 연결은 옮기지 않는다. 제목 끝의 [ … ] 는 처분·액수를 적은 조사자 메모라 떼고(의무 한 줄 끝의 벌칙 메모도), 떼고도 화면에 쓰지 않는 말(tests/wording.ts)이
 // 든 글은 null 로 둔다(화면은 법·조문만 적는다). 검토 후보 표의 의무·기능 이름이 기능–의무 표와 맞는지 본다.
 //
 // 의무마다 법에 적힌 제재(2026-11-24 오너 승인)는 같은 커밋의 제재 표(src/policyofficer/profile/sanctions.jsonl)에서 옮긴다. 표의
@@ -40,7 +40,6 @@ const rows = show("src/policyofficer/profile/duties.jsonl")
   .filter((line) => line.trim())
   .map((line) => JSON.parse(line));
 const spec = parse(show("src/policyofficer/profile/features.yaml"));
-const pack = parse(show("policies/kr-core/pack.yaml"), { maxAliasCount: -1 });
 
 /** RFC 4180 CSV(따옴표 안의 쉼표·따옴표 두 개). 첫 줄은 머리다. */
 function readCsv(text) {
@@ -109,15 +108,6 @@ const whenever = new Set(spec.features.flatMap((f) => f.whenever ?? []));
 const audience = new Set(spec.features.flatMap((f) => f.audience ?? []));
 const goodsOf = Object.fromEntries((spec.goods ?? []).flatMap((g) => g.duties.map((d) => [d, g.name])));
 
-// 정책 팩의 정책마다 의무 id. 한 의무에 정책이 둘 붙지는 않지만 목록으로 둔다. 정책이 의무 둘을 가리키면 팩에 적힌 첫 의무가
-// 그 정책의 의무다(화면은 정책의 내용을 그 의무 줄에 싣고, 둘째 의무는 그리로 잇는다).
-const policiesOf = {};
-const policyHome = {};
-for (const policy of pack.policies ?? []) {
-  for (const duty of policy.duties ?? []) (policiesOf[duty] ??= []).push(String(policy.id));
-  if (policy.duties?.length) policyHome[String(policy.id)] = String(policy.duties[0]);
-}
-
 // 검토 후보 표와 기능–의무 표가 같은 것을 말하는지.
 const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
 const featureKey = Object.keys(candidates[0] ?? {}).find((key) => key.endsWith("기능"));
@@ -129,7 +119,6 @@ for (const c of candidates) {
 }
 const candidateCount = rows.filter((r) => r.review_candidate).length;
 if (candidateCount !== candidates.length) throw new Error(`검토 후보 수가 다릅니다(표 ${candidates.length}, 기능–의무 표 ${candidateCount})`);
-for (const id of Object.keys(policiesOf)) if (!byId[id]?.krcore) throw new Error(`정책 팩의 의무 ${id} 가 기능–의무 표에 kr-core 로 없습니다`);
 
 /** 화면에 쓰지 않는 말이 들었으면 null. */
 const clean = (text) => {
@@ -142,7 +131,7 @@ const titleOf = (title) => clean(String(title ?? "").replace(/\s*\[[^\]]*\]\s*$/
 /** 의무 한 줄 끝의 ( … 벌칙 … )(벌칙이 있는지 없는지에 관한 조사자 메모)를 뗀다. */
 const dutyOf = (duty) => clean(String(duty ?? "").replace(/\s*\([^()]*벌칙[^()]*\)\s*$/u, ""));
 
-// AI 검토가 묻는 의무: 검토 후보, 그리고 kr-core 의무(기능이 있거나 정적 규칙이 걸리면 묻는다. CLI review 의 의무 고르기).
+// AI 검토가 묻는 의무: 검토 후보, 그리고 의무 표의 krcore 칸이 참인 의무(CLI review 의 의무 고르기).
 const asked = rows.filter((r) => r.review_candidate || r.krcore);
 
 // 제재 표: 갈래·표지·조문을 그대로 옮긴다. 화면이 쓰는 모양(camelCase)으로 바꾸기만 한다.
@@ -227,7 +216,6 @@ const duties = asked.map((r) => ({
   trigger: clean(r.trigger),
   url: r.url || null,
   candidate: r.review_candidate,
-  policies: policiesOf[r.id] ?? [],
   whenever: whenever.has(r.id),
   audience: audience.has(r.id),
   goods: goodsOf[r.id] ?? null,
@@ -249,17 +237,13 @@ const out = {
     other: rest.filter((r) => r.feature !== "status").length,
   },
   features: features.filter((f) => duties.some((d) => d.feature === f.id)),
-  policyHome,
   duties,
 };
-for (const [policy, duty] of Object.entries(policyHome)) {
-  if (!duties.some((d) => d.id === duty && d.policies.includes(policy))) throw new Error(`정책 ${policy} 의 의무 ${duty} 가 AI 검토가 묻는 의무에 없습니다`);
-}
 if (out.notAsked.status + out.notAsked.other + out.asked !== out.total) throw new Error("수가 맞지 않습니다");
 
 writeFileSync(path.join(root, "data/duty-map.json"), `${JSON.stringify(out, null, 2)}\n`);
 console.log(
-  `의무 ${out.total} · 검토 후보 ${out.candidates} · AI 검토가 묻는 의무 ${out.asked} (kr-core ${duties.filter((d) => !d.candidate).length} 더함) · 묻지 않음 ${out.notAsked.total} (지위 ${out.notAsked.status}, 그 밖 ${out.notAsked.other}) → data/duty-map.json`,
+  `의무 ${out.total} · 검토 후보 ${out.candidates} · AI 검토가 묻는 의무 ${out.asked} (따로 정한 ${duties.filter((d) => !d.candidate).length} 더함) · 묻지 않음 ${out.notAsked.total} (지위 ${out.notAsked.status}, 그 밖 ${out.notAsked.other}) → data/duty-map.json`,
 );
 if (table) {
   const count = (cls) => duties.filter((d) => d.sanction.class === cls).length;

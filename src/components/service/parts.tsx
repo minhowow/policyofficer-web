@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { CHECKLIST_LABEL, STATUS_LABEL } from "@/lib/report/status";
+import { CHECKLIST_LABEL } from "@/lib/report/status";
 import { repoHref } from "@/lib/service/href";
 import { ANALYSIS_STATUS_LABEL, formatKst } from "@/lib/service/steps";
 import type { AnalysisStatus, RepositoryActivity, RepositoryHit, ReviewFacts, ReviewPlan } from "@/lib/service/types";
@@ -70,9 +70,9 @@ export function RepoRow({ hit }: { hit: RepositoryHit }) {
 /** 기능 이름이 든 줄인지(비었다는 말이 아닌지). 화면 낭독기에 '감지된 기능:'을 앞에 붙일 때 쓴다. */
 const list = (line: string) => line !== NO_FEATURE_LINE && line !== NO_SIGNAL_LINE && !line.startsWith("AI 가 뺀 기능");
 
-export function AnalyzedRow({ activity, count, review = null }: { activity: RepositoryActivity; count: number | null | undefined; review?: ReviewFacts | null }) {
+export function AnalyzedRow({ activity, review = null }: { activity: RepositoryActivity; review?: ReviewFacts | null }) {
   const { repository: repo, analysis, analyses, latestAt } = activity;
-  const done = analysis.status === "succeeded" ? doneParts(analysis.review, count, review) : null;
+  const done = analysis.status === "succeeded" ? doneCount(analysis.review, review) : null;
   return (
     <li>
       <Link href={repoHref(repo.owner, repo.name)} className="sr-row repo-row">
@@ -85,10 +85,7 @@ export function AnalyzedRow({ activity, count, review = null }: { activity: Repo
             최근 <time dateTime={latestAt}>{kstDate(latestAt)}</time>
           </span>
           {done ? (
-            <>
-              <span>{done.main}</span>
-              {done.note && <span>{done.note}</span>}
-            </>
+            <span>{done}</span>
           ) : (
             <span>{ANALYSIS_STATUS_LABEL[analysis.status]}</span>
           )}
@@ -134,67 +131,28 @@ export function FeatureLine({ names, review = null, className }: { names: string
   );
 }
 
-/** 끝난 분석의 발견 수. 결과가 없거나 읽지 못했으면 0 이라고 적지 않고 모른다고 적는다. */
-export function findingCount(count: number | null | undefined): string {
-  return typeof count === "number" ? `발견 ${count}건` : `발견 수 ${STATUS_LABEL["pack-unknown"]}`;
-}
-
 /** review 를 맡겼는데 결과가 없는 분석의 말(분석 쪽의 `SITE.service.reviewMissing` 과 같은 경우). */
 export const REVIEW_NOT_RECEIVED = "검토 결과 받지 못함";
 /** 하루 review 상한에 닿아 review 없이 돈 분석의 말. */
 export const REVIEW_NOT_RUN = "검토 안 함";
+/** 검토를 켜기 전에 돈 분석의 말(그 커밋의 review 가 없다). */
+export const REVIEW_NONE = "검토 결과 없음";
 
 /**
  * 목록 줄·분석 기록 표에 적는 끝난 분석의 수(AI 검토가 본체, 2026-11-15·16 오너 결정). 그 커밋의 review 가 있으면 체크리스트의
- * '확인할 것' 수. 없으면 정적 검사의 발견 수이고, review 를 맡겼는데 받지 못했으면(실패) 그렇다고, 오늘 한도로 하지 않았으면
- * 그렇다고 덧붙인다(`note`, 좁은 화면에서 칸이 길어지지 않게 수 아래 줄에 따로 그린다).
+ * '확인할 것' 수. 없으면 그 까닭(맡겼는데 받지 못함, 오늘 한도로 하지 않음, 검토 결과 없음).
  */
-export function doneParts(
-  plan: ReviewPlan | undefined,
-  count: number | null | undefined,
-  review: ReviewFacts | null | undefined,
-): { main: string; note: string | null } {
-  if (review) return { main: `${CHECKLIST_LABEL.check} ${review.check}건`, note: null };
-  const main = `정적 검사 ${findingCount(count)}`;
-  // 분석 쪽과 같은 갈래: 맡겼는데(run) 결과가 없을 때만. 저장된 것을 쓰기로 한(stored) 분석은 분석 쪽처럼 그대로 둔다.
-  if (plan === "run") return { main, note: REVIEW_NOT_RECEIVED };
-  if (plan === "limit") return { main, note: REVIEW_NOT_RUN };
-  return { main, note: null };
+export function doneCount(plan: ReviewPlan | undefined, review: ReviewFacts | null | undefined): string {
+  if (review) return `${CHECKLIST_LABEL.check} ${review.check}건`;
+  return plan === "run" ? REVIEW_NOT_RECEIVED : plan === "limit" ? REVIEW_NOT_RUN : REVIEW_NONE;
 }
 
-/** 위 둘을 한 글로(시험과 화면 낭독기가 읽는 차례: 수, 덧붙임). */
-export function doneCount(plan: ReviewPlan | undefined, count: number | null | undefined, review: ReviewFacts | null | undefined): string {
-  const { main, note } = doneParts(plan, count, review);
-  return note ? `${main} · ${note}` : main;
+/** 목록 줄에 보이는 수가 0이면 그 갈래(review 의 확인할 것). 0의 뜻을 함께 둔다. */
+export function zeroKind(review: ReviewFacts | null | undefined): "check" | null {
+  return review?.check === 0 ? "check" : null;
 }
 
-/** 끝난 분석의 수와 그 아래 줄의 덧붙임(검토 결과 받지 못함, 검토 안 함). */
-export function DoneCount({ plan, count, review }: { plan: ReviewPlan | undefined; count: number | null | undefined; review: ReviewFacts | null | undefined }) {
-  const { main, note } = doneParts(plan, count, review);
-  return (
-    <>
-      {main}
-      {note && (
-        <span className="done-note">
-          <span className="visually-hidden">, </span>
-          {note}
-        </span>
-      )}
-    </>
-  );
-}
-
-/** 목록 줄에 보이는 수가 0이면 그 갈래(review 의 확인할 것, 정적 검사의 발견). 0의 뜻을 그 말로 함께 둔다. */
-export function zeroKind(count: number | null | undefined, review: ReviewFacts | null | undefined): "check" | "static" | null {
-  if (review) return review.check === 0 ? "check" : null;
-  return count === 0 ? "static" : null;
-}
-
-/** 보이는 0의 갈래마다 0의 뜻(docs/commitments.md 의 1). review 의 확인할 것이면 그 말, 정적 검사면 '검토 필요 신호'의 말. */
-export function zeroNotes(kinds: Iterable<"check" | "static" | null>): string[] {
-  const seen = new Set(kinds);
-  const notes: string[] = [];
-  if (seen.has("check")) notes.push(SITE.zeroCheckIsNotClearance);
-  if (seen.has("static")) notes.push(SITE.zeroIsNotClearance);
-  return notes;
+/** 보이는 0의 갈래마다 0의 뜻(docs/commitments.md 의 1). */
+export function zeroNotes(kinds: Iterable<"check" | null>): string[] {
+  return new Set(kinds).has("check") ? [SITE.zeroCheckIsNotClearance] : [];
 }

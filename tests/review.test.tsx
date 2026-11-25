@@ -5,16 +5,13 @@ import { ReviewView } from "@/components/review/ReviewView";
 import { parseReview } from "@/lib/review";
 import { gateText, shortStatus } from "@/lib/review/text";
 import { layoutFlow } from "@/lib/review/flow";
-import CasePage from "@/app/cases/[slug]/page";
-import CasesPage from "@/app/cases/page";
-import { casesFile } from "@/lib/cases";
-import { EVAL_LIMITS, evalFile } from "@/lib/cases/eval";
-import { evalFigureSvg } from "@/lib/cases/eval-figure";
+import { evalFigureSvg, type EvalFile } from "@/lib/eval/figure";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
+import { PRERUNS } from "@/lib/service/prerun";
 import { SITE } from "@/lib/site";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { closedDetailsAt, elementAt, elementsOf, readJson, textOf } from "./helpers";
+import { elementAt, elementsOf, readJson, textOf } from "./helpers";
 import { withoutSanctions } from "./sanctions";
 import { BANNED_WORDING } from "./wording";
 
@@ -273,70 +270,69 @@ describe("review 결과 (2판)", () => {
   });
 });
 
-describe("사례 쪽: review 2판 실측(2026-11-12)", () => {
-  it("사례 4곳의 결과는 모두 읽히고, 짚은 의무는 그 결과의 체크리스트에 있다. 사례 쪽은 review 화면을 그리고 짚은 의무를 접는다", async () => {
-    // CLI f4967db 로 다시 돌린 결과(2026-11-12)에서 사례 4곳의 '다시 검토 중'은 걷어 냈다(오너 지시).
-    expect(casesFile.reviewRun.cli).toBe("f4967db");
-    // 그 답에 handoff-w11-7 의 판정 규칙만 다시 건 결과다(모델 재호출 없음). 목록과 사례 쪽 머리에 그렇다고 적는다.
-    expect(casesFile.reviewRun.regate).toEqual({ cli: "2a24d94", moved: 7 });
-    expect(textOf(renderToStaticMarkup(<CasesPage />))).toContain(`${SITE.cases.regate} 규칙 CLI 2a24d94`);
-    expect(casesFile.cases.flatMap((c) => c.recheck)).toEqual([]);
-    for (const c of casesFile.cases) {
-      const review = parseReview(c.review);
-      expect(review, c.slug).not.toBeNull();
-      for (const duty of c.recheck) expect(review!.checklist.map((item) => item.duty), c.slug).toContain(duty);
-      const html = renderToStaticMarkup(await CasePage({ params: Promise.resolve({ slug: c.slug }) }));
-      expect(html).toContain('<figure class="flow">');
-      expect(html.includes('<details class="rv-group rv-recheck">'), c.slug).toBe(c.recheck.length > 0);
-      expect(html).toContain(c.commit.slice(0, 7));
-      expect(textOf(html)).toContain(SITE.cases.regate);
-      // 앞선 판으로 만든 결과의 조문 앞 '시행령 '이 법령 이름과 겹쳐 두 번 적히지 않고(lawArticle), 제재 표지가 '어기면'을 겹쳐
-      // 적지 않는다(CLI handoff-w13-2 의 표지 말, 2026-11-24).
-      expect(textOf(html), c.slug).not.toMatch(/(시행령|시행규칙) \1/);
-      expect(textOf(html), c.slug).not.toContain("어기면 · 시정명령을 어기면");
+describe("미리 돌려 넣은 분석: jobtalk(CLI handoff-w13-1, 2026-11-24)", () => {
+  const prerun = PRERUNS[0];
+  const review = parseReview(prerun.review)!;
+  const html = renderToStaticMarkup(<ReviewView review={review} code={{ htmlUrl: "https://github.com/Vactor0911/jobtalk", commit: prerun.commit }} />);
+
+  it("결과 JSON 은 CLI 가 낸 그대로 읽힌다. 이름 바꾸기(handoff-w13-3) 전 판이라 CLI 의 스키마와 다른 것은 도구 이름(policypack)뿐이다", () => {
+    const validate = new Ajv({ strict: false, allErrors: true }).compile(readJson("contract", "schema", "review.cli-2.schema.json") as object);
+    const data = prerun.review as { tool: { name: string } };
+    expect(data.tool.name).toBe("policypack");
+    expect(validate(data)).toBe(false);
+    expect(validate.errors?.map((error) => error.instancePath)).toEqual(["/tool/name"]);
+    expect(validate({ ...data, tool: { ...data.tool, name: "policyofficer" } }), JSON.stringify(validate.errors?.slice(0, 3))).toBe(true);
+    expect(review).not.toBeNull();
+    expect(review.run.models).toEqual({ investigate: "claude-haiku-5-5", verify: "claude-sonnet-5-5" });
+    expect(review.run.rebutScope).toBe("found");
+    expect(review.run.stageUsd).not.toBeNull();
+  });
+
+  it("갈래별 수: 확인할 것 16건(코드에서 본 것 11, 저장소 밖에서 1, 해당 여부부터 4), 나머지는 접는다", () => {
+    expect(textOf(elementsOf(html, '<p class="rv-big">')[0])).toBe("확인할 것 16건");
+    for (const [status, n] of [["seen-in-code", 11], ["check-outside", 1], ["check-applicability", 4]] as const) {
+      const section = elementsOf(html, `<section class="ck ck-check rv-${status}">`)[0];
+      expect(textOf(elementsOf(section, '<h3 class="ck-hd ck-hd-check">')[0]), status).toBe(`${shortStatus(status)} ${n}건`);
+      expect(elementsOf(section, '<li class="rv-item"'), status).toHaveLength(n);
     }
+    for (const [status, n] of [["likely-not-applicable", 1], ["not-applicable", 13]] as const) {
+      const at = html.indexOf(`<details class="rv-group rv-${status}">`);
+      expect(at, status).toBeGreaterThan(html.indexOf('<div class="rv-folded">'));
+      expect(textOf(elementsOf(html.slice(at), "<summary>")[0])).toBe(`${REVIEW_STATUS_LABEL[status]} ${n}건`);
+    }
+    for (const status of ["unknown", "evidence-found"] as const) expect(html, status).not.toContain(`rv-group rv-${status}"`);
+    expect(html).not.toContain("rv-goods");
+    expect(html).not.toContain("rv-recheck");
   });
 
-  it("성격이 다른 저장소 8곳: 이름·주소 없이 성격과 갈래별 건수·시간·비용만. 라이브러리는 빈 체크리스트", () => {
-    expect(casesFile.others.map((o) => o.kind)).toEqual(["쇼핑몰", "위치", "가입만", "AI 없는 커뮤니티", "라이브러리", "POS", "자체 서버 AI", "실시간 게임"]);
-    for (const row of casesFile.others) expect(Object.keys(row).sort()).toEqual(["counts", "kind", "recheck", "seconds", "usd"]);
-    // 비용은 공식 단가로 다시 센 것이다(11/12 실측 12곳 합계 $15.06, 사례 4곳의 그날 몫 $5.12 를 빼면 8곳 $9.94).
-    expect(Math.round(casesFile.others.reduce((sum, row) => sum + row.usd, 0) * 100) / 100).toBe(9.94);
-    const library = casesFile.others.find((o) => o.kind === "라이브러리")!;
-    expect(Object.values(library.counts).every((n) => n === 0)).toBe(true);
-    const html = renderToStaticMarkup(<CasesPage />);
-    const table = elementsOf(html, '<table class="tbl others-table" aria-labelledby="cases-others"')[0];
-    expect(elementsOf(table, "<tr>").length).toBe(2 + casesFile.others.length);
-    expect(table).not.toContain("<a ");
-    // 8곳은 사례 4곳과 다른 판(e12e6ba)으로 돌렸다는 것을 표 위에 적는다.
-    expect(textOf(html)).toContain(`CLI ${casesFile.othersRun.cli}`);
+  it("흐름 그림과 커밋 고정 링크가 있고, 앞선 판의 법령 이름·제재 표지 말이 겹쳐 적히지 않는다", () => {
+    expect(html).toContain('<figure class="flow">');
+    expect(html).toContain(`/blob/${prerun.commit}/`);
+    // 앞선 판으로 만든 결과의 조문 앞 '시행령 '이 법령 이름과 겹쳐 두 번 적히지 않고(lawArticle), 제재 표지가 '어기면'을 겹쳐
+    // 적지 않는다(CLI handoff-w13-2 의 표지 말, 2026-11-24).
+    expect(textOf(html)).not.toMatch(/(시행령|시행규칙) \1/);
+    expect(textOf(html)).not.toContain("어기면 · 시정명령을 어기면");
+    expectNoBanned(html);
   });
+});
 
-  it("공개 저장소 41곳(2026-11-13): 성격별 숫자만(이름·주소·코드 없음), 큰 숫자 넷, 합계 줄, 알려진 한계", () => {
+describe("공개 저장소 41곳 평가(2026-11-13)", () => {
+  const evalFile = readJson("data", "eval-41.json") as EvalFile;
+
+  it("숫자: 34/41곳, 빈 체크리스트 5곳, 인용 2,256건 중 거절 18건, $6.75. 성격별 합이 41곳이고 성격 이름에 경로가 없다", () => {
     const { total, categories } = evalFile;
     expect(total.repos).toBe(41);
     expect(categories.reduce((n, c) => n + c.repos, 0)).toBe(41);
     for (const c of categories) expect(c.kind).not.toMatch(/\//);
-    // 오너 지시의 숫자 그대로: 34곳(정적 검사만으로는 13곳), 빈 체크리스트 5곳, 인용 2,256건 중 거절 18건, $6.75.
-    expect([total.withSeenInCode, evalFile.static.withFindings, total.emptyChecklists, total.citations, total.citationsRejected, total.usd]).toEqual([34, 13, 5, 2256, 18, 6.75]);
-    const html = renderToStaticMarkup(<CasesPage />);
-    const section = elementsOf(html, '<section class="cases-others cases-eval"')[0];
-    const text = textOf(section);
-    for (const part of ["34/41곳", "정적 검사만으로는 13곳", "빈 체크리스트 5곳", "18/2,256건", "$6.75", `판정 규칙 CLI ${evalFile.rules}`, "반박 없음"]) {
-      expect(text).toContain(part);
-    }
-    const table = elementsOf(section, "<table")[0];
-    expect(elementsOf(table, "<tr>").length).toBe(2 + categories.length + 1);
-    expect(section).not.toContain("<a ");
-    expect(section).not.toMatch(/github\.com/);
-    expect(elementsOf(section, "<li>").length).toBe(EVAL_LIMITS.length);
-    expectNoBanned(section);
+    expect([total.withSeenInCode, total.emptyChecklists, total.citations, total.citationsRejected, total.usd]).toEqual([34, 5, 2256, 18, 6.75]);
+    // 규칙 검사를 폐기해(2026-11-25) 정적 검사의 숫자는 싣지 않는다.
+    expect(JSON.stringify(evalFile)).not.toMatch(/static/i);
   });
 
-  it("41곳 포스터 그림(docs/figures/review-results-41.svg)은 지금 데이터로 그린 것과 같다", () => {
+  it("포스터 그림(docs/figures/review-results-41.svg)은 지금 데이터로 그린 것과 같다", () => {
     const svg = readFileSync(path.join(process.cwd(), "docs/figures/review-results-41.svg"), "utf8");
     expect(svg).toBe(evalFigureSvg(evalFile));
     expect(svg).toContain("34 / 41곳");
+    expect(svg).not.toMatch(/정적|kr-core|Semgrep/);
   });
 });
-

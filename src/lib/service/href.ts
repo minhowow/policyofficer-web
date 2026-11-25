@@ -5,7 +5,7 @@
  * 같은 저장소가 대소문자만 다른 주소 둘을 갖지 않게 한다. 화면에는 GitHub 이 돌려준 대소문자를 적는다.
  *
  * 점: GitHub 의 저장소 이름에는 점이 들 수 있다(owner 에는 들 수 없다). 점이 든 마지막 조각은 Next 가 파일 이름으로 보고 링크의
- * 끝 슬래시를 떼어, 정적 호스팅에서는 열리지 않는다(조문 도감이 정책 id 의 점을 빼기표로 바꾸는 까닭. `lib/pack/href.ts`).
+ * 끝 슬래시를 떼어, 미리 그려 두는 쪽에서는 열리지 않는다.
  * 저장소 이름은 빼기표도 쓰므로 바꾸면 두 이름이 한 주소로 겹친다. 그래서 바꾸지 않는다. B1 의 합성 저장소 이름에는 점을 넣지
  * 않고(tests/service.test.ts), B2 에서는 서버가 동적으로 그리므로 끝 슬래시가 없어도 같은 쪽이 열린다. 분석 쪽 주소의 마지막
  * 조각은 분석 id 라 점이 없다. 자세한 것은 docs/architecture.md 의 "분석 서비스(B1)".
@@ -55,4 +55,13 @@ export function fileLink(htmlUrl: string | null, commit: string, file: string, l
   if (!htmlUrl) return null;
   const path = file.split("/").map(encodeURIComponent).join("/");
   return `${htmlUrl}/blob/${commit}/${path}${line === null ? "" : `#L${line}`}`;
+}
+
+/**
+ * 파일·줄을 GitHub 의 커밋 고정 링크로 보낼 때 쓰는 것(분석 서비스의 쪽만 준다). 저장소 주소(GitHub 이 돌려준 html_url)와
+ * 검토한 커밋. 없으면 링크를 걸지 않는다(합성 저장소, GitHub 에 닿지 못했을 때).
+ */
+export interface CodeSource {
+  htmlUrl: string;
+  commit: string;
 }

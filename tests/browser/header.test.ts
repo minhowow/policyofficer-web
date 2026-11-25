@@ -8,7 +8,8 @@ import { closeChrome, launchChrome, NO_STORAGE, openPage, serveSite, stored, typ
 //   그동안 사이트 밖으로 나가는 요청과 브라우저 저장소가 없다.
 // - 1280px: 56px 한 줄이고 본문과 왼쪽 끝이 같다. 머리글의 검색창은 본문에 검색창이 없는 쪽에만 보인다. 지금 쪽을 굵게 적고
 //   aria-current 로 알린다. 첫 화면에는 머리글이 없다(재디자인 D3). 이름은 검색 쪽(/search/)으로 간다.
-// - 메뉴는 최근 분석(질의 없는 /search/), 사례, 조문 도감, 구조다(재디자인 D4, 2026-11-11·13. 데모는 2026-11-25 메뉴에서 뺐다). 최근 분석은 질의 없는 검색 쪽에서만 지금 쪽이다.
+// - 메뉴는 최근 분석(질의 없는 /search/), 조문 도감, 구조 셋이다(재디자인 D4, 2026-11-13. 데모는 2026-11-25 메뉴에서 뺐고, 같은 날
+//   web17 에서 사례 쪽을 걷었다). 최근 분석은 질의 없는 검색 쪽에서만 지금 쪽이다.
 // - "/" 키는 검색창으로 가지 않는다(글자 하나짜리 단축키는 뺐다. docs/ROADMAP.md 의 "사람 결정이 필요한 것").
 // 머리글의 HTML 이 모든 쪽에서 같은지는 tests/browser/served-files.test.ts 가 본다.
 
@@ -114,12 +115,16 @@ describe("390px: 펼치는 메뉴", () => {
         return hidden;
       });
 
-    // 키보드로 메뉴를 열고 메뉴의 링크 넷(최근 분석, 사례, 조문 도감, 구조. 재디자인 D4 에서 하나, 2026-11-11 사례로,
-    // 2026-11-13 구조로 하나씩 늘었고, 2026-11-25 데모가 빠졌다)을 지나 본문으로 간다.
+    // 키보드로 메뉴를 열고 메뉴의 링크 셋(최근 분석, 조문 도감, 구조. 2026-11-25 데모가, 같은 날 web17 에서 사례가 빠졌다)을
+    // 지나 본문으로 간다.
     await page.locator(".site-header .menu > summary").focus();
     await page.keyboard.press("Enter");
     expect(await menuOpen(page)).toBe(true);
-    for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
+    expect(await page.locator(".site-header .menu-pop a").allTextContents()).toEqual(["최근 분석", "조문 도감", "구조"]);
+    for (let i = 0; i < 3; i++) {
+      await page.keyboard.press("Tab");
+      expect(await page.evaluate(() => document.activeElement?.closest(".menu-pop") !== null), `${i + 1}번째 Tab`).toBe(true);
+    }
     expect(await menuOpen(page)).toBe(true);
     await page.keyboard.press("Tab");
     expect(await page.evaluate(() => document.activeElement?.closest(".site-header") === null)).toBe(true);
@@ -175,6 +180,7 @@ describe("1280px: 한 줄 머리글", () => {
           current: [...document.querySelectorAll(".site-header .hdr-nav a[aria-current=page]")].map((a) => a.getAttribute("href")),
         };
       });
+    expect(await page.locator(".site-header .hdr-nav a").allTextContents()).toEqual(["최근 분석", "조문 도감", "구조"]);
     const policy = await read();
     expect(policy).toEqual({
       height: 56,

@@ -46,22 +46,17 @@
   <text class="hw-tag t-tool" x="312" y="114" font-size="12" font-weight="700" text-anchor="end" data-in="sig">도구</text>
   <text class="hw-line" x="90" y="148" font-size="14" data-in="sig">의존성·import·호출·주소</text>
   <text class="hw-line" x="90" y="169" font-size="14" data-in="sig">→ 기능의 단서 (JS·TS)</text>
-  <rect class="hw-box t-tool" x="76" y="213" width="246" height="91" rx="8" data-id="stat"/>
-  <text class="hw-title" x="90" y="240" font-size="17" font-weight="700" data-in="stat">정적 검사</text>
-  <text class="hw-tag t-tool" x="312" y="231" font-size="12" font-weight="700" text-anchor="end" data-in="stat">도구</text>
-  <text class="hw-line" x="90" y="265" font-size="14" data-in="stat">kr-core 팩 · Semgrep</text>
-  <text class="hw-line" x="90" y="286" font-size="14" data-in="stat">→ 의무별 정적 경고</text>
-  <rect class="hw-box t-model" x="76" y="330" width="246" height="133" rx="8" stroke-dasharray="7 5" data-id="und"/>
-  <text class="hw-title" x="90" y="357" font-size="17" font-weight="700" data-in="und">AI 이해</text>
-  <text class="hw-tag t-model" x="312" y="348" font-size="12" font-weight="700" text-anchor="end" data-in="und">모델</text>
-  <text class="hw-line" x="90" y="382" font-size="14" data-in="und">haiku 5.5 · 언어 상관없이</text>
-  <text class="hw-line" x="90" y="403" font-size="14" data-in="und">기능(27가지 중)을 인용과 정함</text>
-  <text class="hw-line" x="90" y="424" font-size="14" data-in="und">플랫폼 · 서비스 요약</text>
-  <text class="hw-line" x="90" y="445" font-size="14" data-in="und">개인정보 흐름</text>
-  <rect class="hw-box t-tool" x="76" y="489" width="246" height="70" rx="8" data-id="g1"/>
-  <text class="hw-title" x="90" y="516" font-size="17" font-weight="700" data-in="g1">관문 ①</text>
-  <text class="hw-tag t-tool" x="312" y="507" font-size="12" font-weight="700" text-anchor="end" data-in="g1">도구</text>
-  <text class="hw-line" x="90" y="541" font-size="14" data-in="g1">인용을 못 넘은 주장은 버림</text>
+  <rect class="hw-box t-model" x="76" y="213" width="246" height="133" rx="8" stroke-dasharray="7 5" data-id="und"/>
+  <text class="hw-title" x="90" y="240" font-size="17" font-weight="700" data-in="und">AI 이해</text>
+  <text class="hw-tag t-model" x="312" y="231" font-size="12" font-weight="700" text-anchor="end" data-in="und">모델</text>
+  <text class="hw-line" x="90" y="265" font-size="14" data-in="und">haiku 5.5 · 언어 상관없이</text>
+  <text class="hw-line" x="90" y="286" font-size="14" data-in="und">기능(27가지 중)을 인용과 정함</text>
+  <text class="hw-line" x="90" y="307" font-size="14" data-in="und">플랫폼 · 서비스 요약</text>
+  <text class="hw-line" x="90" y="328" font-size="14" data-in="und">개인정보 흐름</text>
+  <rect class="hw-box t-tool" x="76" y="372" width="246" height="70" rx="8" data-id="g1"/>
+  <text class="hw-title" x="90" y="399" font-size="17" font-weight="700" data-in="g1">관문 ①</text>
+  <text class="hw-tag t-tool" x="312" y="390" font-size="12" font-weight="700" text-anchor="end" data-in="g1">도구</text>
+  <text class="hw-line" x="90" y="424" font-size="14" data-in="g1">인용을 못 넘은 주장은 버림</text>
   <rect class="hw-box t-model" x="650" y="96" width="250" height="112" rx="8" stroke-dasharray="7 5" data-id="inv"/>
   <text class="hw-title" x="664" y="123" font-size="17" font-weight="700" data-in="inv">조사</text>
   <text class="hw-tag t-model" x="890" y="114" font-size="12" font-weight="700" text-anchor="end" data-in="inv">모델</text>
@@ -90,7 +85,7 @@
   <text class="hw-line" x="386" y="303" font-size="14" data-in="duty">의무 지도 795</text>
   <text class="hw-line" x="386" y="324" font-size="14" data-in="duty">− 지위 의무 257</text>
   <text class="hw-line" x="386" y="345" font-size="14" data-in="duty">→ 있는 기능에 걸리는 것</text>
-  <text class="hw-line" x="386" y="366" font-size="14" data-in="duty">→ 검토 후보·kr-core 만</text>
+  <text class="hw-line" x="386" y="366" font-size="14" data-in="duty">→ 검토 후보 (+ 따로 정한 2)</text>
   <text class="hw-line" x="386" y="387" font-size="14" data-in="duty">(후보: 조문 인용이 법령</text>
   <text class="hw-line" x="386" y="408" font-size="14" data-in="duty">원문과 맞는 것, 미리 대조)</text>
   <rect class="hw-box t-tool" x="950" y="219" width="274" height="238" rx="8" data-id="list"/>
@@ -108,12 +103,11 @@
   <path class="hw-edge t-plain" d="M16 141.5 L76 141.5" marker-end="url(#how-review-head)"/>
   <text class="hw-elabel t-plain" x="16" y="129.5" font-size="14">저장소</text>
   <path class="hw-edge t-plain" d="M199 187 L199 213" marker-end="url(#how-review-head)"/>
-  <path class="hw-edge t-plain" d="M199 304 L199 330" marker-end="url(#how-review-head)"/>
-  <path class="hw-edge t-plain" d="M199 463 L199 489" marker-end="url(#how-review-head)"/>
+  <path class="hw-edge t-plain" d="M199 346 L199 372" marker-end="url(#how-review-head)"/>
   <path class="hw-edge t-plain" d="M775 208 L775 234" marker-end="url(#how-review-head)"/>
   <path class="hw-edge t-plain" d="M775 304 L775 330" marker-end="url(#how-review-head)"/>
   <path class="hw-edge t-plain" d="M775 484 L775 510" marker-end="url(#how-review-head)"/>
-  <path class="hw-edge t-plain" d="M322 524 L347 524 L347 338.5 L372 338.5" marker-end="url(#how-review-head)"/>
+  <path class="hw-edge t-plain" d="M322 407 L347 407 L347 338.5 L372 338.5" marker-end="url(#how-review-head)"/>
   <path class="hw-edge t-plain" d="M600 338.5 L625 338.5 L625 152 L650 152" marker-end="url(#how-review-head)"/>
   <path class="hw-edge t-plain" d="M900 545 L925 545 L925 338 L950 338" marker-end="url(#how-review-head)"/>
   <rect class="hw-box t-tool" x="16" y="614" width="680" height="154" rx="8" data-id="gate"/>

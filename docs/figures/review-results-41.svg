@@ -5,15 +5,15 @@
 <rect x="48" y="122" width="438" height="132" rx="8" fill="#f6f8fa" stroke="#d1d9e0"/>
 <text x="72" y="178" font-size="42" font-weight="700" fill="#bc4c00">34 / 41곳</text>
 <text x="72" y="210" font-size="18" font-weight="600" fill="#1f2328">코드 줄을 인용한 '코드에서 본 것'이 있는 곳</text>
-<text x="72" y="236" font-size="15" fill="#59636e">정적 검사만으로 경고가 있는 곳은 13곳</text>
+<text x="72" y="236" font-size="15" fill="#59636e">공개 JS/TS 저장소 · 반박 없이</text>
 <rect x="510" y="122" width="438" height="132" rx="8" fill="#f6f8fa" stroke="#d1d9e0"/>
 <text x="534" y="178" font-size="42" font-weight="700" fill="#1f2328">5곳</text>
 <text x="534" y="210" font-size="18" font-weight="600" fill="#1f2328">기능이 없는 저장소</text>
 <text x="534" y="236" font-size="15" fill="#59636e">체크리스트가 비어 있음</text>
 <rect x="972" y="122" width="438" height="132" rx="8" fill="#f6f8fa" stroke="#d1d9e0"/>
 <text x="996" y="178" font-size="42" font-weight="700" fill="#1f2328">18 / 2,256건</text>
-<text x="996" y="210" font-size="18" font-weight="600" fill="#1f2328">도구가 거절한 인용</text>
-<text x="996" y="236" font-size="15" fill="#59636e">코드에 그대로 없거나 시험·설정 파일의 줄</text>
+<text x="996" y="210" font-size="18" font-weight="600" fill="#1f2328">도구가 받지 않은 인용</text>
+<text x="996" y="236" font-size="15" fill="#59636e">테스트·설정 파일 · 짧은 조각 · 주석 · 없는 줄</text>
 <rect x="1434" y="122" width="438" height="132" rx="8" fill="#f6f8fa" stroke="#d1d9e0"/>
 <text x="1458" y="178" font-size="42" font-weight="700" fill="#1f2328">$6.75</text>
 <text x="1458" y="210" font-size="18" font-weight="600" fill="#1f2328">41곳 전체 비용 어림</text>

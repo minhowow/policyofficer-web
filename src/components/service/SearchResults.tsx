@@ -41,7 +41,6 @@ export type LoadedActivity =
   | {
       ok: true;
       rows: RepositoryActivity[];
-      findings: Record<string, number | null>;
       reviews?: Record<string, ReviewFacts | null>;
       features?: Record<string, string[] | null>;
     }
@@ -50,7 +49,7 @@ export type LoadedActivity =
 /**
  * 검색 쪽의 빈 상태(`/search/` 를 질의 없이 연 쪽. 도구 화면의 이름이 여기로 온다. 목업 search-home #closed). 검색창, 이 사이트의
  * 최근 분석 상자, 곁칸의 AI 검토가 묻는 의무(의무 지도의 기능마다 의무 수, 누르면 조문 도감에서 그 기능으로 거른다. 수는 의무 지도에서
- * 센다). 2026-11-15 까지 곁칸은 정적 규칙의 정책 여섯이었다(AI 검토가 본체, 정적 검사는 보조. 오너 결정).
+ * 센다).
  */
 export function SearchHome({ recent, tagged }: { recent: LoadedActivity; tagged: boolean }) {
   return (
@@ -69,7 +68,7 @@ export function SearchHome({ recent, tagged }: { recent: LoadedActivity; tagged:
         ) : recent.rows.length === 0 ? (
           <p className="box-empty">아직 분석 없음</p>
         ) : (
-          <ActivityList rows={recent.rows} findings={recent.findings} reviews={recent.reviews} features={recent.features} variant="box" />
+          <ActivityList rows={recent.rows} reviews={recent.reviews} features={recent.features} variant="box" />
         )}
       </section>
       <section className="box search-home-side" aria-labelledby="duties-title">
@@ -199,7 +198,7 @@ function Analyzed({ analyzed, tagged }: { analyzed: LoadedActivity; tagged: bool
   if (analyzed.rows.length === 0) return null;
   const reviews = analyzed.reviews ?? {};
   const notes = zeroNotes(
-    analyzed.rows.map(({ analysis }) => (analysis.status === "succeeded" ? zeroKind(analyzed.findings[analysis.id], reviews[analysis.id]) : null)),
+    analyzed.rows.map(({ analysis }) => (analysis.status === "succeeded" ? zeroKind(reviews[analysis.id]) : null)),
   );
   return (
     <section aria-labelledby="analyzed-title">
@@ -209,7 +208,7 @@ function Analyzed({ analyzed, tagged }: { analyzed: LoadedActivity; tagged: bool
       </div>
       <ul className="box sr-list">
         {analyzed.rows.map((activity) => (
-          <AnalyzedRow key={activity.analysis.id} activity={activity} count={analyzed.findings[activity.analysis.id]} review={reviews[activity.analysis.id]} />
+          <AnalyzedRow key={activity.analysis.id} activity={activity} review={reviews[activity.analysis.id]} />
         ))}
       </ul>
       {notes.map((note) => (

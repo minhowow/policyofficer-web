@@ -5,7 +5,7 @@ import type { Sanction } from "./sanction";
 /**
  * 의무 지도(조문 도감 /policy/, 2026-11-15 오너 결정). CLI 의 기능–의무 표와 검토 후보 표에서 AI 검토(review)가 묻는 의무만
  * 옮긴 것이다(`node scripts/export-duty-map.mjs` → data/duty-map.json, 실행기가 설치하는 CLI 커밋에서 읽는다). 나머지 의무는 갈래별
- * 수만 있다. 조문 원문은 싣지 않고 법제처 주소만 둔다(조문 원문은 팩 메타데이터의 것만 싣는다). 화면에 쓰지 않는 말이 든 제목·의무
+ * 수만 있다. 조문 원문은 싣지 않고 법제처 주소만 둔다. 화면에 쓰지 않는 말이 든 제목·의무
  * 한 줄·걸리는 코드는 내보낼 때 null 로 두었다(화면은 법·조문만 적는다). 의무마다 법에 적힌 제재(`sanction`)는 CLI 의 제재 표에서
  * 옮긴 것이다(2026-11-24 오너 승인, `./sanction`).
  */
@@ -23,10 +23,8 @@ export interface MapDuty {
   /** 코드에서 그 의무가 걸리는 곳(CLI 표의 trigger). */
   trigger: string | null;
   url: string | null;
-  /** 검토 후보인지. 아니면 kr-core 의무라서 묻는다(기능이 있거나 정적 규칙이 걸리면). */
+  /** 검토 후보인지. 아니면 CLI 가 따로 정해 함께 묻는 의무다(의무 표의 krcore 칸).*/
   candidate: boolean;
-  /** 이 의무를 가리키는 정적 규칙 팩의 정책 id. */
-  policies: string[];
   /** 그 기능이 있으면 걸리는 의무(review 가 '해당 없음'을 받지 않는다). */
   whenever: boolean;
   /** 이용자가 누구인지(나이)에 걸리는 의무. */
@@ -45,8 +43,6 @@ export interface DutyMap {
   asked: number;
   notAsked: { total: number; status: number; other: number };
   features: { id: string; name: string }[];
-  /** 정책 id → 그 정책이 든 의무 id(팩에 적힌 첫 의무). */
-  policyHome: Record<string, string>;
   duties: MapDuty[];
 }
 
@@ -71,23 +67,17 @@ export function featureName(id: string): string {
 
 const byId = new Map(dutyMap.duties.map((duty) => [duty.id, duty]));
 
-/** 의무 id 의 제재. 의무 지도에 없거나 제재 표가 없으면 null. 이미 저장된 분석과 사례의 체크리스트도 의무 id 로 이것을 붙인다. */
+/** 의무 id 의 제재. 의무 지도에 없거나 제재 표가 없으면 null. 이미 저장된 분석의 체크리스트도 의무 id 로 이것을 붙인다. */
 export function sanctionOf(id: string): Sanction | null {
   return byId.get(id)?.sanction ?? null;
 }
 
 /**
  * 의무의 짧은 제목(의무 지도의 title, 조문 도감의 의무 줄과 같은 글). 의무 지도에 없거나 제목이 없으면 null(부르는 쪽이 의무 한 줄로
- * 대신한다). 결과 쪽·사례 쪽 체크리스트의 행이 쓴다(2026-11-25 web16).
+ * 대신한다). 결과 쪽 체크리스트의 행이 쓴다(2026-11-25 web16).
  */
 export function dutyTitle(id: string): string | null {
   return byId.get(id)?.title ?? null;
-}
-
-/** 정책의 내용을 싣는 의무(팩에 적힌 그 정책의 첫 의무). */
-export function policyHomeDuty(policyId: string): MapDuty | null {
-  const id = dutyMap.policyHome[policyId];
-  return dutyMap.duties.find((duty) => duty.id === id) ?? null;
 }
 
 /**

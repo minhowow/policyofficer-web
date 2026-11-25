@@ -1,6 +1,6 @@
 // 구조 쪽(/how/)의 그림을 포스터·보고서용 파일로 내보낸다: docs/figures/<이름>.svg 와 .png(밝은 바탕, 3배). 쉬운 판은
-// <이름>-simple(포스터), 자세한 판은 <이름>(보고서), 따라가 보기는 trace-<사례>. 그림의 자료는 src/lib/how/figures.ts 이고(따라가
-// 보기는 data/cases.json 에서 읽는다) 사이트도 같은 것으로 그린다. 내보내기 전에 Chrome 으로 그려 글이 제 상자 밖으로
+// <이름>-simple(포스터), 자세한 판은 <이름>(보고서), 따라가 보기는 trace-<저장소>. 그림의 자료는 src/lib/how/figures.ts 이고(따라가
+// 보기는 data/analyses/ 의 미리 돌린 분석에서 읽는다) 사이트도 같은 것으로 그린다. 내보내기 전에 Chrome 으로 그려 글이 제 상자 밖으로
 // 넘치는지, 글끼리 겹치는지 잰다. 그러면 파일을 쓰지 않고 멈춘다.
 //
 //   node scripts/export-figures.mjs          # 모두
@@ -13,7 +13,14 @@ import { figureSvg } from "../src/lib/how/draw.ts";
 import { buildFigures } from "../src/lib/how/figures.ts";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const built = buildFigures(JSON.parse(readFileSync(path.join(root, "data/cases.json"), "utf8")));
+// 따라가 보기: 미리 돌려 넣은 분석(src/lib/service/prerun.ts 의 jobtalk 과 같은 것).
+const built = buildFigures({
+  owner: "Vactor0911",
+  name: "jobtalk",
+  commit: "bbfb3ab14534907ff4618c563ff92a6354da97a1",
+  ranOn: "2026-11-24",
+  review: JSON.parse(readFileSync(path.join(root, "data/analyses/vactor0911-jobtalk-bbfb3ab.review.json"), "utf8")),
+});
 const FIGURES = [...built.simple, built.trace, ...built.detailed];
 const checkOnly = process.argv.includes("--check");
 const browser = await chromium.launch({ channel: "chrome", headless: true });

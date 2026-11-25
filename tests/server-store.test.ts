@@ -14,7 +14,10 @@ import { dispatchTimeoutReason, pumpQueue, queueTimeoutReason } from "@/server/q
 import { WAKE_RETRY_MINUTES } from "@/lib/service/queue";
 import { createDbStore, kstDayStart, stalledStep } from "@/server/store/db";
 import { pickActivity } from "@/lib/service/activity";
+import { parseProfile } from "@/lib/profile";
+import { parseReview, reviewFactsOf } from "@/lib/review";
 import { createGitHubStub } from "../scripts/github-stub.mjs";
+import { readJson } from "./helpers";
 
 // 운영 저장소 구현(DB + GitHub, src/server/store/db.ts)을 메모리의 PGlite 와 가짜 GitHub 으로 돌린다. 실제 GitHub 과 DB 서버를
 // 부르지 않는다. 같은 SQL 이 운영의 Postgres 에서 돈다(DATABASE_URL).
@@ -70,21 +73,24 @@ const created = (outcome: RequestOutcome) => {
   return outcome;
 };
 
-/** 실행기가 한 것처럼 단계를 적는다(콜백은 다음 차례에 만든다. 여기서는 DB 에 바로 적는다). */
-async function finish(id: string, at: Date, result: string | null = JSON.stringify({ ok: true })) {
+/**
+ * 실행기가 한 것처럼 단계를 적는다(콜백은 tests/server-api.test.ts 가 본다. 여기서는 DB 에 바로 적는다). 결과 행은 콜백이 두는 것과
+ * 같은 꼴이다: 규칙 검사의 결과 칸(json)은 비우고(2026-11-25 부터), `review` 를 주면 그 review 를 둔다.
+ */
+async function finish(id: string, at: Date, review: unknown = null) {
   const iso = at.toISOString();
   const steps = STEP_ORDER.map((name) => ({ name, startedAt: iso, endedAt: iso }));
   await db.query("UPDATE analyses SET status = 'succeeded', finished_at = $2, steps = $3::jsonb WHERE id = $1", [id, at, JSON.stringify(steps)]);
-  if (result !== null) await db.query("INSERT INTO results (analysis_id, json) VALUES ($1, $2)", [id, result]);
+  await db.query("INSERT INTO results (analysis_id, json, profile, review) VALUES ($1, NULL, NULL, $2)", [id, review === null ? null : JSON.stringify(review)]);
 }
 
 describe("DB: 마이그레이션", () => {
   it("이름 차례로 한 번만 적용한다", async () => {
-    expect(readMigrations().map((m) => m.name)).toEqual(["001_init.sql", "002_finding_count.sql", "003_queue.sql", "004_runner_wake.sql", "005_profile.sql", "006_review.sql", "007_review_plan.sql", "008_scan_part.sql", "009_repo_rename.sql"]);
+    expect(readMigrations().map((m) => m.name)).toEqual(["001_init.sql", "002_finding_count.sql", "003_queue.sql", "004_runner_wake.sql", "005_profile.sql", "006_review.sql", "007_review_plan.sql", "008_scan_part.sql", "009_repo_rename.sql", "010_result_json_nullable.sql"]);
     // 이미 열 때 적용했다. 다시 돌려도 아무것도 하지 않는다.
     expect(await migrate(db)).toEqual([]);
     const applied = await db.query<{ name: string }>("SELECT name FROM schema_migrations ORDER BY name");
-    expect(applied.rows.map((row) => row.name)).toEqual(["001_init.sql", "002_finding_count.sql", "003_queue.sql", "004_runner_wake.sql", "005_profile.sql", "006_review.sql", "007_review_plan.sql", "008_scan_part.sql", "009_repo_rename.sql"]);
+    expect(applied.rows.map((row) => row.name)).toEqual(["001_init.sql", "002_finding_count.sql", "003_queue.sql", "004_runner_wake.sql", "005_profile.sql", "006_review.sql", "007_review_plan.sql", "008_scan_part.sql", "009_repo_rename.sql", "010_result_json_nullable.sql"]);
   });
 
   it("009: 이름이 바뀐 이 프로젝트의 두 저장소(2026-11-24)의 지난 기록만 새 이름으로 옮긴다", async () => {
@@ -105,7 +111,7 @@ describe("DB: 마이그레이션", () => {
     await row("aaaaaaaaaa", "minhowow", "Plitsoft-SDP", null);
     await row("bbbbbbbbbb", "minhowow", "Plitsoft-SDP-Web", "https://github.com/minhowow/Plitsoft-SDP-Web/actions/runs/1");
     await row("cccccccccc", "someone", "Plitsoft-SDP", null);
-    expect(await migrate(fresh)).toEqual(["009_repo_rename.sql"]);
+    expect(await migrate(fresh)).toEqual(["009_repo_rename.sql", "010_result_json_nullable.sql"]);
     const rows = await fresh.query<{ id: string; owner: string; repo: string; repo_key: string; runner_run_url: string | null }>(
       "SELECT id, owner, repo, repo_key, runner_run_url FROM analyses ORDER BY id",
     );
@@ -113,6 +119,33 @@ describe("DB: 마이그레이션", () => {
       { id: "aaaaaaaaaa", owner: "minhowow", repo: "policyofficer", repo_key: "minhowow/policyofficer", runner_run_url: null },
       { id: "bbbbbbbbbb", owner: "minhowow", repo: "policyofficer-web", repo_key: "minhowow/policyofficer-web", runner_run_url: "https://github.com/minhowow/policyofficer-web/actions/runs/1" },
       { id: "cccccccccc", owner: "someone", repo: "Plitsoft-SDP", repo_key: "someone/plitsoft-sdp", runner_run_url: null },
+    ]);
+    await fresh.close();
+  });
+
+  it("010: 규칙 검사를 돌리지 않아(2026-11-25) 결과 칸(results.json)이 비어도 된다. 앞선 분석의 결과는 그대로 둔다", async () => {
+    const fresh = await openDatabase({ databaseUrl: null, pgliteDir: "memory://" }).then(async (other) => {
+      await other.query("DROP SCHEMA public CASCADE");
+      await other.query("CREATE SCHEMA public");
+      return other;
+    });
+    await migrate(fresh, readMigrations().filter((m) => m.name < "010"));
+    const steps = JSON.stringify(STEP_ORDER.map((name) => ({ name, startedAt: null, endedAt: null })));
+    for (const id of ["aaaaaaaaaa", "bbbbbbbbbb"]) {
+      await fresh.query(
+        "INSERT INTO analyses (id, owner, repo, repo_key, commit_sha, branch, status, requested_at, steps) VALUES ($1, 'o', 'r', 'o/r', $2, 'main', 'succeeded', now(), $3::jsonb)",
+        [id, id[0].repeat(40), steps],
+      );
+    }
+    await fresh.query("INSERT INTO results (analysis_id, json) VALUES ('aaaaaaaaaa', $1)", ['{"tool":{"version":"x"}}']);
+    // 010 앞에서는 결과 칸을 비울 수 없었다(NOT NULL).
+    await expect(fresh.query("INSERT INTO results (analysis_id, json) VALUES ('bbbbbbbbbb', NULL)")).rejects.toMatchObject({ code: "23502" });
+    expect(await migrate(fresh)).toEqual(["010_result_json_nullable.sql"]);
+    await fresh.query("INSERT INTO results (analysis_id, json, review) VALUES ('bbbbbbbbbb', NULL, $1)", ['{"review_version":2}']);
+    const rows = await fresh.query<{ analysis_id: string; json: string | null }>("SELECT analysis_id, json FROM results ORDER BY analysis_id");
+    expect(rows.rows).toEqual([
+      { analysis_id: "aaaaaaaaaa", json: '{"tool":{"version":"x"}}' },
+      { analysis_id: "bbbbbbbbbb", json: null },
     ]);
     await fresh.close();
   });
@@ -135,7 +168,9 @@ describe("DB: 마이그레이션", () => {
       "analyses.requested_at",
       "analyses.finished_at",
       "analyses.steps",
+      // 도구 판: review(없으면 프로필)의 tool.version.
       "analyses.tool_version",
+      // 팩 판과 규칙 검사의 발견 수. 2026-11-25 부터 적지 않는다(앞선 분석의 값은 그대로 둔다).
       "analyses.pack_digest",
       "analyses.runner_run_id",
       "analyses.runner_run_url",
@@ -145,13 +180,14 @@ describe("DB: 마이그레이션", () => {
       "analyses.feature_names",
       // review 를 어떻게 했는지(run·stored·limit). 하루 review 실행 수를 센다(2026-11-12).
       "analyses.review_plan",
-      // 검사 단계 안에서 실행기가 알린 일(profile·review)과 받은 때. 진행 표시에만 쓴다(2026-11-13).
+      // 검토 단계 안에서 실행기가 알린 일(profile·review)과 받은 때. 진행 표시에만 쓴다(2026-11-13).
       "analyses.scan_part",
       "analyses.scan_part_at",
       "github_budget.bucket",
       "github_budget.window_start",
       "github_budget.used",
       "results.analysis_id",
+      // 규칙 검사(policyofficer scan)의 결과 JSON. 2026-11-25 부터 비운다(migrations/010. 앞선 분석의 것은 그대로).
       "results.json",
       // 저장소 프로필(policyofficer profile 의 JSON): 기능과 근거 파일·줄, 걸릴 수 있는 의무 목록. 코드 전체는 담지 않는다.
       "results.profile",
@@ -218,8 +254,7 @@ describe("분석 요청", () => {
     await finish(first.analysis.id, clock.now);
     later(61);
     const second = created(await store.requestAnalysis("example-org", "kids-signup"));
-    await finish(second.analysis.id, clock.now, null);
-    await db.query("INSERT INTO results (analysis_id, json, review) VALUES ($1, $2, $3)", [second.analysis.id, "{}", JSON.stringify({ review_version: 2 })]);
+    await finish(second.analysis.id, clock.now, { review_version: 2 });
     later(61);
     created(await store.requestAnalysis("example-org", "kids-signup"));
     created(await store.requestAnalysis("example-org", "night-push"));
@@ -227,22 +262,21 @@ describe("분석 요청", () => {
     expect(wakes.map((w) => (w as { review: boolean }).review)).toEqual([true, true, false, true]);
   });
 
-  it("하루(한국 표준시) review 를 맡기는 수는 REVIEW_DAILY_LIMIT 까지다. 넘으면 review 없이 보내고 분석에 limit 을 적는다. 저장된 review 를 쓰는 분석과 검사 앞에서 멈춘 분석은 세지 않는다", async () => {
+  it("하루(한국 표준시) review 를 맡기는 수는 REVIEW_DAILY_LIMIT 까지다. 넘으면 review 없이 보내고 분석에 limit 을 적는다. 저장된 review 를 쓰는 분석과 검토 앞에서 멈춘 분석은 세지 않는다", async () => {
     const { store, stub, clock, later, wakes } = setup({ runner: { review: true }, limits: { reviewDaily: 2, poolSize: 5 } });
     const a = created(await store.requestAnalysis("example-org", "kids-signup"));
     const b = created(await store.requestAnalysis("example-org", "night-push"));
     const c = created(await store.requestAnalysis("example-labs", "plain.utils"));
     expect([a, b, c].map((o) => o.analysis.review)).toEqual(["run", "run", "limit"]);
     expect((await store.findAnalysis(c.analysis.id))?.review).toBe("limit");
-    // review 는 검사 단계에서 돈다. 저장소 받기에서 멈춘 분석은 모델을 부르지 않았으므로 세지 않는다.
+    // review 는 검토 단계에서 돈다. 저장소 받기에서 멈춘 분석은 모델을 부르지 않았으므로 세지 않는다.
     await db.query("UPDATE analyses SET status = 'failed', failure_step = 'fetch', failure_reason = 'x', finished_at = $2 WHERE id = $1", [b.analysis.id, clock.now]);
     expect(created(await store.requestAnalysis("Example-Studio", "GenAI-Chat")).analysis.review).toBe("run");
     stub.setHead("example-labs", "plain.utils", "2");
     later(1);
     expect(created(await store.requestAnalysis("example-labs", "plain.utils")).analysis.review).toBe("limit");
     // 같은 커밋의 저장된 review 가 있으면 상한과 상관없이 stored(맡기지 않는다).
-    await finish(a.analysis.id, clock.now, null);
-    await db.query("INSERT INTO results (analysis_id, json, review) VALUES ($1, $2, $3)", [a.analysis.id, "{}", JSON.stringify({ review_version: 2 })]);
+    await finish(a.analysis.id, clock.now, { review_version: 2 });
     later(61);
     expect(created(await store.requestAnalysis("example-org", "kids-signup")).analysis.review).toBe("stored");
     // 다음 날(한국 표준시 0시가 지나면) 다시 센다.
@@ -687,7 +721,7 @@ describe("오래된 분석", () => {
     expect(DEFAULTS.runTimeoutMinutes).toBe(32);
     const { store, later } = setup();
     const { analysis } = created(await store.requestAnalysis("example-org", "kids-signup"));
-    // 실행기가 저장소 받기까지 알렸다(검사는 시작했고 끝나지 않았다).
+    // 실행기가 저장소 받기까지 알렸다(검토 단계는 시작했고 끝나지 않았다).
     const at = new Date(T0.getTime() + 60_000).toISOString();
     const steps = [
       { name: "queued", startedAt: T0.toISOString(), endedAt: at },
@@ -703,7 +737,7 @@ describe("오래된 분석", () => {
     expect(stale.status).toBe("failed");
     expect(stale.failure).toEqual({
       step: "scan",
-      reason: "시간 초과: 실행기에 보낸 뒤 32분 안에 끝나지 않아 멈춘 것으로 적었습니다. ‘검사’ 단계에 머물러 있었습니다.",
+      reason: "시간 초과: 실행기에 보낸 뒤 32분 안에 끝나지 않아 멈춘 것으로 적었습니다. ‘검토’ 단계에 머물러 있었습니다.",
     });
     // 언제 멈췄는지는 모르므로 그 단계의 끝난 시각을 꾸며 적지 않는다.
     expect(stale.steps.find((s) => s.name === "scan")?.endedAt).toBeNull();
@@ -740,17 +774,27 @@ describe("읽기", () => {
     expect(await store.getAnalysis("example-org", "night-push", a.analysis.id)).toBeNull();
   });
 
-  it("결과는 끝난 분석만, 받은 그대로 돌려준다. JSON 이 아니면 글 그대로다", async () => {
-    const { store, clock, stub } = setup({ limits: { poolSize: 5 } });
+  it("프로필과 review 는 끝난 분석의 것만 읽는다. 규칙 검사의 결과 칸(json)이 비어도 읽는다. 규칙 검사의 결과·발견 수를 읽는 길은 없다", async () => {
+    const { store, clock } = setup({ limits: { poolSize: 5 } });
     const a = created(await store.requestAnalysis("example-org", "kids-signup"));
-    expect(await store.getResult(a.analysis.id)).toBeNull();
-    await finish(a.analysis.id, clock.now, '{"tool":{"version":"x"}}');
-    expect(await store.getResult(a.analysis.id)).toEqual({ tool: { version: "x" } });
-    stub.setHead("example-org", "kids-signup", "2");
-    clock.now = new Date(clock.now.getTime() + 60_000);
-    const b = created(await store.requestAnalysis("example-org", "kids-signup"));
-    await finish(b.analysis.id, clock.now, "not json");
-    expect(await store.getResult(b.analysis.id)).toBe("not json");
+    const profile = readJson("contract", "cli-current", "profile", "kids-signup.main.json");
+    const review = readJson("contract", "review", "genai-chat.review.json");
+    await db.query("INSERT INTO results (analysis_id, json, profile, review) VALUES ($1, NULL, $2, $3)", [a.analysis.id, JSON.stringify(profile), JSON.stringify(review)]);
+    // 끝나지 않은 분석의 것은 읽지 않는다.
+    expect(await store.getProfile(a.analysis.id)).toBeNull();
+    expect(await store.getReview("example-org", "kids-signup", a.analysis.commit)).toBeNull();
+    const iso = clock.now.toISOString();
+    await db.query("UPDATE analyses SET status = 'succeeded', finished_at = $2, steps = $3::jsonb WHERE id = $1", [
+      a.analysis.id,
+      clock.now,
+      JSON.stringify(STEP_ORDER.map((name) => ({ name, startedAt: iso, endedAt: iso }))),
+    ]);
+    expect(await store.getProfile(a.analysis.id)).toEqual(parseProfile(profile));
+    expect(await store.getReview("example-org", "kids-signup", a.analysis.commit)).toEqual(parseReview(review));
+    expect(await store.reviewFacts([a.analysis.id])).toEqual({ [a.analysis.id]: reviewFactsOf(parseReview(review)!) });
+    // 2026-11-25 오너 지시로 규칙 검사를 없앴다. 저장소 구현에 그 결과를 읽는 것이 남아 있지 않다.
+    expect("getResult" in store).toBe(false);
+    expect("findingCounts" in store).toBe(false);
   });
 
   it("최근 분석: 저장소마다 한 줄(진행 중이 먼저, 없으면 가장 나중의 분석), 요청 시각 차례, 기록에 있는 이름(GitHub 을 부르지 않는다)", async () => {

@@ -69,11 +69,11 @@
   <text class="hw-line" x="512" y="564" font-size="14" data-in="runner">CLI 설치 (고정 커밋)</text>
   <text class="hw-line" x="512" y="585" font-size="14" data-in="runner">진행·결과를 서명해 보냄</text>
   <rect class="hw-box t-plain" x="760" y="482" width="244" height="133" rx="8" data-id="cli"/>
-  <text class="hw-title" x="774" y="509" font-size="17" font-weight="700" data-in="cli">CLI 7cf9758</text>
-  <text class="hw-tag t-plain" x="994" y="500" font-size="12" font-weight="700" text-anchor="end" data-in="cli">handoff-w13-3</text>
-  <text class="hw-line" x="774" y="534" font-size="14" data-in="cli">scan · AI 판정 (haiku)</text>
-  <text class="hw-line" x="774" y="555" font-size="14" data-in="cli">profile 명령 (모델 없음)</text>
-  <text class="hw-line" x="774" y="576" font-size="14" data-in="cli">review (haiku·sonnet)</text>
+  <text class="hw-title" x="774" y="509" font-size="17" font-weight="700" data-in="cli">CLI 386ce07</text>
+  <text class="hw-tag t-plain" x="994" y="500" font-size="12" font-weight="700" text-anchor="end" data-in="cli">handoff-w13-4</text>
+  <text class="hw-line" x="774" y="534" font-size="14" data-in="cli">profile 명령 (모델 없음)</text>
+  <text class="hw-line" x="774" y="555" font-size="14" data-in="cli">review: 기능 파악·조사 (haiku)</text>
+  <text class="hw-line" x="774" y="576" font-size="14" data-in="cli">반박 (sonnet)</text>
   <text class="hw-line" x="774" y="597" font-size="14" data-in="cli">review 한 건 어림 $3·420초</text>
   <rect class="hw-box t-plain" x="1066" y="180" width="190" height="91" rx="8" data-id="recv"/>
   <text class="hw-title" x="1080" y="207" font-size="17" font-weight="700" data-in="recv">결과 받기·보이기</text>
@@ -81,7 +81,7 @@
   <text class="hw-line" x="1080" y="253" font-size="14" data-in="recv">DB 에서 읽어 쪽을 그림</text>
   <rect class="hw-box t-keep" x="1066" y="330" width="190" height="112" rx="8" data-id="store"/>
   <text class="hw-title" x="1080" y="357" font-size="17" font-weight="700" data-in="store">결과 저장</text>
-  <text class="hw-line" x="1080" y="382" font-size="14" data-in="store">결과 JSON 셋</text>
+  <text class="hw-line" x="1080" y="382" font-size="14" data-in="store">결과 JSON 둘</text>
   <text class="hw-line" x="1080" y="403" font-size="14" data-in="store">(인용한 코드 줄 포함)</text>
   <text class="hw-line" x="1080" y="424" font-size="14" data-in="store">코드 전체는 두지 않음</text>
   <rect class="hw-box t-plain" x="1066" y="37" width="190" height="70" rx="8" data-id="screen"/>

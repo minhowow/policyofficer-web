@@ -2,18 +2,18 @@
 // 분석 실행기. GitHub Actions 의 워크플로(.github/workflows/analyze.yml)가 단계마다 이 파일을 부르고, 로컬 실행기
 // (scripts/local-runner.mjs)는 같은 함수를 가져다 쓴다. Node 내장 모듈만 쓴다.
 //
-// 하는 일(설계 8): 저장소 받기·도구 설치 → 검사(정적 검사와 AI 판정 `policyofficer scan`, 그 뒤 저장소 프로필 `policyofficer profile`,
-// 모델 호출 없음. 입력 REVIEW 가 "true" 일 때만 그다음 `policyofficer review`, 모델 호출) → 정리(결과와 프로필·review 보내기).
-// 단계를 시작할 때마다 사이트에 서명한 콜백을 보내고, 멈추면 그 단계와 까닭을 보낸다. 검사 단계 안에서는 프로필과 review 를
-// 시작할 때 그것도 알린다(part. 알리지 못해도 멈추지 않는다). 대상 코드는 읽기만 한다(설치·빌드·실행하지 않는다).
+// 하는 일(설계 8): 저장소 받기·도구 설치 → 검토(저장소 프로필 `policyofficer profile`, 모델 호출 없음. 입력 REVIEW 가 "true" 일
+// 때만 그다음 `policyofficer review`, 모델 호출) → 정리(프로필·review 보내기). 2026-11-25 오너 지시로 규칙 검사(scan)는 돌리지 않는다
+// (CLI handoff-w13-4 부터 그 명령이 없다). 단계를 시작할 때마다 사이트에 서명한 콜백을 보내고, 멈추면 그 단계와 까닭을 보낸다. 검토
+// 단계 안에서는 review 를 시작할 때 그것도 알린다(part. 알리지 못해도 멈추지 않는다). 대상 코드는 읽기만 한다(설치·빌드·실행하지
+// 않는다).
 //
 // 워크플로에서 부르는 법(값은 모두 환경 변수로 받는다. 워크플로 입력을 셸 글에 끼워 넣지 않는다):
 //   node runner/run.mjs check              입력 검사(분석 id·owner·repo·커밋·콜백 주소 모양)
 //   node runner/run.mjs notify <단계>      단계 시작 콜백 (RUNNER_SECRET)
 //   node runner/run.mjs fetch              tarball 받기·풀기, JS/TS 파일 수 상한 (GITHUB_TOKEN: 이 워크플로의 읽기 토큰)
 //   node runner/run.mjs install            uv 와 CLI 설치(고정 커밋) (CLI_REPO_TOKEN: CLI 저장소가 비공개일 때만)
-//   node runner/run.mjs scan               policyofficer scan (ANTHROPIC_API_KEY)
-//   node runner/run.mjs part <일>          검사 단계 안의 일(profile | review) 시작 알림 (RUNNER_SECRET). 알리지 못해도 성공으로 끝난다
+//   node runner/run.mjs part <일>          검토 단계 안의 일(profile | review) 시작 알림 (RUNNER_SECRET). 알리지 못해도 성공으로 끝난다
 //   node runner/run.mjs profile            policyofficer profile (비밀값 없이). 실패해도 결과만 보낸다
 //   node runner/run.mjs review             REVIEW="true" 면 policyofficer review (ANTHROPIC_API_KEY, REVIEW_* 상한). 실패해도 결과만 보낸다
 //   node runner/run.mjs finish             정리 단계 시작 콜백과 결과 콜백 (RUNNER_SECRET)
@@ -30,7 +30,7 @@ import { ArchiveError, extractTarGz } from "./tar.mjs";
 
 /** 실행기가 알리는 단계(사이트의 STEP_ORDER 에서 대기를 뺀 것. src/lib/service/steps.ts). */
 export const RUNNER_STEPS = ["fetch", "scan", "finish"];
-/** 검사 단계 안에서 알리는 일(사이트의 `Analysis.scanPart`, src/server/callbacks.ts). 단계가 아니다. 이 차례로 간다. */
+/** 검토 단계(id scan) 안에서 알리는 일(사이트의 `Analysis.scanPart`, src/server/callbacks.ts). 단계가 아니다. 이 차례로 간다. */
 export const SCAN_PARTS = ["profile", "review"];
 
 export const DEFAULTS = {
@@ -38,7 +38,6 @@ export const DEFAULTS = {
   maxExtractMb: 400,
   maxJsTsFiles: 3000,
   resultMaxKb: 4000,
-  scanTimeoutMinutes: 15,
   profileTimeoutMinutes: 3,
   // review(입력 REVIEW 가 "true" 일 때만). 워크플로의 REVIEW_* 가 없을 때의 값이다(CLI 의 기본과 같은 모델, 한 건 $3·420초. 금액은 공식 단가).
   reviewModel: "anthropic:claude-haiku-5-5",
@@ -127,18 +126,18 @@ async function send(ctx, payload, step) {
 }
 
 export const notifyStep = (ctx, step, run = null) => send(ctx, run ? { event: "step", step, run } : { event: "step", step }, step);
-/** 결과(CLI 결과 JSON 글)와, 있으면 저장소 프로필과 review 결과(JSON 값)를 보낸다. */
-export const sendResult = (ctx, output, profile = null, review = null) =>
-  send(ctx, { event: "result", output, ...(profile ? { profile } : {}), ...(review ? { review } : {}) }, "finish");
+/** 결과: 있으면 저장소 프로필과 review 결과(JSON 값)를 보낸다. */
+export const sendResult = (ctx, profile, review) =>
+  send(ctx, { event: "result", ...(profile ? { profile } : {}), ...(review ? { review } : {}) }, "finish");
 export const sendFailure = (ctx, step, reason) => send(ctx, { event: "fail", step, reason }, step);
 
 /**
- * 검사 단계 안의 일(프로필, review)을 시작했다고 알린다. 화면의 진행 표시에만 쓰이는 알림이라 best-effort 다: 닿지 못하거나
+ * 검토 단계 안의 일(프로필, review)을 시작했다고 알린다. 화면의 진행 표시에만 쓰이는 알림이라 best-effort 다: 닿지 못하거나
  * 서버가 받지 않아도 던지지 않고 로그만 남긴다(분석을 멈추지 않고, 형편 파일의 refused 도 적지 않는다). 받았으면 true.
  */
 export async function notifyPart(ctx, part, { log = console.error } = {}) {
   if (!SCAN_PARTS.includes(part)) {
-    log(`실행기: 모르는 검사 단계 안의 일(${part})이라 알리지 않았습니다.`);
+    log(`실행기: 모르는 검토 단계 안의 일(${part})이라 알리지 않았습니다.`);
     return false;
   }
   try {
@@ -149,9 +148,9 @@ export async function notifyPart(ctx, part, { log = console.error } = {}) {
       { secret: ctx.secret, fetcher: ctx.fetcher, attempts: 2, delayMs: ctx.retryDelayMs },
     );
     if (status === 200) return true;
-    log(`실행기: 사이트가 검사 단계 안의 일(${part}) 알림을 받지 않았습니다(${typeof body?.message === "string" ? body.message : `응답 ${status}`}). 그대로 갑니다.`);
+    log(`실행기: 사이트가 검토 단계 안의 일(${part}) 알림을 받지 않았습니다(${typeof body?.message === "string" ? body.message : `응답 ${status}`}). 그대로 갑니다.`);
   } catch (error) {
-    log(`실행기: 검사 단계 안의 일(${part})을 알리지 못했습니다(${error instanceof Error ? error.message : "까닭 모름"}). 그대로 갑니다.`);
+    log(`실행기: 검토 단계 안의 일(${part})을 알리지 못했습니다(${error instanceof Error ? error.message : "까닭 모름"}). 그대로 갑니다.`);
   }
   return false;
 }
@@ -323,38 +322,13 @@ export function installCli(env, { run = spawnSync } = {}) {
     ? { GIT_CONFIG_COUNT: "1", GIT_CONFIG_KEY_0: `url.https://x-access-token:${env.CLI_REPO_TOKEN}@github.com/.insteadOf`, GIT_CONFIG_VALUE_0: "https://github.com/" }
     : {};
   const spec = `policyofficer @ git+https://github.com/${cliRepo}@${cliCommit}`;
-  // git 의 CLI 를 설치하면 CLI 의 uv.lock 이 쓰이지 않는다. 딸린 꾸러미(pydantic, ruamel.yaml, semgrep 등)가 PyPI 의 가장 새 판으로
-  // 풀리지 않게, 고정한 날짜(CLI_EXCLUDE_NEWER) 뒤에 나온 판은 고르지 않는다(이 단계와 검사 단계에서 돌 코드를 그날까지로 묶는다).
+  // git 의 CLI 를 설치하면 CLI 의 uv.lock 이 쓰이지 않는다. 딸린 꾸러미(ruamel.yaml)가 PyPI 의 가장 새 판으로 풀리지 않게, 고정한
+  // 날짜(CLI_EXCLUDE_NEWER) 뒤에 나온 판은 고르지 않는다(이 단계와 검토 단계에서 돌 코드를 그날까지로 묶는다).
   const cli = run("uv", ["tool", "install", "--quiet", "--python", "3.12", "--exclude-newer", excludeNewer, spec], { env: childEnv(env, git), encoding: "utf8", timeout: 10 * 60_000 });
   if (cli.status !== 0) {
     logTail("CLI 설치", cli.stderr, env);
-    throw new StepError("fetch", "검사 도구(CLI)를 설치하지 못했습니다.");
+    throw new StepError("fetch", "검토 도구(CLI)를 설치하지 못했습니다.");
   }
-}
-
-/**
- * 검사: `policyofficer scan . --judge <판정자> --output-format json` 을 저장소 폴더에서 돌린다. 종료 코드 0(검토할 것 없음)과
- * 1(검토 필요)은 결과다. 2 는 도구 오류다. 표준 출력(결과 JSON)을 그대로 돌려준다. 읽어 보는 것은 사이트가 한다.
- */
-export function runScan({ dir, judge, command = ["policyofficer"], env, timeoutMs, run = spawnSync }) {
-  const [bin, ...pre] = command;
-  const result = run(bin, [...pre, "scan", ".", "--judge", judge, "--output-format", "json"], {
-    cwd: dir,
-    env,
-    encoding: "utf8",
-    maxBuffer: 64 * 1024 * 1024,
-    timeout: timeoutMs,
-  });
-  if (result.error && result.error.code === "ETIMEDOUT") {
-    throw new StepError("scan", `검사가 ${Math.round(timeoutMs / 60_000)}분 안에 끝나지 않아 멈췄습니다.`);
-  }
-  if (result.error) throw new StepError("scan", "검사 도구(CLI)를 실행하지 못했습니다.");
-  if (result.status !== 0 && result.status !== 1) {
-    logTail("검사", result.stderr, env ?? {});
-    throw new StepError("scan", `검사 도구가 오류로 끝났습니다(종료 코드 ${result.status ?? "없음"}).`);
-  }
-  if (!result.stdout || result.stdout.trim() === "") throw new StepError("scan", "검사 도구가 결과를 내지 않았습니다.");
-  return result.stdout;
 }
 
 /**
@@ -450,33 +424,25 @@ export function runReview({ dir, command = ["policyofficer"], env, options, run 
 }
 
 /**
- * 결과 콜백에 함께 실을 것(`{ profile, review }`)을 크기 상한에 맞춘다. 다 실은 본문이 상한을 넘으면 review 를 먼저 빼고, 그래도
- * 넘으면 프로필도 뺀다(둘 때문에 분석이 실패하지 않게). 결과만으로도 넘으면 멈춘다. 사이트는 보낸 본문 전체를 상한과 견주므로
- * 그 본문과 같은 글로 잰다.
+ * 결과 콜백에 실을 것(`{ profile, review }`)을 크기 상한에 맞춘다. 둘을 함께 실어 상한을 넘으면 review(결과의 본체)만, 그것도 넘으면
+ * 프로필만 싣는다. 하나만 있는데 넘으면 뺀다. 사이트는 보낸 본문 전체를 상한과 견주므로 그 본문과 같은 글로 잰다. 둘 다 빠지면
+ * 사이트는 같은 커밋의 저장된 review 가 없는 한 분석을 실패로 적는다.
  */
-export function resultBody(ctx, output, extras, maxKb, { log = console.error } = {}) {
-  const fits = (body) => Buffer.byteLength(JSON.stringify({ event: "result", output, ...body, target: ctx.target }), "utf8") <= maxKb * 1024;
-  let profile = extras?.profile ?? null;
-  let review = extras?.review ?? null;
-  if (review && !fits({ ...(profile ? { profile } : {}), review })) {
-    log("결과와 review 를 함께 보내면 크기 상한을 넘어 review 를 빼고 보냅니다.");
-    review = null;
-  }
-  if (profile && !fits({ profile })) {
-    log("결과와 프로필을 함께 보내면 크기 상한을 넘어 프로필을 빼고 보냅니다.");
-    profile = null;
-  }
-  if (!profile && !review) checkResultSize(JSON.stringify({ event: "result", output, target: ctx.target }), maxKb);
-  return { profile, review };
+export function resultBody(ctx, extras, maxKb, { log = console.error } = {}) {
+  const fits = (body) => Buffer.byteLength(JSON.stringify({ event: "result", ...body, target: ctx.target }), "utf8") <= maxKb * 1024;
+  const profile = extras?.profile ?? null;
+  const review = extras?.review ?? null;
+  const pick = [
+    { profile, review },
+    { profile: null, review },
+    { profile, review: null },
+  ].find((body) => (body.profile || body.review) && fits({ ...(body.profile ? { profile: body.profile } : {}), ...(body.review ? { review: body.review } : {}) }));
+  const out = pick ?? { profile: null, review: null };
+  if (review && !out.review) log("review 를 보내면 크기 상한을 넘어 빼고 보냅니다.");
+  if (profile && !out.profile) log("프로필을 보내면 크기 상한을 넘어 빼고 보냅니다.");
+  return out;
 }
 
-/** 결과 크기 상한. 넘으면 보내지 않고 멈춘다(사이트도 받지 않는다). */
-export function checkResultSize(output, maxKb) {
-  const bytes = Buffer.byteLength(output, "utf8");
-  if (bytes > maxKb * 1024) {
-    throw new StepError("finish", `결과가 너무 큽니다(${Math.ceil(bytes / 1024).toLocaleString("en-US")}KB, 상한 ${maxKb.toLocaleString("en-US")}KB).`);
-  }
-}
 
 // ---- 워크플로의 단계 사이 형편 ----
 
@@ -549,22 +515,8 @@ async function main(argv, env) {
         step("fetch");
         installCli(env);
         return;
-      case "scan": {
-        step("scan");
-        const model = env.JUDGE_MODEL ?? "";
-        if (!/^[A-Za-z0-9._-]{1,80}$/.test(model)) throw new StepError("scan", "실행기의 AI 판정자 설정이 맞지 않습니다.");
-        if (!env.ANTHROPIC_API_KEY) throw new StepError("scan", "실행기에 AI 판정자의 API 키가 없어 검사하지 않았습니다.");
-        const output = runScan({
-          dir: src,
-          judge: `anthropic:${model}`,
-          env: childEnv(env, { ANTHROPIC_API_KEY: env.ANTHROPIC_API_KEY, GIT_CEILING_DIRECTORIES: work }),
-          timeoutMs: positive(env.SCAN_TIMEOUT_MINUTES, DEFAULTS.scanTimeoutMinutes) * 60_000,
-        });
-        writeFileSync(path.join(work, "output.json"), output);
-        return;
-      }
       case "part":
-        // 검사 단계 안의 일을 알린다(best-effort). 형편 파일은 바꾸지 않는다(멈추면 검사 단계의 멈춤이다).
+        // 검토 단계 안의 일을 알린다(best-effort). 형편 파일은 바꾸지 않는다(멈추면 검토 단계의 멈춤이다).
         if (problems.includes("콜백 주소") || problems.includes("분석 id")) return; // 알릴 곳을 믿을 수 없다.
         await notifyPart(ctx, arg);
         return;
@@ -601,8 +553,7 @@ async function main(argv, env) {
       case "finish": {
         step("finish");
         await notifyStep(ctx, "finish");
-        const output = readFileSync(path.join(work, "output.json"), "utf8");
-        // 프로필·review 가 없으면(검사 단계에서 만들지 못했거나 돌리지 않았다) 결과만 보낸다.
+        // 프로필·review 가 없으면(검토 단계에서 만들지 못했거나 돌리지 않았다) 있는 것만 보낸다.
         const optional = (name) => {
           try {
             return JSON.parse(readFileSync(path.join(work, name), "utf8"));
@@ -610,14 +561,8 @@ async function main(argv, env) {
             return null;
           }
         };
-        // 사이트는 보낸 본문 전체(결과를 글로 실은 JSON)를 상한과 견준다. 그 본문과 같은 글로 잰다.
-        const fitted = resultBody(
-          ctx,
-          output,
-          { profile: optional("profile.json"), review: optional("review.json") },
-          positive(env.RESULT_MAX_KB, DEFAULTS.resultMaxKb),
-        );
-        await sendResult(ctx, output, fitted.profile, fitted.review);
+        const fitted = resultBody(ctx, { profile: optional("profile.json"), review: optional("review.json") }, positive(env.RESULT_MAX_KB, DEFAULTS.resultMaxKb));
+        await sendResult(ctx, fitted.profile, fitted.review);
         return;
       }
       case "fail": {

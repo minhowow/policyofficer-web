@@ -1,31 +1,34 @@
 /**
- * 구조 쪽(/how/)의 그림(2026-11-13 오너 지시). 쉬운 판 셋(전시·포스터, 처음 보는 사람이 10초 안에 읽는 것. 상자 7개 이하, 상자마다
- * 제목과 한 줄, 숫자·커밋·모델 이름·내부 낱말 없음), 따라가 보기 하나(사례 하나가 단계를 지나는 모습. 사례 쪽에 실린 결과에서 그대로
- * 옮긴다), 자세한 판 셋(보고서, 만든 사람이 읽는 설계도). 낱말과 숫자의 출처:
+ * 구조 쪽(/how/)의 그림(2026-11-13 오너 지시). 쉬운 판 둘(전시·포스터, 처음 보는 사람이 10초 안에 읽는 것. 상자 7개 이하, 상자마다
+ * 제목과 한 줄, 숫자·커밋·모델 이름·내부 낱말 없음), 따라가 보기 하나(실제 분석 하나가 단계를 지나는 모습. 그 결과에서 그대로
+ * 옮긴다), 자세한 판 둘(보고서, 만든 사람이 읽는 설계도). 2026-11-25 오너 지시로 규칙 검사(scan)를 폐기해 '같은 엔진, 두 가지 쓰임'
+ * 그림과 그 상자를 지웠다. 낱말과 숫자의 출처:
  * - 그림 1: 이 저장소의 코드(src/server/config.ts 의 기본값. 운영 환경 변수는 이 값들을 바꾸지 않는다), .github/workflows/analyze.yml,
  *   runner/run.mjs, src/server/queue.ts·callbacks.ts, src/server/db/migrations/. VM 이 작업 뒤 사라지는 것은 GitHub 호스팅 실행기의
  *   성질이다(이 저장소는 '분석마다 새 VM'만 적는다).
- * - 그림 2·3: CLI 세션의 사실 자료(~/.cache/policypack-eval/structure-2026-11-13/cli-structure.md, 태그 handoff-w11-8 기준)와 고정
- *   태그의 CLI 코드·docs/output.md(handoff-w11-13 에서 보고 handoff-w13-2 에서 다시 봄. 그 사이에 더해진 것은 제재 표와 진행 표시다). 의무 지도는 법령 206개(법률·시행령·시행규칙·고시)를 읽어 뽑은 의무 795개이고, 795줄에
- *   적힌 법령 이름은 113개다(CLI docs/lawmap/README.md, duties.jsonl). 기능은 27가지(features.yaml 의 features. handoff-w11-13 에서
- *   '그 밖의 AI(분류·인식 모델)'가 더해졌다. 품목 6가지는 따로). 기능은 이해 단계가 기능마다 인용과 함께 정한다(언어와 상관없이, JS·TS
- *   신호는 단서). 웹은 반박을 '코드에서 본 것'·'충족 근거 있음'에만 건다(runner 의 --rebut-scope found). 상태 이름은 사이트의 말
- *   (src/lib/report/status.ts)을 쓴다.
- * - 따라가 보기: data/cases.json 의 사례(TRACE)를 그대로 읽는다. 고른 까닭은 그 사례의 한 줄 요약(src/lib/cases/stories.ts)이 이 의무다.
+ * - 그림 2: CLI 세션의 사실 자료(~/.cache/policypack-eval/structure-2026-11-13/cli-structure.md)와 고정 태그의 CLI 코드·docs/output.md
+ *   (handoff-w13-4 에서 다시 봄). 의무 지도는 법령 206개(법률·시행령·시행규칙·고시)를 읽어 뽑은 의무 795개이고, 795줄에 적힌 법령
+ *   이름은 113개다(CLI docs/lawmap/README.md, duties.jsonl). 기능은 27가지(features.yaml 의 features. 품목 6가지는 따로). 기능은 이해
+ *   단계가 기능마다 인용과 함께 정한다(언어와 상관없이, JS·TS 신호는 단서). 웹은 반박을 '코드에서 본 것'·'충족 근거 있음'에만 건다
+ *   (runner 의 --rebut-scope found). 상태 이름은 사이트의 말(src/lib/report/status.ts)을 쓴다.
+ * - 따라가 보기: 미리 돌려 넣은 분석(data/analyses/, `TraceSource`)을 그대로 읽는다. 고른 까닭은 그 저장소의 한 줄 요약(사람이 원본
+ *   코드에서 확인해 쓴 것, `HEADLINE`)이 이 의무다.
  * CLI 를 옮겨 고정하면(CLI_PIN) 낱말과 숫자를 다시 보고 `node scripts/export-figures.mjs` 로 docs/figures/ 를 다시 뽑는다
- * (tests/how.test.ts 가 파일이 이 자료와 같은지, CLI_PIN 이 수집본의 커밋과 같은지 본다).
+ * (tests/how.test.ts 가 파일이 이 자료와 같은지, CLI_PIN 이 실행기의 커밋과 같은지 본다).
  */
-import { CASE_STORIES } from "../cases/stories.ts";
 import { lawArticle } from "../duties/article.ts";
 import { REVIEW_STATUS_LABEL } from "../report/status.ts";
 import { SITE } from "../site.ts";
 import { BIG, boxHeight, Canvas, SIZE, wrap, type Figure, type Tone } from "./draw.ts";
 
-/** 실행기가 고정한 CLI(analyze.yml 의 CLI_COMMIT 앞 7자리, contract/cli-current/MANIFEST.json 과 같다)와 그 커밋을 가리키는 태그. */
-export const CLI_PIN = { commit: "7cf9758", tag: "handoff-w13-3" } as const;
+/** 실행기가 고정한 CLI(analyze.yml 의 CLI_COMMIT 앞 7자리)와 그 커밋을 가리키는 태그. */
+export const CLI_PIN = { commit: "386ce07", tag: "handoff-w13-4" } as const;
 
-/** 따라가 보기의 사례와 의무(jobtalk: 상담 메시지를 OpenAI 로 보내는데 가입 동의문에 국외 이전이 없다). */
-export const TRACE = { slug: "jobtalk", duty: "pipa-28-8-1" } as const;
+/** 따라가 보기의 의무(jobtalk: 상담 메시지를 OpenAI 로 보내는데 가입 동의문에 국외 이전이 없다). */
+export const TRACE = { duty: "pipa-28-8-1" } as const;
+
+/** 따라가 보기의 저장소 한 줄 요약(사람이 원본 코드에서 확인해 쓴 것, 2026-11-12). */
+const HEADLINE = "진로 상담 챗봇. 자격증·관심 분야·상담 메시지를 OpenAI 로 보내는데, 가입 동의문에 국외 이전이 적혀 있지 않다";
 
 const LINE = 21;
 const boxH = (n: number) => boxHeight(n);
@@ -229,68 +232,15 @@ function reviewSimple(): Figure {
   };
 }
 
-/* ─────────────────────────── 쉬운 판 3: 같은 엔진, 두 가지 쓰임 ─────────────────────────── */
+/* ─────────────────────────── 따라가 보기: 실제 분석 하나가 단계를 지나는 모습 ─────────────────────────── */
 
-function usesSimple(): Figure {
-  const W = 1240;
-  const c = new Canvas();
-  const w = 372;
-  const gap = (W - 32 - w * 3) / 2;
-  const y = 16;
-  const h = boxHeight(1, BIG) + 30;
-  const parts: { id: string; title: string; line: string; small: string; tone: Tone; out: string }[] = [
-    { id: "dev", title: "개발할 때", line: "내 컴퓨터와 CI 에서, AI 없이도 돎", small: "scan · Claude Code 훅 · pre-commit · CI", tone: "plain", out: "AI 를 켜면 코드가 바깥으로 나감" },
-    { id: "engine", title: "같은 엔진 · 같은 정책", line: "같은 규칙으로 코드를 검사", small: SITE.cli, tone: "keep", out: "" },
-    { id: "web", title: "웹에서", line: "남의 저장소를 AI 와 함께, 법 의무를 더 넓게", small: "scan · profile · review", tone: "plain", out: "읽는 코드가 AI(바깥)로 나감" },
-  ];
-  const boxes = parts.map((p, i) => {
-    const x = 16 + i * (w + gap);
-    const b = put(c, p.id, x, y, w, p.title, [p.line], { tone: p.tone, size: BIG, h });
-    c.text(x + 14, y + h - 14, p.small, { cls: "hw-small", size: BIG.small, in: p.id });
-    if (p.out) c.text(x + 14, y + h + 28, p.out, { cls: "hw-tag t-out", size: 15, bold: true });
-    return b;
-  });
-  c.line(
-    [
-      [boxes[0].right, boxes[0].cy],
-      [boxes[1].x, boxes[1].cy],
-    ],
-    "hw-edge",
-  );
-  c.line(
-    [
-      [boxes[1].right, boxes[1].cy],
-      [boxes[2].x, boxes[2].cy],
-    ],
-    "hw-edge",
-  );
-
-  return {
-    id: "how-uses-simple",
-    file: "engine-two-uses-simple",
-    title: "같은 엔진, 두 가지 쓰임",
-    width: W,
-    height: y + h + 48,
-    shapes: c.shapes,
-    list: [
-      {
-        items: parts.map((p) => ({
-          tone: p.tone,
-          title: p.title,
-          lines: [p.line, p.small, ...(p.out ? [p.out] : [])],
-        })),
-      },
-    ],
-    notes: [],
-  };
-}
-
-/* ─────────────────────────── 따라가 보기: 사례 하나가 단계를 지나는 모습 ─────────────────────────── */
-
-/** 따라가 보기가 읽는 사례 자료(data/cases.json 의 꼴 가운데 쓰는 것만). */
+/** 따라가 보기가 읽는 분석(미리 돌려 넣은 기록, data/analyses/): 저장소·커밋·돌린 날과 review 결과 JSON. */
 export interface TraceSource {
-  reviewRun: { ranOn: string };
-  cases: { slug: string; owner: string; name: string; commit: string; review: unknown }[];
+  owner: string;
+  name: string;
+  commit: string;
+  ranOn: string;
+  review: unknown;
 }
 
 interface TraceItem {
@@ -313,23 +263,22 @@ interface TraceFeature {
   evidence: { file: string; line: number | null; what: string }[];
 }
 
-/** 사례 자료에서 따라가 볼 의무 한 건과 그 기능. 없으면 멈춘다(자료가 바뀌면 그림을 다시 고를 일이다). */
+/** 분석에서 따라가 볼 의무 한 건과 그 기능. 없으면 멈춘다(자료가 바뀌면 그림을 다시 고를 일이다). */
 export function traceData(source: TraceSource) {
-  const found = source.cases.find((c) => c.slug === TRACE.slug);
-  const review = found?.review as
+  const review = source.review as
     | { checklist?: TraceItem[]; profile?: { features?: TraceFeature[] }; run?: { models?: { investigate?: string; verify?: string } } }
     | undefined;
   const item = review?.checklist?.find((i) => i.duty === TRACE.duty);
   const feature = review?.profile?.features?.find((f) => f.id === item?.feature);
-  if (!found || !item || !feature) throw new Error(`따라가 보기: 사례 ${TRACE.slug} 의 의무 ${TRACE.duty} 를 찾지 못했습니다.`);
-  return { repo: found, item, feature, ranOn: source.reviewRun.ranOn, models: review?.run?.models ?? {} };
+  if (!item || !feature) throw new Error(`따라가 보기: ${source.owner}/${source.name} 의 의무 ${TRACE.duty} 를 찾지 못했습니다.`);
+  return { repo: source, item, feature, ranOn: source.ranOn, models: review?.run?.models ?? {} };
 }
 
-/** 사례 결과를 실을 때 함께 보이는 것(docs/commitments.md: 미리 돌린 것, 저장소·커밋·돌린 날·모델). 쪽의 그림 아래와 파일에 쓴다. */
+/** 분석 결과를 실을 때 함께 보이는 것(docs/commitments.md: 미리 돌린 것, 저장소·커밋·돌린 날·모델). 쪽의 그림 아래와 파일에 쓴다. */
 export function traceSourceLine(source: TraceSource): string {
   const { repo, ranOn, models } = traceData(source);
   const by = [models.investigate && `조사 ${models.investigate}`, models.verify && `반박 ${models.verify}`].filter(Boolean).join(" · ");
-  return `사례 ${repo.owner}/${repo.name} · 커밋 ${repo.commit.slice(0, 7)} · ${SITE.cases.prerun} ${ranOn}${by ? ` (${by})` : ""} · ${SITE.cases.regate}`;
+  return `${repo.owner}/${repo.name} · 커밋 ${repo.commit.slice(0, 7)} · ${SITE.prerun} ${ranOn}${by ? ` (${by})` : ""}`;
 }
 
 const VERIFICATION: Record<string, string> = { upheld: "유지", overturned: "뒤집음", "overturn-ungrounded": "근거 없는 뒤집기 거절", "not-run": "묻지 못함" };
@@ -338,7 +287,7 @@ function traceFigure(source: TraceSource): Figure {
   const { repo, item, feature } = traceData(source);
   const W = 1240;
   const c = new Canvas();
-  const headline = `${repo.name} — ${CASE_STORIES[TRACE.slug]?.headline ?? ""}`;
+  const headline = `${repo.name} — ${HEADLINE}`;
   const head = wrap(headline, W - 32, 18, 2);
   head.forEach((line, i) => c.text(16, 30 + i * 26, line, { cls: "hw-title", size: 18, bold: true }));
   let y = 30 + head.length * 26;
@@ -495,7 +444,7 @@ function pathFigure(): Figure {
   const web = place("web", "vercel", 0, "웹 (Next.js)", ["GitHub 에 공개·끝 커밋 확인", "새 분석 하루 30건", "review 하루 10건", "같은 커밋은 다시 씀", "(분석은 60분 · review 는 늘)"]);
   const queue = place("queue", "db", 0, "대기열", ["분석 줄 (analyses 표)", "실행 자리 2 · 대기 20"]);
   // 실행기(runner/run.mjs)가 CLI 를 부르고, 진행과 결과를 서명해 웹에 보낸다. CLI 는 실행기 상자 안에 둔다(웹과 직접 잇지 않는다).
-  const cliLines = ["scan · AI 판정 (haiku)", "profile 명령 (모델 없음)", "review (haiku·sonnet)", "review 한 건 어림 $3·420초"];
+  const cliLines = ["profile 명령 (모델 없음)", "review: 기능 파악·조사 (haiku)", "반박 (sonnet)", "review 한 건 어림 $3·420초"];
   const runH = boxH(cliLines.length) + 24;
   const runY = Math.round(lane.vm.y + (lane.vm.h - runH) / 2);
   const runW = col[2].x + col[2].w + 12 - col[1].x;
@@ -503,7 +452,7 @@ function pathFigure(): Figure {
   const runner = { x: col[1].x, y: runY, w: runW, h: runH, cx: col[1].x + runW / 2, cy: runY + runH / 2, bottom: runY + runH, right: col[1].x + runW };
   const cli = put(c, "cli", col[2].x, runY + 12, col[2].w, `CLI ${CLI_PIN.commit}`, cliLines, { tag: CLI_PIN.tag });
   const recv = place("recv", "vercel", 3, "결과 받기·보이기", ["콜백 서명 확인 (HMAC)", "DB 에서 읽어 쪽을 그림"]);
-  const store = place("store", "db", 3, "결과 저장", ["결과 JSON 셋", "(인용한 코드 줄 포함)", "코드 전체는 두지 않음"], { tone: "keep" });
+  const store = place("store", "db", 3, "결과 저장", ["결과 JSON 둘", "(인용한 코드 줄 포함)", "코드 전체는 두지 않음"], { tone: "keep" });
   const screen = place("screen", "browser", 3, "화면", ["3초마다 진행 읽기"]);
   // AI 상자는 띠의 아래쪽에 두어, 오가는 화살표의 말이 들어갈 자리를 남긴다.
   const ai = put(c, "ai", col[2].x, lane.ai.y + lane.ai.h - boxH(1) - 14, col[2].w, "AI", ["haiku 5.5 · sonnet 5.5"], { tone: "out", tag: "외부" });
@@ -622,7 +571,7 @@ function pathFigure(): Figure {
             lines: ["haiku 5.5 · sonnet 5.5", "답은 CLI 로 돌아감"],
           },
           { via: "⑤ 진행·결과 JSON (실행기가 서명한 콜백)", tag: "Vercel", title: "결과 받기·보이기", lines: ["콜백 서명 확인 (HMAC)", "DB 에서 읽어 쪽을 그림"] },
-          { via: "⑥ 저장", tag: "DB", tone: "keep", title: "결과 저장", lines: ["결과 JSON 셋 (인용한 코드 줄 포함)", "코드 전체는 두지 않음"] },
+          { via: "⑥ 저장", tag: "DB", tone: "keep", title: "결과 저장", lines: ["결과 JSON 둘 (인용한 코드 줄 포함)", "코드 전체는 두지 않음"] },
           { via: "⑦ 진행·결과 (3초마다 읽음)", tag: "브라우저", title: "화면", lines: ["3초마다 진행 읽기"] },
         ],
       },
@@ -632,10 +581,10 @@ function pathFigure(): Figure {
       },
     ],
     notes: [
-      "분석의 본체는 VM 안의 CLI 가 하는 AI 검토(review)다. 기능을 파악해 걸리는 의무를 고르고, AI 가 의무마다 코드를 조사하고, 도구가 그 인용을 확인해 체크리스트를 만든다. 정적 검사(scan)는 보조로 함께 돌고, 결과 화면 아래의 '보조' 한 줄에 접어 싣는다.",
+      "분석은 VM 안의 CLI 가 하는 AI 검토(review)다. 기능을 파악해 걸리는 의무를 고르고, AI 가 의무마다 코드를 조사하고, 다른 AI 가 반박하고, 도구가 인용과 검색을 직접 대조해 체크리스트를 만든다.",
       "요청은 브라우저 → Vercel 의 웹 → DB 의 대기열을 지나, 실행 자리가 비면 웹이 GitHub Actions 에 맡긴다. 분석마다 새 VM 이 뜨고, 실행기가 진행과 결과를 서명한 콜백으로 보내면 웹이 DB 에 둔다. 화면은 3초마다 그것을 읽는다.",
       `남의 코드는 그 VM 에만 풀리고 읽기만 한다. 바깥(Anthropic)으로는 CLI 가 고른 파일의 코드와 질문이 나간다(비밀값 모양은 가린다). 웹은 Anthropic 을 부르지 않는다. CLI 는 커밋 ${CLI_PIN.commit}(태그 ${CLI_PIN.tag})에 고정했다.`,
-      "DB 에는 결과 JSON 셋(scan·profile·review)과 진행 기록만 둔다(인용한 코드 줄은 결과 안에 있고, 코드 전체와 압축본은 두지 않는다). 한도: 새 분석 하루 30건, review 하루 10건, review 한 건 어림 $3·420초(새 질문마다 본다). 같은 커밋은 60분 안의 분석과 저장된 review 를 다시 쓴다.",
+      "DB 에는 결과 JSON(profile·review)과 진행 기록만 둔다(인용한 코드 줄은 결과 안에 있고, 코드 전체와 압축본은 두지 않는다). 한도: 새 분석 하루 30건, review 하루 10건, review 한 건 어림 $3·420초(새 질문마다 본다). 같은 커밋은 60분 안의 분석과 저장된 review 를 다시 쓴다.",
     ],
   };
 }
@@ -679,8 +628,7 @@ function reviewFigure(): Figure {
 
   // A: 프로필(위에서 아래로).
   const sig = put(c, "sig", A.x, top, A.w, "신호", ["의존성·import·호출·주소", "→ 기능의 단서 (JS·TS)"], { tone: "tool", tag: "도구" });
-  const stat = put(c, "stat", A.x, sig.bottom + gap, A.w, "정적 검사", ["kr-core 팩 · Semgrep", "→ 의무별 정적 경고"], { tone: "tool", tag: "도구" });
-  const und = put(c, "und", A.x, stat.bottom + gap, A.w, "AI 이해", ["haiku 5.5 · 언어 상관없이", "기능(27가지 중)을 인용과 정함", "플랫폼 · 서비스 요약", "개인정보 흐름"], { tone: "model", tag: "모델" });
+  const und = put(c, "und", A.x, sig.bottom + gap, A.w, "AI 이해", ["haiku 5.5 · 언어 상관없이", "기능(27가지 중)을 인용과 정함", "플랫폼 · 서비스 요약", "개인정보 흐름"], { tone: "model", tag: "모델" });
   const g1 = put(c, "g1", A.x, und.bottom + gap, A.w, "관문 ①", ["인용을 못 넘은 주장은 버림"], { tone: "tool", tag: "도구" });
   // C: 의무마다 조사 → 관문 → 반박 → 관문.
   const inv = put(c, "inv", C.x, top, C.w, "조사", ["haiku 5.5 · 의무 하나씩", "코드 읽기·검색 도구로", "상태·인용·근거를 답함"], { tone: "model", tag: "모델" });
@@ -696,7 +644,7 @@ function reviewFigure(): Figure {
   const colBottom = Math.max(g1.bottom, g3.bottom);
 
   // B: 걸리는 의무(코드가 고른다).
-  const dutyLines = ["의무 지도 795", "− 지위 의무 257", "→ 있는 기능에 걸리는 것", "→ 검토 후보·kr-core 만", "(후보: 조문 인용이 법령", "원문과 맞는 것, 미리 대조)"];
+  const dutyLines = ["의무 지도 795", "− 지위 의무 257", "→ 있는 기능에 걸리는 것", "→ 검토 후보 (+ 따로 정한 2)", "(후보: 조문 인용이 법령", "원문과 맞는 것, 미리 대조)"];
   const duty = put(c, "duty", B.x, Math.round(top + (colBottom - top - boxH(dutyLines.length)) / 2), B.w, "걸리는 의무", dutyLines, { tone: "tool", tag: "도구" });
 
   // D: 체크리스트.
@@ -710,8 +658,7 @@ function reviewFigure(): Figure {
   ]);
   c.label(16, sig.cy - 12, "저장소", { anchor: "start" });
   for (const [a, b] of [
-    [sig, stat],
-    [stat, und],
+    [sig, und],
     [und, g1],
     [inv, g2],
     [g2, reb],
@@ -771,7 +718,6 @@ function reviewFigure(): Figure {
         title: "프로필",
         items: [
           { tag: "도구", tone: "tool", title: "신호", lines: ["의존성·import·호출 모양·주소·경로 낱말·화면 파일", "→ 기능의 단서 (JS·TS)"] },
-          { tag: "도구", tone: "tool", title: "정적 검사", lines: ["kr-core 팩 · Semgrep", "→ 의무별 정적 경고"] },
           { tag: "모델", tone: "model", title: "AI 이해", lines: ["haiku 5.5 · 언어 상관없이", "기능(27가지 중)을 기능마다 인용과 함께 정함 · 플랫폼 · 서비스 요약 · 개인정보 흐름"] },
           { tag: "도구", tone: "tool", title: "관문 ①", lines: ["인용을 못 넘은 주장은 버림"] },
         ],
@@ -813,135 +759,19 @@ function reviewFigure(): Figure {
       },
     ],
     notes: [
-      "보라(점선)는 모델이 말한 것, 파랑은 모델 없이 도구가 한 것이다. 기능은 AI 가 코드를 읽어 언어와 상관없이 정한다(기능마다 인용과 함께. JS·TS 의 의존성·import 신호는 단서다). 정적 검사 규칙과 41곳 평가는 JS/TS 저장소 기준이다. Java·Python·Go 저장소 4곳에서 동작을 확인했다.",
-      "어느 의무를 물을지는 코드의 규칙이 고른다: 의무 795개에서 지위 의무를 빼고, 있는 기능에 걸리는 것 가운데 검토 후보와 kr-core 의무만. 정적 검사(kr-core·Semgrep)의 경고는 같은 의무의 질문에 힌트로 붙는 보조다.",
+      "보라(점선)는 모델이 말한 것, 파랑은 모델 없이 도구가 한 것이다. 기능은 AI 가 코드를 읽어 언어와 상관없이 정한다(기능마다 인용과 함께. JS·TS 의 의존성·import 신호는 단서다). 41곳 평가는 JS/TS 저장소에서 했고, Java·Python·Go 저장소 4곳에서 동작을 확인했다.",
+      "어느 의무를 물을지는 모델 없이 도구가 고른다: 의무 795개에서 지위 의무를 빼고, 있는 기능에 걸리는 검토 후보만 묻는다(위탁 공개·국외 이전 의무 2개는 CLI 가 따로 정해 함께 묻는다).",
       "모델의 답은 모두 관문을 거쳐 상태가 정해진다. 관문은 인용한 글이 그 파일 코드에 글자 그대로 있는지, '없다'는 답의 검색을 다시 돌려 줄 수가 같은지, '해당 없음'의 조건과 근거가 갖춰졌는지를 직접 확인하고, 못 넘으면 빼지 않고 상태를 낮춘다. 인용한 줄이 그 의무와 관련 있는지, 검색어가 충분히 넓은지는 보지 않는다. 그래서 체크리스트는 사람이 확인할 목록이다.",
       "조사는 haiku 5.5, 반박은 sonnet 5.5 이다. 웹은 반박을 '코드에서 본 것'·'충족 근거 있음'에만 건다(그 밖의 항목은 반박 안 함). 의무 하나씩 묻고 여섯 개까지 동시에 돈다. 웹은 한 건에 어림 $3·420초 상한을 건다(새 질문마다 본다).",
     ],
   };
 }
 
-/* ─────────────────────────── 그림 3: 같은 엔진, 두 가지 쓰임 ─────────────────────────── */
-
-function usesFigure(): Figure {
-  const W = 1240;
-  const c = new Canvas();
-  const L = { x: 16, w: 290 };
-  const M = { x: 326, w: 300 };
-  const R = { x: 646, w: 270 };
-  const seamX = 956;
-  const web = { x: 996, w: W - 16 - 996 };
-  const laneY = 16;
-  const top = laneY + 64;
-  const gap = 16;
-  const inner = (lane: { x: number; w: number }) => ({ x: lane.x + 14, w: lane.w - 28 });
-
-  // 왼쪽: 개발자 쪽(기본값으로 모델·네트워크 없음).
-  const li = inner(L);
-  const scan = put(c, "scan", li.x, top, li.w, "scan", ["kr-core → Semgrep CE 로 한꺼번에", "참·거짓·모름 세 값으로", "--staged · --diff"]);
-  const hook = put(c, "hook", li.x, scan.bottom + gap, li.w, "Claude Code 훅", ["Edit·Write 뒤 그 파일 하나", "확실한 '검토 필요'만 알림"]);
-  const ciLines = ["pre-commit: 커밋할 JS/TS 파일", "CI: 저장소 전체", "SARIF 2.1.0 · GitLab Code Quality", "종료 코드 0·1·2"];
-  const ci = put(c, "ci", li.x, hook.bottom + gap, li.w, "pre-commit · CI", ciLines);
-
-  // 가운데: 함께 쓰는 것.
-  const mi = inner(M);
-  const packLines = ["정책 6 · 의무 8 · 조문 원문 8", "Semgrep 규칙으로 옮겨 씀", "두 쪽이 함께 씀"];
-  const mapLines = ["법령 206개를 읽어 뽑은 의무", "(의무가 나온 법령 113개)", "기능 27가지와 이은 표", "profile · review 만 읽음 (웹 쪽)", "kr-core 는 그 가운데 8개"];
-  const contractLines = ["scan: report-1 JSON 스키마", "review: review-2 JSON 스키마", "profile: 판 1 (스키마 파일 없음)"];
-  const pack = put(c, "pack", mi.x, top, mi.w, "정책 팩 kr-core", packLines);
-  const map = put(c, "map", mi.x, pack.bottom + gap, mi.w, "의무 지도 795", mapLines);
-  const contract = put(c, "contract", mi.x, map.bottom + gap, mi.w, "출력 계약", contractLines);
-
-  // 오른쪽: 웹 쪽(실행기가 부른다).
-  const ri = inner(R);
-  const judge = put(c, "judge", ri.x, top, ri.w, "scan --judge haiku", ["정적으로 결론이 안 난 곳만", "파일 하나씩 물음"], { tone: "model", tag: "모델" });
-  const prof = put(c, "prof", ri.x, judge.bottom + gap, ri.w, "profile", ["모델 없음", "기능 · 플랫폼 · 의무 목록"]);
-  const revLines = ["haiku 조사 + sonnet 반박", "켰을 때만 (하루 10건)", "한 건 상한 어림 $3·420초"];
-  const rev = put(c, "rev", ri.x, prof.bottom + gap, ri.w, "review", revLines, { tone: "model", tag: "모델" });
-
-  const bottom = Math.max(ci.bottom, contract.bottom, rev.bottom) + 48;
-  // 띠는 상자보다 먼저 그려야 아래에 깔린다.
-  const lanes = c.shapes.splice(0);
-  c.lane("lane-dev", L.x, laneY, L.w, bottom - laneY, "개발자 쪽", { sub: "모델 없이 돎 · 바깥 통신 없음" });
-  c.lane("lane-shared", M.x, laneY, M.w, bottom - laneY, "함께 쓰는 것", { sub: "파일 고르기 · 인용 관문 · 비밀값 가림도" });
-  c.lane("lane-web", R.x, laneY, R.w, bottom - laneY, "웹 쪽", { sub: "실행기가 부름 · AI 중심" });
-  c.shapes.push(...lanes);
-  c.text(li.x, bottom - 18, "--judge 를 켜면 판정 대상 코드가 외부 API 로 나감", { cls: "hw-tag t-out", size: SIZE.tag, bold: true, in: "lane-dev" });
-  c.text(ri.x, bottom - 18, "판정 대상 코드가 Anthropic API 로 나감", { cls: "hw-tag t-out", size: SIZE.tag, bold: true, in: "lane-web" });
-
-  // 이음매: 웹은 고정한 커밋과 스키마로만 CLI 와 잇는다.
-  c.line(
-    [
-      [seamX, laneY + 26],
-      [seamX, bottom],
-    ],
-    "hw-seam",
-    true,
-  );
-  c.text(seamX, laneY + 14, "이음매", { cls: "hw-lane-name", size: SIZE.lane, bold: true, anchor: "middle" });
-  const siteLines = [`CLI 커밋 ${CLI_PIN.commit} 고정`, `(태그 ${CLI_PIN.tag})`, "결과 JSON 의 스키마", "(review-2 사본 · scan 판 1)", "팩 메타데이터 (조문 원문)", "계약 시험: 커밋·날짜·팩"];
-  const site = put(c, "site", web.x, Math.round(laneY + (bottom - laneY - boxH(siteLines.length)) / 2), web.w, "웹 (이 사이트)", siteLines, { tone: "keep" });
-  c.arrow([
-    [R.x + R.w, site.cy],
-    [site.x, site.cy],
-  ]);
-  c.label(seamX, site.cy - 12, "결과 JSON", { anchor: "middle" });
-
+/** 쪽과 내보내기가 함께 쓰는 그림 모음. 따라가 보기는 분석 자료를 받아 그린다. */
+export function buildFigures(trace: TraceSource) {
   return {
-    id: "how-uses",
-    file: "engine-two-uses",
-    title: "같은 엔진, 두 가지 쓰임",
-    width: W,
-    height: bottom + 16,
-    shapes: c.shapes,
-    list: [
-      {
-        title: "개발자 쪽 · 모델 없이 돎 · 바깥 통신 없음",
-        items: [
-          { title: "scan", lines: ["kr-core → Semgrep CE 로 한꺼번에, 참·거짓·모름 세 값으로", "--staged · --diff"] },
-          { title: "Claude Code 훅", lines: ["Edit·Write 뒤 그 파일 하나", "확실한 '검토 필요'만 알림"] },
-          { title: "pre-commit · CI", lines: ciLines },
-          { tone: "out", tag: "외부", title: "--judge 는 선택", lines: ["켜면 판정 대상 코드가 외부 API 로 나감"] },
-        ],
-      },
-      {
-        title: "함께 쓰는 것",
-        items: [
-          { title: "정책 팩 kr-core", lines: packLines },
-          { title: "의무 지도 795", lines: mapLines },
-          { title: "출력 계약", lines: contractLines },
-          { title: "엔진 코드", lines: ["파일 고르기 · 인용 관문 · 비밀값 가림"] },
-        ],
-      },
-      {
-        title: "웹 쪽 · 실행기가 부름 · AI 중심",
-        items: [
-          { tag: "모델", tone: "model", title: "scan --judge haiku", lines: ["정적으로 결론이 안 난 곳만 파일 하나씩 물음"] },
-          { title: "profile", lines: ["모델 없음", "기능 · 플랫폼 · 의무 목록"] },
-          { tag: "모델", tone: "model", title: "review", lines: revLines },
-          { tone: "out", tag: "외부", title: "Anthropic API", lines: ["판정 대상 코드가 나감 (비밀값 모양은 가림)"] },
-        ],
-      },
-      {
-        title: "이음매",
-        items: [{ via: "결과 JSON", tone: "keep", title: "웹 (이 사이트)", lines: siteLines }],
-      },
-    ],
-    notes: [
-      "이 사이트의 본체는 웹 쪽의 AI 검토(review)다. 실행기가 scan(haiku 판정자)과 profile 을 늘 부르고, review 는 켰을 때만(하루 10건, 같은 커밋의 저장된 것이 없을 때) 부른다. review 에서 조사와 반박은 모델이, 관문은 도구가 한다.",
-      "정적 검사(scan)는 보조다. 같은 엔진이 개발자 쪽(scan, Claude Code 훅, pre-commit·CI)에서는 기본값으로 모델을 부르지 않고 바깥 통신도 없이 돈다(대상은 JS/TS 파일). 판정자(--judge)를 켜면 판정 대상 코드가 외부 API 로 나간다.",
-      "가운데는 CLI 안에 있는 것이다. 정책 팩 kr-core(정책 6·의무 8)와 엔진 코드는 두 쪽이 함께 쓰고, 의무 지도 795 와 review-2 스키마는 웹 쪽(profile·review)만 쓴다.",
-      `웹과 CLI 는 고정한 커밋(${CLI_PIN.commit}, 태그 ${CLI_PIN.tag}), 결과 JSON 의 스키마, 팩 메타데이터(조문 원문)로 잇는다. CLI 를 옮기면 계약 시험이 커밋·날짜·팩 판이 맞는지 본다.`,
-    ],
-  };
-}
-
-
-/** 쪽과 내보내기가 함께 쓰는 그림 모음. 따라가 보기는 사례 자료를 받아 그린다. */
-export function buildFigures(cases: TraceSource) {
-  return {
-    simple: [pathSimple(), reviewSimple(), usesSimple()],
-    trace: traceFigure(cases),
-    detailed: [pathFigure(), reviewFigure(), usesFigure()],
+    simple: [pathSimple(), reviewSimple()],
+    trace: traceFigure(trace),
+    detailed: [pathFigure(), reviewFigure()],
   };
 }

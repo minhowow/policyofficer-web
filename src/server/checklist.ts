@@ -1,7 +1,9 @@
 import "server-only";
 import { isAnalysisId } from "@/lib/service/id";
 import { ServiceUnavailableError } from "@/lib/service/errors";
+import { prerunOf } from "@/lib/service/prerun";
 import { formatKst } from "@/lib/service/steps";
+import { SITE } from "@/lib/site";
 import type { Analysis, ServiceStore } from "@/lib/service/types";
 import { checklistDoc, checklistFileName, checklistMarkdown, type ChecklistDoc, type ChecklistSource } from "@/lib/review/checklist";
 import { showsSyntheticTag } from "./config";
@@ -23,8 +25,9 @@ export async function analysisChecklist(
   if (!analysis || analysis.status !== "succeeded") return null;
   const review = await store.getReview(analysis.owner, analysis.name, analysis.commit);
   if (!review) return null;
-  // 분석 쪽의 기록과 같다: 검사한 날은 검사 단계가 시작한 때다.
+  // 분석 쪽의 기록과 같다: 검토한 날은 검토 단계가 시작한 때다. CLI 로 미리 돌려 넣은 분석은 그렇다고 밝힌다(docs/commitments.md 의 1).
   const scannedAt = analysis.steps.find((step) => step.name === "scan")?.startedAt ?? analysis.requestedAt;
+  const prerun = prerunOf(analysis.id);
   return {
     analysis,
     doc: checklistDoc(review),
@@ -32,7 +35,10 @@ export async function analysisChecklist(
       repo: `${analysis.owner}/${analysis.name}`,
       htmlUrl: tagged ? null : `https://github.com/${analysis.owner}/${analysis.name}`,
       commit: analysis.commit,
-      facts: [...(tagged ? ["합성 예시"] : []), `분석 ${analysis.id} · 검사 ${formatKst(scannedAt)} KST`],
+      facts: [
+        ...(tagged ? ["합성 예시"] : []),
+        prerun ? `분석 ${analysis.id} · ${SITE.prerun} ${prerun.ranOn}` : `분석 ${analysis.id} · 검토 ${formatKst(scannedAt)} KST`,
+      ],
     },
   };
 }

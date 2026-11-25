@@ -1,9 +1,3 @@
-import genaiChatFixed from "@contract/cli-current/genai-chat.fixed.json";
-import genaiChatMain from "@contract/cli-current/genai-chat.main.json";
-import kidsSignupFixed from "@contract/cli-current/kids-signup.fixed.json";
-import kidsSignupMain from "@contract/cli-current/kids-signup.main.json";
-import nightPushMain from "@contract/cli-current/night-push.main.json";
-import plainMain from "@contract/cli-current/plain.main.json";
 import genaiChatFixedProfile from "@contract/cli-current/profile/genai-chat.fixed.json";
 import genaiChatMainProfile from "@contract/cli-current/profile/genai-chat.main.json";
 import kidsSignupFixedProfile from "@contract/cli-current/profile/kids-signup.fixed.json";
@@ -13,8 +7,6 @@ import plainMainProfile from "@contract/cli-current/profile/plain.main.json";
 import { featureNames, parseProfile } from "@/lib/profile";
 import { parseReview, reviewFactsOf } from "@/lib/review";
 import genaiChatReview from "@contract/review/genai-chat.review.json";
-import { parseReport } from "@/lib/report/parse";
-import { serviceFindingCount } from "@/lib/report/types";
 import { pickActivity } from "./activity";
 import { repoKey } from "./href";
 import { matchRepositories } from "./search";
@@ -28,13 +20,11 @@ import type { Analysis, AnalysisStep, Repository, RepositoryHit, ReviewFacts, Se
  * (`src/server/store/index.ts`). 쪽은 `synthetic: true` 를 보고 "합성 예시"를 밝힌다.
  *
  * - 저장소는 모두 합성이다. 실제로 있는 남의 저장소 이름을 쓰지 않고, GitHub 주소(`htmlUrl`)도 없다(링크를 걸지 않는다).
- * - 끝난 분석의 결과는 contract/cli-current 의 CLI 실제 출력이다(합성 데모 코드 contract/fixtures 를 검사한 것). 손으로 고치지
- *   않는다. 그 출력은 판정자 없이 만들었다(대시보드가 결과의 `run.judge` 대로 "판정자 꺼짐"을 보인다).
+ * - 끝난 분석의 프로필은 contract/cli-current/profile 의 CLI 실제 출력이다(합성 데모 코드 contract/fixtures 에 돌린 것). review 는
+ *   손으로 만든 합성 예시(contract/review/genai-chat.review.json)이고 example-studio/genai-chat 에만 있다. 손으로 고치지 않는다.
  * - 진행 중·대기·실패한 분석, 분석이 여러 번인 저장소, 분석이 없는 저장소를 모두 둔다. 진행 중인 분석은 한 순간을 고정한
  *   것이다(합성 미리보기는 진행을 다시 읽지 않아 움직이지 않는다).
  */
-
-type Capture = { tool: { version: string }; run: { pack_digest: string; judge: string | null } };
 
 const repo = (owner: string, name: string, description: string, language: string): Repository => ({
   owner,
@@ -56,16 +46,6 @@ const REPOSITORIES: Repository[] = [
   repo("example-labs", "todo-web", "할 일 목록 웹", "JavaScript"),
 ];
 
-/** 분석 id → CLI 결과. 끝난 분석에만 있다. */
-const RESULTS: Record<string, Capture> = {
-  wtk33e9zuf: kidsSignupMain,
-  "87q82b6jbu": kidsSignupFixed,
-  "64y4jdtazh": nightPushMain,
-  "4qqa6fdx2h": genaiChatMain,
-  mruw8xjzjw: genaiChatFixed,
-  w7bc479x2u: plainMain,
-};
-
 /**
  * 분석 id → 저장소 프로필. 결과와 같은 합성 데모 코드에 `policyofficer profile` 을 돌린 수집본이다
  * (contract/cli-current/profile/<표본>.json, `npm run capture` 가 함께 만든다).
@@ -77,16 +57,6 @@ const PROFILES: Record<string, unknown> = {
   "4qqa6fdx2h": genaiChatMainProfile,
   mruw8xjzjw: genaiChatFixedProfile,
   w7bc479x2u: plainMainProfile,
-};
-
-/** 결과마다 어느 수집본인지. 시험이 수집본과 견줄 때 쓴다. */
-export const SYNTHETIC_RESULT_SOURCES: Record<string, string> = {
-  wtk33e9zuf: "kids-signup.main",
-  "87q82b6jbu": "kids-signup.fixed",
-  "64y4jdtazh": "night-push.main",
-  "4qqa6fdx2h": "genai-chat.main",
-  mruw8xjzjw: "genai-chat.fixed",
-  w7bc479x2u: "plain.main",
 };
 
 /** 요청한 시각에서 몇 초 뒤인지로 단계의 시작·끝을 적는다. null 이면 그 일이 아직 없다. */
@@ -102,7 +72,6 @@ function steps(requestedAt: string, timeline: Timeline): AnalysisStep[] {
 
 function succeeded(id: string, owner: string, name: string, commit: string, requestedAt: string, seconds: [number, number, number, number]): Analysis {
   const [queued, fetched, scanned, finished] = seconds;
-  const result = RESULTS[id];
   return {
     id,
     owner,
@@ -118,7 +87,7 @@ function succeeded(id: string, owner: string, name: string, commit: string, requ
       finish: [scanned, finished],
     }),
     failure: null,
-    versions: { tool: result.tool.version, pack: result.run.pack_digest },
+    versions: null,
   };
 }
 
@@ -137,7 +106,7 @@ const ANALYSES: Analysis[] = [
     steps: steps("2026-10-24T04:58:02Z", { queued: [0, 18], fetch: [18, 37], scan: [37, null] }),
     failure: null,
     versions: { tool: "0.3.0.dev0", pack: "284a5b28911a0124" },
-    // 검사 단계 안에서 실행기가 AI 검토를 시작했다고 알린 순간(검사 시작 86초 뒤).
+    // 검토 단계 안에서 실행기가 AI 검토를 시작했다고 알린 순간(그 단계 시작 86초 뒤).
     review: "run",
     scanPart: { name: "review", startedAt: "2026-10-24T05:00:05Z" },
   },
@@ -153,7 +122,7 @@ const ANALYSES: Analysis[] = [
     steps: steps("2026-10-22T06:31:09Z", { queued: [0, 11], fetch: [11, 611] }),
     failure: {
       step: "fetch",
-      reason: "저장소를 받는 동안 실행기가 10분 넘게 응답하지 않아 멈췄습니다. 검사는 시작하지 않았습니다.",
+      reason: "저장소를 받는 동안 실행기가 10분 넘게 응답하지 않아 멈췄습니다. 검토는 시작하지 않았습니다.",
     },
     versions: null,
   },
@@ -222,20 +191,6 @@ export const syntheticStore: ServiceStore = {
   },
   async findAnalysis(id) {
     return ANALYSES.find((analysis) => analysis.id === id) ?? null;
-  },
-  async getResult(id) {
-    const analysis = ANALYSES.find((entry) => entry.id === id);
-    return analysis?.status === "succeeded" ? (RESULTS[id] ?? null) : null;
-  },
-  async findingCounts(ids) {
-    const counts: Record<string, number | null> = {};
-    for (const id of ids) {
-      const analysis = ANALYSES.find((entry) => entry.id === id);
-      if (analysis?.status !== "succeeded") continue;
-      const parsed = parseReport(RESULTS[id] ?? null);
-      counts[id] = parsed.ok ? serviceFindingCount(parsed.report.findings) : null;
-    }
-    return counts;
   },
   async getProfile(id) {
     const analysis = ANALYSES.find((entry) => entry.id === id);

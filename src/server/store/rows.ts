@@ -55,7 +55,7 @@ export function rowToAnalysis(row: Row): Analysis {
       row.status === "failed" && row.failure_step && row.failure_reason
         ? { step: row.failure_step, reason: row.failure_reason }
         : null,
-    versions: row.tool_version && row.pack_digest ? { tool: row.tool_version, pack: row.pack_digest } : null,
+    versions: row.tool_version ? { tool: row.tool_version, pack: row.pack_digest } : null,
     review: row.review_plan ?? undefined,
     scanPart: row.scan_part && row.scan_part_at ? { name: row.scan_part, startedAt: iso(row.scan_part_at) } : undefined,
   };

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "@/components/Icon";
-import type { CodeSource } from "@/components/result/PolicyCard";
+import type { CodeSource } from "@/lib/service/href";
 import { SanctionBadge, SanctionDetails } from "@/components/result/Sanction";
 import { Tier } from "@/components/result/Tiers";
 import { Where } from "@/components/result/Where";
@@ -36,13 +36,13 @@ export { checkCount };
  * 인용은 관문을 통과한 것(`ok`)만 보인다. 의무 한 줄에 처분의 말이 들면 그 줄은 싣지 않는다(docs/commitments.md 1장). 행의 제목은 의무
  * 지도의 짧은 제목(조문 도감과 같은 글)이고, 없으면 의무 한 줄, 그것도 없으면 조문이다.
  *
- * `recheck` 는 사람이 답을 읽고 말이 안 된다고 짚은 의무(사례 쪽, 2026-11-12 오너 결정)다. 그 상태는 보이지 않고 갈래 수에서도
+ * `recheck` 는 사람이 답을 읽고 말이 안 된다고 짚은 의무(2026-11-12 오너 결정)다. 그 상태는 보이지 않고 갈래 수에서도
  * 빼며, 맨 아래 "다시 검토 중 N건"에 의무 이름만 접어 둔다.
  *
  * 품목 신호가 없어 묻지 않은 품목 의무(묶음 goods)는 "특정 품목을 판다면 확인할 것" 한 줄로 접고 확인할 것의 수에 넣지 않는다. 프로필
  * 신호 인용(`why` profile)은 코드 줄이 아니라 기능이 있다는 파일이라 인용한 줄과 따로 적는다.
  *
- * 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 의무 id 로 의무 지도에서 찾아(`sanctionOf`. 이미 저장된 분석과 사례에도 그대로
+ * 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 의무 id 로 의무 지도에서 찾아(`sanctionOf`. 이미 저장된 분석에도 그대로
  * 붙는다) 행의 어기면 칸과 둘째 줄, 펼친 상세에 적고, 갈래 안을 무거운 차례로 늘어놓는다(`byWeight`. 같은 무게는 지금 차례). 해당
  * 여부부터 확인할 항목의 제재 앞에는 '해당되면'을 둔다. 제재 표가 없는 판이면 단추·칸·주의 문구가 없다.
  */
@@ -51,15 +51,12 @@ export function ReviewView({
   code = null,
   recheck = [],
   exportLinks,
-  runNote,
 }: {
   review: Review;
   code?: CodeSource | null;
   recheck?: readonly string[];
-  /** 체크리스트 내보내기(마크다운 파일, 인쇄용 보기)의 주소. 없으면(데모의 합성 예시) 링크를 두지 않는다. */
+  /** 체크리스트 내보내기(마크다운 파일, 인쇄용 보기)의 주소. 없으면 링크를 두지 않는다. */
   exportLinks?: { markdown: string; print: string };
-  /** 검증 정보에 함께 적는 실행의 사실(사례 쪽: 결과를 낸 CLI 커밋, 판정 규칙만 다시 건 결과면 그 규칙의 CLI 커밋). */
-  runNote?: { cli: string; regate: string | null };
 }) {
   const held = review.checklist.filter((item) => recheck.includes(item.duty));
   const items = review.checklist.filter((item) => !recheck.includes(item.duty));
@@ -98,7 +95,7 @@ export function ReviewView({
           <FlowFigure layout={layoutFlow(review.flow.nodes, review.flow.edges)} nodes={review.flow.nodes} edges={review.flow.edges} code={code} />
         )}
       </Tier>
-      <Verification review={review} note={runNote} />
+      <Verification review={review} />
     </div>
   );
 }
@@ -500,10 +497,10 @@ function Checklist({ review, items, held, code }: { review: Review; items: Revie
 
 /**
  * 검증 정보(쪽 아래, 2026-11-25 web16): 숫자 나열 대신 문장으로(인용을 파일에서 글자 그대로 확인한 수, '없다' 검색을 다시 돌려 같은 수와
- * 달라 쓰지 않은 수, 반박의 결과). 그 아래 회색 한 줄에 모델·비용(구성과 함께)·시간·가린 비밀값·묻지 않은 의무, 사례 쪽은 CLI 커밋과
- * 판정 규칙만 다시 적용한 사실. 결과에 실린 수 그대로다.
+ * 달라 쓰지 않은 수, 반박의 결과). 그 아래 회색 한 줄에 모델·비용(구성과 함께)·시간·가린 비밀값·묻지 않은 의무. 결과에 실린 수
+ * 그대로다.
  */
-function Verification({ review, note }: { review: Review; note?: { cli: string; regate: string | null } }) {
+function Verification({ review }: { review: Review }) {
   const { run } = review;
   const sum = (record: Record<string, number>) => Object.values(record).reduce((a, b) => a + b, 0);
   const masked = sum(run.masked);
@@ -528,16 +525,6 @@ function Verification({ review, note }: { review: Review; note?: { cli: string; 
           </span>
           {masked > 0 && <span>가린 비밀값 {masked}개</span>}
           {notAsked > 0 && <span>묻지 않은 의무 {notAsked}개</span>}
-          {note && (
-            <span>
-              CLI <code translate="no">{note.cli}</code>
-            </span>
-          )}
-          {note?.regate && (
-            <span>
-              {SITE.cases.regate} · 규칙 CLI <code translate="no">{note.regate}</code>
-            </span>
-          )}
         </p>
       </div>
     </section>

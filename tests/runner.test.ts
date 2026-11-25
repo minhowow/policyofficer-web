@@ -11,9 +11,9 @@ import { openDatabase, type Database } from "@/server/db";
 import { createGitHub } from "@/server/github";
 import { sign as serverSign } from "@/server/signature";
 import { createDbStore } from "@/server/store/db";
+import * as runner from "../runner/run.mjs";
 import {
   checkFileCount,
-  checkResultSize,
   childEnv,
   copyRepository,
   countJsTs,
@@ -27,14 +27,24 @@ import {
   reviewOptions,
   runProfile,
   runReview,
-  runScan,
+  sendResult,
   sign as runnerSign,
   StepError,
 } from "../runner/run.mjs";
 import { extractTar, extractTarGz } from "../runner/tar.mjs";
+import { parseProfile } from "@/lib/profile";
+import { parseReview } from "@/lib/review";
 import { createGitHubStub } from "../scripts/github-stub.mjs";
-import { main as localRunner, NO_CAPTURE, parseArgs as localArgs, sourceFor, UNKNOWN_REPOSITORY } from "../scripts/local-runner.mjs";
-import { root } from "./helpers";
+import {
+  main as localRunner,
+  NO_CAPTURE,
+  parseArgs as localArgs,
+  profileCaptureFor,
+  reviewCaptureFor,
+  sourceFor,
+  UNKNOWN_REPOSITORY,
+} from "../scripts/local-runner.mjs";
+import { readJson, root } from "./helpers";
 
 // 실행기(runner/run.mjs, runner/tar.mjs)와 로컬 실행기(scripts/local-runner.mjs). 실제 GitHub·Anthropic·CLI 를 부르지 않는다.
 // 압축 파일은 시험이 손으로 만들고, CLI 는 가짜 spawn 으로 바꾼다. 로컬 실행기는 --fixture 로만 돈다.
@@ -206,7 +216,7 @@ describe("저장소 받기 (fetchRepository)", () => {
   });
 });
 
-describe("입력·파일 수·결과 크기", () => {
+describe("입력·파일 수", () => {
   const good = {
     ANALYSIS_ID: "abcdefghjk",
     REPO_OWNER: "example-org",
@@ -257,11 +267,6 @@ describe("입력·파일 수·결과 크기", () => {
     expect(existsSync(path.join(scratch, "copy", "src", "a.ts"))).toBe(true);
   });
 
-  it("결과 크기 상한을 넘으면 정리 단계에서 멈춘다", () => {
-    expect(() => checkResultSize("x".repeat(2048), 2)).not.toThrow();
-    expect(() => checkResultSize("x".repeat(2049), 2)).toThrow(StepError);
-  });
-
   it("실패한 자식 과정의 표준 오류는 끝부분만, 비밀값을 가려 로그에 남긴다", () => {
     const lines: string[] = [];
     const env = { CLI_REPO_TOKEN: "ghp_secret", ANTHROPIC_API_KEY: "sk-ant-k" };
@@ -271,31 +276,33 @@ describe("입력·파일 수·결과 크기", () => {
     expect(lines[0]).not.toContain("sk-ant-k");
     expect(lines[0]).toContain("x-access-token:***@github.com");
     expect(lines[0].length).toBeLessThan(2100);
-    logTail("검사", "  \n", env, { log: (text: string) => lines.push(text) });
+    logTail("저장소 프로필", "  \n", env, { log: (text: string) => lines.push(text) });
     expect(lines).toHaveLength(1);
   });
 });
 
-describe("도구 설치와 검사", () => {
-  it("검사 명령: policyofficer scan . --judge <판정자> --output-format json 을 저장소 폴더에서, 넘긴 환경만으로 돌린다", () => {
-    const calls: { bin: string; args: string[]; cwd: string; env: Record<string, string> }[] = [];
-    const fake = ((bin: string, args: string[], options: { cwd: string; env: Record<string, string> }) => {
-      calls.push({ bin, args, cwd: options.cwd, env: options.env });
-      return { status: 1, stdout: '{"ok":1}', stderr: "" };
-    }) as never;
-    const env = childEnv({ PATH: "/bin", HOME: "/h", RUNNER_SECRET: "s", GITHUB_TOKEN: "g" }, { ANTHROPIC_API_KEY: "k" });
-    expect(runScan({ dir: "/w/src", judge: "anthropic:haiku", env, timeoutMs: 1000, run: fake })).toBe('{"ok":1}');
-    expect(calls).toEqual([
-      { bin: "policyofficer", args: ["scan", ".", "--judge", "anthropic:haiku", "--output-format", "json"], cwd: "/w/src", env: { PATH: "/bin", HOME: "/h", ANTHROPIC_API_KEY: "k" } },
-    ]);
+describe("도구 설치와 검토", () => {
+  it("규칙 검사(policyofficer scan)는 돌리지 않는다(2026-11-25 오너 지시, CLI handoff-w13-4 부터 그 명령이 없다)", () => {
+    // 실행기에 그 명령을 부르는 함수와 결과 크기만으로 멈추는 함수가 남아 있지 않다.
+    expect(Object.keys(runner)).not.toContain("runScan");
+    expect(Object.keys(runner)).not.toContain("checkResultSize");
+    expect(runner.DEFAULTS).not.toHaveProperty("scanTimeoutMinutes");
+    for (const file of [path.join(root, "runner", "run.mjs"), path.join(root, "scripts", "local-runner.mjs")]) {
+      expect(readFileSync(file, "utf8"), file).not.toMatch(/["']scan["'],\s*["']\.["']/);
+    }
   });
 
-  it("종료 코드 0·1 은 결과, 2 는 검사 단계의 실패, 빈 출력·시간 초과도 실패다", () => {
-    const with_ = (result: object) => () => runScan({ dir: ".", judge: "none", env: {}, timeoutMs: 60_000, run: (() => result) as never });
-    expect(with_({ status: 0, stdout: "{}" })()).toBe("{}");
-    expect(with_({ status: 2, stdout: "" })).toThrow("종료 코드 2");
-    expect(with_({ status: 0, stdout: "  " })).toThrow("결과를 내지 않았습니다");
-    expect(with_({ status: null, error: Object.assign(new Error("t"), { code: "ETIMEDOUT" }) })).toThrow("1분 안에 끝나지 않아");
+  it("CLI 에는 고른 환경만 넘긴다: 콜백 서명 열쇠·GitHub 토큰은 빼고, 따로 준 것(review 의 API 키 등)만 더한다", () => {
+    const env = childEnv({ PATH: "/bin", HOME: "/h", RUNNER_SECRET: "s", GITHUB_TOKEN: "g", CLI_REPO_TOKEN: "t" }, { ANTHROPIC_API_KEY: "k" });
+    expect(env).toEqual({ PATH: "/bin", HOME: "/h", ANTHROPIC_API_KEY: "k" });
+    const seen: Record<string, string>[] = [];
+    const fake = ((_bin: string, _args: string[], options: { env: Record<string, string> }) => {
+      seen.push(options.env);
+      return { status: 0, stdout: '{"profile_version":1}', stderr: "" };
+    }) as never;
+    runProfile({ dir: "/w/src", env: childEnv({ PATH: "/bin", RUNNER_SECRET: "s", ANTHROPIC_API_KEY: "k" }), timeoutMs: 1000, run: fake });
+    // 프로필은 모델을 부르지 않으므로 API 키도 넘기지 않는다.
+    expect(seen).toEqual([{ PATH: "/bin" }]);
   });
 
   it("저장소 프로필: policyofficer profile . 을 저장소 폴더에서 돌린다. 실패해도 던지지 않고 null 이며, 까닭의 비밀값은 가린다", () => {
@@ -316,18 +323,31 @@ describe("도구 설치와 검사", () => {
     expect(logged.join("\n")).not.toContain("sek");
   });
 
-  it("결과 콜백의 본문: 프로필·review 를 실으면 상한을 넘을 때 review 를 먼저, 그다음 프로필을 빼고 보낸다. 결과만으로 넘으면 멈춘다", () => {
+  it("결과 콜백의 본문: 둘을 함께 실어 상한을 넘으면 review(본체)만, 그것도 넘으면 프로필만 싣는다. 둘 다 빠져도 멈추지 않는다(사이트가 실패로 적는다)", () => {
     const ctx = { target: { owner: "o", repo: "r", commit: "a".repeat(40) } };
-    const quiet = { log: () => {} };
+    const logs: string[] = [];
+    const quiet = { log: (line: string) => logs.push(line) };
     const profile = { profile_version: 1 };
     const review = { review_version: 2 };
     const bigProfile = { profile_version: 1, features: [], pad: "x".repeat(4000) };
     const bigReview = { review_version: 2, pad: "x".repeat(4000) };
-    expect(resultBody(ctx, "{}", { profile, review }, 1, quiet)).toEqual({ profile, review });
-    expect(resultBody(ctx, "{}", { profile, review: bigReview }, 1, quiet)).toEqual({ profile, review: null });
-    expect(resultBody(ctx, "{}", { profile: bigProfile, review }, 1, quiet)).toEqual({ profile: null, review: null });
-    expect(resultBody(ctx, "{}", { profile: bigProfile, review: null }, 1, quiet)).toEqual({ profile: null, review: null });
-    expect(() => resultBody(ctx, "y".repeat(2000), { profile: null, review: null }, 1, quiet)).toThrow("결과가 너무 큽니다");
+    expect(resultBody(ctx, { profile, review }, 1, quiet)).toEqual({ profile, review });
+    expect(logs).toEqual([]);
+    expect(resultBody(ctx, { profile, review: bigReview }, 1, quiet)).toEqual({ profile, review: null });
+    expect(resultBody(ctx, { profile: null, review: bigReview }, 1, quiet)).toEqual({ profile: null, review: null });
+    expect(resultBody(ctx, { profile: bigProfile, review: null }, 1, quiet)).toEqual({ profile: null, review: null });
+    expect(resultBody(ctx, { profile: null, review: null }, 1, quiet)).toEqual({ profile: null, review: null });
+    expect(resultBody(ctx, null, 1, quiet)).toEqual({ profile: null, review: null });
+    // 프로필이 크고 review 가 작으면 review 를 남긴다(결과의 본체).
+    expect(resultBody(ctx, { profile: bigProfile, review }, 1, quiet)).toEqual({ profile: null, review });
+    expect(logs.join("\n")).toContain("review 를 보내면 크기 상한을 넘어 빼고");
+    expect(logs.join("\n")).toContain("프로필을 보내면 크기 상한을 넘어 빼고");
+    // 본문 전체(target 을 실은 결과 이벤트)로 잰다: 상한에 꼭 맞는 프로필은 싣고, 한 바이트 넘으면 뺀다.
+    const body = (pad: string) => JSON.stringify({ event: "result", profile: { pad }, target: ctx.target });
+    const fit = "x".repeat(1024 - Buffer.byteLength(body("")));
+    expect(Buffer.byteLength(body(fit))).toBe(1024);
+    expect(resultBody(ctx, { profile: { pad: fit }, review: null }, 1, quiet).profile).toEqual({ pad: fit });
+    expect(resultBody(ctx, { profile: { pad: `${fit}x` }, review: null }, 1, quiet).profile).toBeNull();
   });
 
   it("review: 워크플로의 REVIEW_* 를 CLI 옵션으로 넘긴다(한 건의 금액·시간 상한). 실패해도 던지지 않고 null 이며, 까닭의 비밀값은 가린다", () => {
@@ -388,7 +408,7 @@ describe("도구 설치와 검사", () => {
   });
 });
 
-describe("검사 단계 안의 일 알림 (2026-11-13)", () => {
+describe("검토 단계 안의 일 알림과 결과 보내기 (2026-11-13)", () => {
   const ID = "abcdefghjk";
   const target = { owner: "example-org", repo: "kids-signup", commit: "e".repeat(40) };
   const ctxWith = (fetcher: (url: string, init: RequestInit) => Promise<Response>, secret = "s") => ({
@@ -411,8 +431,8 @@ describe("검사 단계 안의 일 알림 (2026-11-13)", () => {
     expect(await notifyPart(ctxWith(answer(200)), "profile", { log })).toBe(true);
     expect(JSON.parse(sent[0].body)).toEqual({ event: "part", part: "profile", target });
     expect(sent[0].signature).toMatch(/^v1=[0-9a-f]{64}$/);
-    expect(await notifyPart(ctxWith(answer(409, "검사 단계 안의 일은 검사 단계에서만 받습니다.")), "review", { log })).toBe(false);
-    expect(logs.at(-1)).toContain("검사 단계에서만 받습니다");
+    expect(await notifyPart(ctxWith(answer(409, "검토 단계 안의 일은 검토 단계에서만 받습니다.")), "review", { log })).toBe(false);
+    expect(logs.at(-1)).toContain("검토 단계에서만 받습니다");
     // 5xx 는 한 번 더 보낸 뒤 그만둔다.
     sent.length = 0;
     expect(await notifyPart(ctxWith(answer(503)), "review", { log })).toBe(false);
@@ -424,6 +444,31 @@ describe("검사 단계 안의 일 알림 (2026-11-13)", () => {
     expect(await notifyPart(ctxWith(answer(200), ""), "profile", { log })).toBe(false);
     expect(await notifyPart(ctxWith(answer(200)), "judge", { log })).toBe(false);
     expect(sent).toHaveLength(0);
+  });
+
+  it("결과는 서명한 { event: result, profile?, review?, target } 이다. 없는 것은 싣지 않고 규칙 검사의 결과(output)는 싣지 않는다", async () => {
+    const sent: unknown[] = [];
+    const ok = async (_url: string, init: RequestInit) => {
+      sent.push(JSON.parse(String(init.body)));
+      return new Response(JSON.stringify({ ok: true, message: "결과를 적었습니다.", status: "succeeded" }), { status: 200 });
+    };
+    // run.mjs 의 JSDoc 이 없는 기본값(null)으로 타입이 좁혀지므로 넓혀 부른다.
+    const send = sendResult as (ctx: ReturnType<typeof ctxWith>, profile?: unknown, review?: unknown) => Promise<unknown>;
+    const profile = { profile_version: 1 };
+    const review = { review_version: 2 };
+    expect(await send(ctxWith(ok), profile, review)).toMatchObject({ status: "succeeded" });
+    await send(ctxWith(ok), profile);
+    await send(ctxWith(ok), null, review);
+    await send(ctxWith(ok));
+    expect(sent).toEqual([
+      { event: "result", profile, review, target },
+      { event: "result", profile, target },
+      { event: "result", review, target },
+      { event: "result", target },
+    ]);
+    // 사이트가 받지 않으면(끝난 분석 등) 정리 단계의 멈춤이고, 다시 알리지 않는다.
+    const refused = async () => new Response(JSON.stringify({ ok: false, message: "이미 끝난 분석이라 바꾸지 않습니다." }), { status: 409 });
+    await expect(send(ctxWith(refused), profile)).rejects.toMatchObject({ step: "finish", refused: true });
   });
 
   /** 워크플로처럼 실행기 명령 하나를 따로 돌린다. 콜백 주소는 닿지 않는 곳이다. CLI 는 PATH 에 없다. */
@@ -455,7 +500,7 @@ describe("검사 단계 안의 일 알림 (2026-11-13)", () => {
     expect(state()).toEqual({ step: "scan", reason: null });
     expect(runCommand(["part", "judge"], { RUNNER_SECRET: "s" }).status).toBe(0);
     expect(state()).toEqual({ step: "scan", reason: null });
-    // 프로필: CLI 가 없으면 파일을 남기지 않고(앞의 것도 지운다) 성공으로 끝난다. 멈추면 검사 단계의 멈춤이다.
+    // 프로필: CLI 가 없으면 파일을 남기지 않고(앞의 것도 지운다) 성공으로 끝난다. 멈추면 검토 단계의 멈춤이다.
     writeFileSync(path.join(scratch, "profile.json"), "{}");
     const profile = runCommand(["profile"]);
     expect(profile.status, profile.stderr).toBe(0);
@@ -469,10 +514,11 @@ describe("검사 단계 안의 일 알림 (2026-11-13)", () => {
     const noKey = runCommand(["review"], { REVIEW: "true" });
     expect(noKey.status).toBe(0);
     expect(noKey.stderr).toContain("review 를 돌리지 않았습니다");
-    // 검사는 키가 없으면 검사 단계에서 멈춘다(여기서만 실패로 끝난다).
-    const scan = runCommand(["scan"], { JUDGE_MODEL: "claude-haiku-5-5" });
+    expect(state()).toEqual({ step: "scan", reason: null });
+    // 규칙 검사 명령은 없다(2026-11-25). 부르면 모르는 명령으로 실패한다.
+    const scan = runCommand(["scan"], { ANTHROPIC_API_KEY: "k" });
     expect(scan.status).toBe(1);
-    expect(state()).toMatchObject({ step: "scan", reason: "실행기에 AI 판정자의 API 키가 없어 검사하지 않았습니다." });
+    expect(state()).toMatchObject({ step: "scan", reason: "실행기의 일이 실패했습니다." });
   });
 });
 
@@ -499,7 +545,7 @@ describe("워크플로 (.github/workflows/analyze.yml)", () => {
     expect(jobEnv).not.toMatch(/\$\{\{\s*(runner|job|steps|env)\./);
   });
 
-  it("실행 시간 상한 30분(검사 15분 + 프로필 3분 + 켰을 때 review 6분 + 받기·설치), 도구는 이 파일에서 고정(CLI 저장소·커밋, uv 판), 비밀값은 그것이 필요한 단계에만", () => {
+  it("실행 시간 상한 30분(프로필 3분 + 켰을 때 review 7분 + 받기·설치), 도구는 이 파일에서 고정(CLI 저장소·커밋, uv 판), 비밀값은 그것이 필요한 단계에만", () => {
     expect(workflow).toMatch(/timeout-minutes: 30\n/);
     // review 는 입력(기본 "false")으로만 켜고, 한 건의 상한은 이 파일에서 정한다. 입력은 셸 글이 아니라 환경 변수로 넘긴다.
     expect(workflow).toMatch(/ {6}review:\n {8}description: [^\n]+\n {8}required: false\n {8}default: "false"\n {8}type: string\n/);
@@ -528,8 +574,7 @@ describe("워크플로 (.github/workflows/analyze.yml)", () => {
       '"알림: 저장소 받기·도구 설치 시작"': ["RUNNER_SECRET"],
       "저장소 받기": [],
       "도구 설치": ["CLI_REPO_TOKEN"],
-      '"알림: 검사 시작"': ["RUNNER_SECRET"],
-      "검사(정적 검사와 AI 판정)": ["ANTHROPIC_API_KEY"],
+      '"알림: 검토 시작"': ["RUNNER_SECRET"],
       '"알림: 저장소 프로필 시작"': ["RUNNER_SECRET"],
       "저장소 프로필(모델 호출 없음)": [],
       '"알림: review 시작"': ["RUNNER_SECRET"],
@@ -537,7 +582,8 @@ describe("워크플로 (.github/workflows/analyze.yml)", () => {
       "정리(결과 보내기)": ["RUNNER_SECRET"],
       '"알림: 멈춤"': ["RUNNER_SECRET"],
     });
-    // 단계마다 부르는 실행기 명령. 검사 단계 안의 일(프로필, review)은 시작을 알린 뒤 돈다. review 와 그 알림은 입력이 "true" 일 때만.
+    // 단계마다 부르는 실행기 명령. 검토 단계 안의 일(프로필, review)은 시작을 알린 뒤 돈다. review 와 그 알림은 입력이 "true" 일 때만.
+    // 규칙 검사(policyofficer scan)는 돌리지 않는다(2026-11-25).
     const runOf = Object.fromEntries(steps.map((step) => [step.split("\n")[0], /\n {8}run: (.+)/.exec(step)?.[1]]));
     expect(Object.values(runOf).filter(Boolean)).toEqual([
       "node runner/run.mjs check",
@@ -545,7 +591,6 @@ describe("워크플로 (.github/workflows/analyze.yml)", () => {
       "node runner/run.mjs fetch",
       "node runner/run.mjs install",
       "node runner/run.mjs notify scan",
-      "node runner/run.mjs scan",
       "node runner/run.mjs part profile",
       "node runner/run.mjs profile",
       "node runner/run.mjs part review",
@@ -561,6 +606,8 @@ describe("워크플로 (.github/workflows/analyze.yml)", () => {
     for (const match of workflow.matchAll(/uses: (\S+)/g)) expect(match[1]).toMatch(/@[0-9a-f]{40}$/);
     // 대상 코드를 설치·빌드·실행하지 않는다.
     expect(workflow).not.toMatch(/npm (install|ci|run)|yarn|pnpm|npx/);
+    // 규칙 검사의 판정자 모델과 시간 상한은 없다. ANTHROPIC_API_KEY 는 review 단계에만 간다(위 byName).
+    expect(workflow).not.toMatch(/JUDGE_MODEL|SCAN_TIMEOUT_MINUTES|run\.mjs scan\b/);
   });
 });
 
@@ -608,28 +655,41 @@ describe("로컬 실행기 (scripts/local-runner.mjs --fixture)", () => {
     return ((await response.json()) as { analysis: { id: string } }).analysis.id;
   };
 
-  it("대기 중인 분석을 모두 집어 끝까지 돌린다. 결과는 그 저장소의 합성 데모 코드 수집본 그대로다", async () => {
+  it("대기 중인 분석을 모두 집어 끝까지 돌린다. 결과는 그 저장소의 합성 데모 코드의 프로필 수집본, review 를 맡겼으면 같은 앱의 합성 review 다", async () => {
     const kids = await request("example-org", "kids-signup");
     const chat = await request("Example-Studio", "GenAI-Chat");
+    // 사이트가 genai-chat 에만 review 를 맡긴 것처럼 한다(REVIEW 스위치를 켜고 보낸 때 적는 것).
+    await db.query("UPDATE analyses SET review_plan = 'run' WHERE id = $1", [chat]);
     await localRunner(["--fixture", "--once", "--site", site], { RUNNER_SECRET: SECRET });
-    for (const [id, fixture] of [[kids, "kids-signup"], [chat, "genai-chat"]]) {
+    for (const [id, fixture, part] of [[kids, "kids-signup", "profile"], [chat, "genai-chat", "review"]]) {
       const analysis = await deps.store().findAnalysis(id);
       expect(analysis?.status, id).toBe("succeeded");
       expect(analysis?.steps.every((step) => step.startedAt && step.endedAt)).toBe(true);
-      expect(await deps.store().getResult(id)).toEqual(JSON.parse(readFileSync(path.join(root, "contract", "cli-current", `${fixture}.main.json`), "utf8")));
-      // 저장소 프로필도 같은 표본의 수집본을 함께 보낸다. 프로필을 시작할 때 알렸다(review 는 맡기지 않아 알리지 않는다).
-      expect((await deps.store().getProfile(id))?.features.length, id).toBeGreaterThan(0);
-      expect(analysis?.scanPart?.name, id).toBe("profile");
+      // 같은 표본의 프로필 수집본을 보낸다. 규칙 검사의 결과 칸은 비어 있다.
+      expect(await deps.store().getProfile(id)).toEqual(parseProfile(readJson("contract", "cli-current", "profile", `${fixture}.main.json`)));
+      expect((await db.query<{ json: string | null }>("SELECT json FROM results WHERE analysis_id = $1", [id])).rows).toEqual([{ json: null }]);
+      // 검토 단계 안의 일을 시작할 때 알렸다(review 는 맡긴 분석에서만).
+      expect(analysis?.scanPart?.name, id).toBe(part);
     }
-    expect(sourceFor("example-labs", "plain.utils", { source: null })?.dir).toBe(path.join(root, "contract", "fixtures", "plain", "main"));
+    expect(await deps.store().getReview("example-org", "kids-signup", (await deps.store().findAnalysis(kids))!.commit)).toBeNull();
+    const chatAnalysis = (await deps.store().findAnalysis(chat))!;
+    expect(await deps.store().getReview(chatAnalysis.owner, chatAnalysis.name, chatAnalysis.commit)).toEqual(
+      parseReview(readJson("contract", "review", "genai-chat.review.json")),
+    );
+    expect(sourceFor("example-labs", "plain.utils", { source: null })).toEqual({ dir: path.join(root, "contract", "fixtures", "plain", "main"), sample: "plain.main" });
     // --source 를 줘도 합성 저장소는 제 합성 데모 코드다(다른 폴더의 코드가 그 이름에 붙지 않는다).
     expect(sourceFor("example-labs", "plain.utils", { source: "/x" })?.dir).toBe(path.join(root, "contract", "fixtures", "plain", "main"));
-    // 가짜 GitHub 의 목록에 없는 저장소는 --source 를 직접 준 때만 그 폴더(수집본 없음)이고, 아니면 검사하지 않는다(재디자인 D4).
-    expect(sourceFor("someone", "else", { source: "/x" })).toEqual({ dir: "/x", capture: null });
+    // 가짜 GitHub 의 목록에 없는 저장소는 --source 를 직접 준 때만 그 폴더(수집본 없음)이고, 아니면 읽지 않는다(재디자인 D4).
+    expect(sourceFor("someone", "else", { source: "/x" })).toEqual({ dir: "/x", sample: null });
     expect(sourceFor("someone", "else", { source: null })).toBeNull();
     // 합성 데모 코드가 없는 합성 저장소(크기 상한을 넘는 것)도 같다.
     expect(sourceFor("example-labs", "huge-monorepo", { source: null })).toBeNull();
     expect(localArgs([]).source).toBeNull();
+    // 수집본: 표본의 프로필, 같은 앱의 합성 review(genai-chat 에만 있다). 없으면 null.
+    expect(profileCaptureFor("night-push.fixed")).toEqual(readJson("contract", "cli-current", "profile", "night-push.fixed.json"));
+    expect(profileCaptureFor("nothing.main")).toBeNull();
+    expect(reviewCaptureFor("genai-chat.fixed")).toEqual(readJson("contract", "review", "genai-chat.review.json"));
+    expect(reviewCaptureFor("kids-signup.main")).toBeNull();
   });
 
   /** 가짜 GitHub 에 없는 저장소의 분석이 대기열에 있는 것처럼 만든다(사이트는 가짜 GitHub 에 있는 저장소만 받으므로). */
@@ -646,7 +706,7 @@ describe("로컬 실행기 (scripts/local-runner.mjs --fixture)", () => {
       const analysis = await deps.store().findAnalysis(id);
       expect(analysis?.status, args.join(" ")).toBe("failed");
       expect(analysis?.failure).toEqual({ step: "fetch", reason: UNKNOWN_REPOSITORY });
-      expect(await deps.store().getResult(id)).toBeNull();
+      expect((await db.query("SELECT * FROM results WHERE analysis_id = $1", [id])).rows).toEqual([]);
     }
     // --source 를 주어도 --fixture 면 그 폴더의 수집본이 없으므로 결과를 꾸미지 않는다.
     const id = await unknownRepository();
@@ -654,7 +714,7 @@ describe("로컬 실행기 (scripts/local-runner.mjs --fixture)", () => {
     expect((await deps.store().findAnalysis(id))?.failure).toEqual({ step: "fetch", reason: NO_CAPTURE });
   });
 
-  it("검사할 폴더에 문제가 있으면 그 단계와 까닭을 실패로 알린다(--source 를 직접 준 저장소)", async () => {
+  it("읽을 폴더에 문제가 있으면 그 단계와 까닭을 실패로 알린다(--source 를 직접 준 저장소)", async () => {
     // 없는 폴더를 가리키는 --source. CLI 를 돌리기 전, 저장소 받기에서 멈춘다.
     const id = await unknownRepository();
     await localRunner(["--once", "--site", site, "--source", path.join(scratch, "missing")], { RUNNER_SECRET: SECRET });

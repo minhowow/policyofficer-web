@@ -22,9 +22,8 @@ import {
 import type { Analysis, Repository, ReviewFacts } from "@/lib/service/types";
 import { Icon } from "@/components/Icon";
 import { SITE } from "@/lib/site";
-import { AnalysisBadge, DoneCount, FeatureLine, RepoName, zeroKind, zeroNotes } from "./parts";
+import { AnalysisBadge, doneCount, FeatureLine, RepoName, zeroKind, zeroNotes } from "./parts";
 
-export { findingCount } from "./parts";
 import { RequestButton } from "./RequestButton";
 
 /**
@@ -69,7 +68,7 @@ export function AnalysisTitle({ repository, tagged }: { repository: Repository; 
         </Link>
       </h1>
       {tagged && <span className="tag">합성 예시</span>}
-      {/* 저장소 쪽 머리와 같은 자리(첫 줄 오른쪽, 조문별 검사 기록 단추가 있으면 그 왼쪽). */}
+      {/* 저장소 쪽 머리와 같은 자리(첫 줄 오른쪽). */}
       <GitHubLink repository={repository} />
     </>
   );
@@ -95,13 +94,19 @@ export function GitHubLink({ repository }: { repository: Repository }) {
  * 분석 쪽 머리의 메타 줄: 배지, 분석 id, 커밋과 브랜치, 시각(KST), 걸린 시간. 저장소(위 줄), 커밋, 분석 id, 시각이 한자리에
  * 있다(docs/commitments.md 의 "실제 결과로 보인다"). 끝난 분석은 시작–끝 시각과 걸린 시간을, 그 밖에는 요청 시각을 적는다.
  */
-export function AnalysisMeta({ repository, analysis }: { repository: Repository; analysis: Analysis }) {
+export function AnalysisMeta({ repository, analysis, prerunOn = null }: { repository: Repository; analysis: Analysis; prerunOn?: string | null }) {
   const ended = analysis.status === "succeeded" ? finishedAt(analysis) : null;
   const started = analysis.steps[0]?.startedAt ?? analysis.requestedAt;
   const range = ended ? kstRange(started, ended) : null;
   return (
     <div className="meta an-meta">
       <AnalysisBadge status={analysis.status} />
+      {/* 이 사이트의 실행기가 아니라 CLI 로 미리 돌려 넣은 분석(docs/commitments.md 의 1). */}
+      {prerunOn && (
+        <span className="tag">
+          {SITE.prerun} · {prerunOn}
+        </span>
+      )}
       <span>
         분석{" "}
         <code className="v" translate="no">
@@ -137,14 +142,25 @@ export function AnalysisMeta({ repository, analysis }: { repository: Repository;
   );
 }
 
-/** 분석 쪽의 머리(결과가 없는 분석: 대기·분석 중·실패). 끝난 분석은 조문별 검사 기록 단추와 함께 결과의 틀이 그린다. */
-export function AnalysisHeader({ repository, analysis, tagged }: { repository: Repository; analysis: Analysis; tagged: boolean }) {
+/** 분석 쪽의 머리: 저장소 이름과 GitHub 링크, 메타 줄. */
+export function AnalysisHeader({
+  repository,
+  analysis,
+  tagged,
+  prerunOn = null,
+}: {
+  repository: Repository;
+  analysis: Analysis;
+  tagged: boolean;
+  /** 미리 돌려 넣은 분석이면 돌린 날. */
+  prerunOn?: string | null;
+}) {
   return (
     <header className="an-head">
       <div className="ttl">
         <AnalysisTitle repository={repository} tagged={tagged} />
       </div>
-      <AnalysisMeta repository={repository} analysis={analysis} />
+      <AnalysisMeta repository={repository} analysis={analysis} prerunOn={prerunOn} />
     </header>
   );
 }
@@ -321,21 +337,19 @@ export function RequestAction({ repository, closed }: { repository: Repository; 
 }
 
 /**
- * 저장소의 분석 기록 표. 나중에 요청한 것이 위다. 칸은 분석 id(그 쪽으로 가는 링크), 상태, 커밋, 요청 시각(KST), 발견. 끝난
- * 분석에는 결과에 실린 발견 수를 적는다(점수가 아니다). 대기 중인 분석은 대기열의 몇 번째인지를 센 때와 함께 적는다(이 쪽은
+ * 저장소의 분석 기록 표. 나중에 요청한 것이 위다. 칸은 분석 id(그 쪽으로 가는 링크), 상태, 커밋, 요청 시각(KST), 결과. 끝난
+ * 분석에는 review 의 확인할 것 수(없으면 그 까닭)를 적는다(점수가 아니다). 대기 중인 분석은 대기열의 몇 번째인지를 센 때와 함께 적는다(이 쪽은
  * 다시 읽지 않는다).
  */
 export function HistoryTable({
   repository,
   analyses,
-  findings,
   reviews = {},
   features = {},
   queue = null,
 }: {
   repository: Repository;
   analyses: Analysis[];
-  findings: Record<string, number | null>;
   /** 끝난 분석마다 review 의 확인할 것 수와 기능(`ServiceStore.reviewFacts`). 있으면 결과 칸과 기능 줄이 이것을 쓴다. */
   reviews?: Record<string, ReviewFacts | null>;
   /** 끝난 분석마다 감지된 기능(`ServiceStore.featureNames`). 분석 칸의 id 아래에 짧게 적는다. */
@@ -343,8 +357,8 @@ export function HistoryTable({
   /** 대기열(DB 에서 센 것). 없으면(합성) 대기열의 자리를 적지 않는다. */
   queue?: QueueSnapshot | null;
 }) {
-  // 결과 칸에 0건이 보이면 그 갈래(review 의 확인할 것, 정적 검사의 발견)의 0의 뜻을 표 바로 아래에 적는다(docs/commitments.md 의 1).
-  const notes = zeroNotes(analyses.map((analysis) => (analysis.status === "succeeded" ? zeroKind(findings[analysis.id], reviews[analysis.id]) : null)));
+  // 결과 칸에 확인할 것 0건이 보이면 그 0의 뜻을 표 바로 아래에 적는다(docs/commitments.md 의 1).
+  const notes = zeroNotes(analyses.map((analysis) => (analysis.status === "succeeded" ? zeroKind(reviews[analysis.id]) : null)));
   return (
     <>
       <div className="box box-scroll">
@@ -384,7 +398,7 @@ export function HistoryTable({
                     <time dateTime={analysis.requestedAt}>{formatKst(analysis.requestedAt)}</time>
                   </td>
                   <td className="r an-row-out">
-                    {analysis.status === "succeeded" && <DoneCount plan={analysis.review} count={findings[analysis.id]} review={reviews[analysis.id]} />}
+                    {analysis.status === "succeeded" && doneCount(analysis.review, reviews[analysis.id])}
                   </td>
                 </tr>
               );

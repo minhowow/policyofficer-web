@@ -19,11 +19,6 @@ export function checkCount(items: readonly ReviewItem[]): number {
   return items.filter((item) => CHECKS.includes(item.status) && item.group !== "goods").length;
 }
 
-/** 확인할 것 가운데 '코드에서 본 것'의 수(묻지 않은 품목 의무는 빼고). 정적 검사의 접힌 보조 줄이 함께 적는다. */
-export function seenCount(items: readonly ReviewItem[]): number {
-  return items.filter((item) => item.status === "seen-in-code" && item.group !== "goods").length;
-}
-
 /**
  * 화면에 싣지 않는 처분의 말(docs/commitments.md 1장: 처분 사례와 그 액수를 화면에 싣지 않는다). 의무 한 줄에 이 말이 들면 그 줄은
  * 적지 않고 법·조문·법제처 링크만 둔다. 소스의 문구 시험(tests/commitments.test.ts)이 이 낱말을 글자 그대로 막으므로 글자 번호로
@@ -107,9 +102,8 @@ export function modelLabel(id: string): string {
 const STAGE_LABEL: Record<string, string> = { understand: "기능 파악", investigate: "조사", rebut: "반박" };
 
 /**
- * 비용 어림과 그 구성(`조사+반박 $1.20`, 2026-11-25 web16). 구성은 결과의 질문 기록에서 돈이 든 단계다. 기록이 없는 결과(사례 쪽의
- * 옮긴 결과)는 이해 단계를 새로 돌렸다고 적힌 결과면 기능 파악, 그리고 조사와, 반박이 한 건이라도 돈 결과면 반박이다(사례 4곳은
- * 이해 단계를 앞 결과에서 되살려 돈이 들지 않았다).
+ * 비용 어림과 그 구성(`조사+반박 $1.20`, 2026-11-25 web16). 구성은 결과의 질문 기록에서 돈이 든 단계다. 기록이 없는 결과는 이해
+ * 단계를 새로 돌렸다고 적힌 결과면 기능 파악, 그리고 조사와, 반박이 한 건이라도 돈 결과면 반박이다.
  */
 export function costText(run: {
   usdEstimate: number;

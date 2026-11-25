@@ -1,5 +1,5 @@
 // 공개 저장소 41곳 review 평가의 포스터 그림을 내보낸다: docs/figures/review-results-41.svg 와 .png(밝은 바탕, 2배). 숫자는
-// data/eval-41.json(scripts/export-eval.mjs), 그림은 src/lib/cases/eval-figure.ts 다. 내보내기 전에 Chrome 으로 그려 글끼리
+// data/eval-41.json(scripts/export-eval.mjs), 그림은 src/lib/eval/figure.ts 다. 내보내기 전에 Chrome 으로 그려 글끼리
 // 겹치는지, 그림 밖으로 나가는지 잰다. 그러면 파일을 쓰지 않고 멈춘다. review-results-12 는 건드리지 않는다.
 //
 //   node --no-warnings scripts/export-eval-figure.mjs
@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
-import { evalFigureSvg } from "../src/lib/cases/eval-figure.ts";
+import { evalFigureSvg } from "../src/lib/eval/figure.ts";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const svg = evalFigureSvg(JSON.parse(readFileSync(path.join(root, "data/eval-41.json"), "utf8")));

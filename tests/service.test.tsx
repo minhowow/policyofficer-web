@@ -1,24 +1,20 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
+import { ReviewView } from "@/components/review/ReviewView";
 import { AnalysisDashboard } from "@/components/service/AnalysisDashboard";
 import { ActivityList } from "@/components/service/activity";
 import { AnalysisTitle, Failed, HistoryTable, InProgress, PROGRESS_NOTE, RequestAction, StepList } from "@/components/service/analysis";
 import { LiveAnalysis, POLL_MS } from "@/components/service/LiveAnalysis";
 import { movingText } from "@/components/service/RequestButton";
 import { RepoRow } from "@/components/service/parts";
-import { LATEST_FINDINGS, LatestAnalysis } from "@/components/service/repository";
+import { LatestAnalysis } from "@/components/service/repository";
 import { SearchHome, SearchResults } from "@/components/service/SearchResults";
 import { keepArticle } from "@/components/text";
 import { dutyFeatureHref, dutyMap } from "@/lib/duties";
-import { packMeta, policyHref } from "@/lib/pack";
-import { paragraphOf } from "@/lib/pack/legal";
 import { parseProfile } from "@/lib/profile";
-import { CHECKLIST_LABEL } from "@/lib/report/status";
+import { parseReview } from "@/lib/review";
 import { checklistDoc } from "@/lib/review/checklist";
 import { NO_FEATURES, NO_JUDGEMENT } from "@/components/result/Tiers";
-import { parseReport } from "@/lib/report/parse";
-import type { Report } from "@/lib/report/types";
-import { buildReportView, type ReportView } from "@/lib/report/view-model";
 import { analysisHref, commitLink, fileLink, repoHref, repoKey, searchHref, shortCommit } from "@/lib/service/href";
 import { ID_ALPHABET, ID_LENGTH, isAnalysisId, newAnalysisId } from "@/lib/service/id";
 import { pickActivity } from "@/lib/service/activity";
@@ -26,8 +22,8 @@ import { hangulToQwerty } from "@/lib/service/keyboard";
 import { placeAt, placeOf, placeText, readPlace } from "@/lib/service/queue";
 import { matchRepositories } from "@/lib/service/search";
 import { activeLabel, activeStep, duration, finishedAt, formatKst, scanParts, STEP_ORDER, stepState } from "@/lib/service/steps";
-import { SYNTHETIC_RESULT_SOURCES, syntheticRepositories, syntheticStore as store } from "@/lib/service/synthetic";
-import type { Analysis, Repository } from "@/lib/service/types";
+import { syntheticRepositories, syntheticStore as store } from "@/lib/service/synthetic";
+import type { Analysis, Repository, ReviewFacts } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
 import { closedDetailsAt, elementAt, elementsOf, readJson, textOf } from "./helpers";
 import { BANNED_WORDING } from "./wording";
@@ -45,12 +41,18 @@ vi.mock("next/navigation", async (original) => ({
 const repos = syntheticRepositories();
 const analyses = (await Promise.all(repos.map(({ repository: r }) => store.listAnalyses(r.owner, r.name)))).flat();
 
-function viewOf(id: string): ReportView {
-  const name = SYNTHETIC_RESULT_SOURCES[id];
-  const parsed = parseReport(readJson("contract", "cli-current", `${name}.json`));
-  if (!parsed.ok) throw new Error(parsed.errors.join("\n"));
-  return buildReportView(parsed.report, parsed.contract, packMeta);
-}
+/** 끝난 합성 분석마다 그 프로필 수집본의 표본(contract/cli-current/profile/<표본>.json). */
+const PROFILE_SOURCES: Record<string, string> = {
+  wtk33e9zuf: "kids-signup.main",
+  "87q82b6jbu": "kids-signup.fixed",
+  "64y4jdtazh": "night-push.main",
+  "4qqa6fdx2h": "genai-chat.main",
+  mruw8xjzjw: "genai-chat.fixed",
+  w7bc479x2u: "plain.main",
+};
+const profileOf = (sample: string) => parseProfile(readJson("contract", "cli-current", "profile", `${sample}.json`))!;
+/** 손으로 만든 review 2판 합성 예시(생성형 AI 채팅 합성 저장소에만 있다). */
+const syntheticReview = parseReview(readJson("contract", "review", "genai-chat.review.json"))!;
 
 describe("합성 저장소는 인터페이스 뒤에 있다", () => {
   it("합성 구현은 합성이라고 밝힌다", () => {
@@ -111,17 +113,19 @@ describe("합성 데이터", () => {
     }
   });
 
-  it("끝난 분석의 결과는 contract/cli-current 의 수집본 그대로이고, 판이 결과와 맞는다", async () => {
+  it("끝난 분석의 프로필은 contract/cli-current/profile 의 수집본 그대로이고, review 는 생성형 AI 채팅 합성 저장소에만 있다. 규칙 검사의 결과와 판은 없다(2026-11-25)", async () => {
     const done = analyses.filter((a) => a.status === "succeeded");
-    expect(done.length).toBeGreaterThanOrEqual(4);
+    expect(done.map((a) => a.id).sort()).toEqual(Object.keys(PROFILE_SOURCES).sort());
     for (const analysis of done) {
-      const result = (await store.getResult(analysis.id)) as Report;
-      expect(result, analysis.id).toEqual(readJson("contract", "cli-current", `${SYNTHETIC_RESULT_SOURCES[analysis.id]}.json`));
-      expect(analysis.versions, analysis.id).toEqual({ tool: result.tool.version, pack: result.run.pack_digest });
+      expect(await store.getProfile(analysis.id), analysis.id).toEqual(profileOf(PROFILE_SOURCES[analysis.id]));
+      expect(analysis.versions, analysis.id).toBeNull();
+      expect(await store.getReview(analysis.owner, analysis.name, analysis.commit), analysis.id).toEqual(analysis.name === "genai-chat" ? syntheticReview : null);
     }
     for (const analysis of analyses.filter((a) => a.status !== "succeeded")) {
-      expect(await store.getResult(analysis.id), analysis.id).toBeNull();
+      expect(await store.getProfile(analysis.id), analysis.id).toBeNull();
     }
+    expect("getResult" in store).toBe(false);
+    expect("findingCounts" in store).toBe(false);
   });
 
   it("최근 분석은 저장소마다 한 줄이다: 진행 중인 분석이 있으면 그것, 없으면 가장 나중의 분석. 요청 시각 차례(나중 것이 앞)", async () => {
@@ -284,45 +288,51 @@ describe("부품", () => {
     expect(textOf(html)).toContain("검토할 곳이 없다는 뜻이 아닙니다");
   });
 
-  it("단계는 넷이다. 정적 검사와 AI 판정은 CLI 명령 하나라 한 단계로 적는다(CLI 가 둘의 경계를 알려 주지 않는다)", () => {
+  it("단계는 넷이다. 셋째 단계는 '검토'(기능 파악과, 켰을 때 AI 검토)다. 2026-11-25 부터 규칙 검사는 없다", () => {
     const html = renderToStaticMarkup(<StepList analysis={find("succeeded")} />);
     expect([...html.matchAll(/<span class="step-name">([^<]*)<\/span>/g)].map((m) => m[1])).toEqual([
       "대기",
       "저장소 받기·도구 설치",
-      "검사",
+      "검토",
       "정리",
     ]);
-    // 실행기가 검사 단계 안의 차례를 알리기 전에 끝난 분석에는 그 차례를 적지 않는다.
+    // 실행기가 검토 단계 안의 차례를 알리기 전에 끝난 분석에는 그 차례를 적지 않는다.
     expect(html).not.toContain("step-sub");
     expect(textOf(html)).not.toContain("건너뜀");
+    expect(textOf(html)).not.toMatch(/정적 검사|AI 판정/);
   });
 
-  it("검사 단계 안의 차례: 실행기가 알린 것만으로 정한다. 알린 일이 지금이고 앞은 끝났다. AI 검토 안의 단계는 차례만 적는다", () => {
+  it("검토 단계 안의 차례: 실행기가 알린 것만으로 정한다. 알린 일이 지금이고 앞은 끝났다. AI 검토 안의 단계는 차례만 적는다", () => {
     const running = find("running");
     const scanStart = running.steps.find((step) => step.name === "scan")!.startedAt;
     const at = "2026-10-24T05:00:05Z";
     const rows = (analysis: Analysis) => scanParts(analysis).map((row) => `${row.name}:${row.state}`);
-    // 알림 전: 정적 검사·AI 판정이 지금(검사 단계가 시작한 때부터).
-    expect(rows({ ...running, scanPart: undefined })).toEqual(["judge:active", "profile:waiting", "review:waiting"]);
+    // 알림 전: 기능 파악이 지금(검토 단계가 시작한 때부터).
+    expect(rows({ ...running, scanPart: undefined })).toEqual(["profile:active", "review:waiting"]);
     expect(scanParts({ ...running, scanPart: undefined })[0].startedAt).toBe(scanStart);
-    expect(rows({ ...running, scanPart: { name: "profile", startedAt: at } })).toEqual(["judge:done", "profile:active", "review:waiting"]);
-    expect(rows(running)).toEqual(["judge:done", "profile:done", "review:active"]);
+    // 알림을 받았으면 그 때가 시작이다.
+    expect(rows({ ...running, scanPart: { name: "profile", startedAt: at } })).toEqual(["profile:active", "review:waiting"]);
+    expect(scanParts({ ...running, scanPart: { name: "profile", startedAt: at } })[0].startedAt).toBe(at);
+    expect(rows(running)).toEqual(["profile:done", "review:active"]);
+    expect(scanParts(running)[1].startedAt).toBe(running.scanPart!.startedAt);
     // review 를 돌리지 않는 분석: 스위치가 꺼졌으면 AI 검토 줄이 없고, 저장된 결과·하루 한도면 그 까닭을 적는다.
-    expect(rows({ ...running, review: undefined, scanPart: undefined })).toEqual(["judge:active", "profile:waiting"]);
+    expect(rows({ ...running, review: undefined, scanPart: undefined })).toEqual(["profile:active"]);
     expect(scanParts({ ...running, review: "stored", scanPart: undefined }).at(-1)).toMatchObject({ name: "review", skipped: "같은 커밋의 저장된 결과를 씀" });
     expect(scanParts({ ...running, review: "limit", scanPart: undefined }).at(-1)).toMatchObject({ name: "review", skipped: "오늘 한도가 차서 하지 않음" });
-    // 검사 단계에서 멈춘 분석: 지금이던 일에서 멈췄다.
+    // 검토 단계에서 멈춘 분석: 지금이던 일에서 멈췄다.
     const failed: Analysis = { ...running, status: "failed", failure: { step: "scan", reason: "시험" } };
-    expect(rows(failed)).toEqual(["judge:done", "profile:done", "review:failed"]);
+    expect(rows(failed)).toEqual(["profile:done", "review:failed"]);
+    expect(rows({ ...failed, scanPart: undefined })).toEqual(["profile:failed", "review:notrun"]);
     // 지금 하는 일의 이름과 진행 줄.
     expect(activeLabel(running)).toBe("AI 검토");
-    expect(activeLabel({ ...running, scanPart: undefined })).toBe("정적 검사·AI 판정");
+    expect(activeLabel({ ...running, scanPart: undefined })).toBe("기능 파악");
     const html = renderToStaticMarkup(<StepList analysis={running} />);
     expect(html.match(/aria-current="step"/g)).toHaveLength(1);
     expect(html).toMatch(/<li class="step-item step-sub step-active" aria-current="step">/);
-    expect(textOf(html)).toContain("의무 고르기 → 의무별 조사 → 반박 (이 안의 차례는 알 수 없음)");
-    // 대기 중인 분석: 검사 단계의 차례는 모두 기다림이다.
-    expect(rows(find("queued"))).toEqual(["judge:waiting", "profile:waiting"]);
+    expect(textOf(html)).toContain("의무 고르기 → 의무별 조사 → 반박 → 직접 대조 (이 안의 차례는 알 수 없음)");
+    expect(textOf(html)).not.toMatch(/정적 검사|AI 판정/);
+    // 대기 중인 분석: 검토 단계의 차례는 모두 기다림이다.
+    expect(rows(find("queued"))).toEqual(["profile:waiting"]);
   });
 
   it("분석 요청 단추는 누를 수 없고, 바로 옆에 까닭이 있다", () => {
@@ -378,37 +388,39 @@ describe("부품", () => {
     }
   });
 
-  it("분석 기록 표: 분석마다 그 쪽으로 가는 링크, 상태, 짧은 커밋, 요청 시각(KST). 끝난 분석의 결과 칸은 review 가 있으면 확인할 것 수, 없으면 정적 검사의 발견 수", () => {
+  it("분석 기록 표: 분석마다 그 쪽으로 가는 링크, 상태, 짧은 커밋, 요청 시각(KST). 끝난 분석의 결과 칸은 review 가 있으면 확인할 것 수, 없으면 그 까닭", () => {
     const running = find("running");
     const repository = repoOf(running);
     const list = analyses.filter((a) => a.name === repository.name);
-    const html = renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} findings={{ "64y4jdtazh": 2 }} />);
+    const html = renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} />);
     for (const analysis of list) expect(html).toContain(linked(analysisHref(repository.owner, repository.name, analysis.id)));
     expect([...html.matchAll(/<th scope="col"[^>]*>([^<]*)<\/th>/g)].map((m) => m[1])).toEqual(["분석", "상태", "커밋", "요청 시각 (KST)", "결과"]);
-    expect(textOf(html)).toContain("정적 검사 발견 2건");
+    // 끝난 night-push 분석에는 review 가 없다. 규칙 검사의 발견 수는 적지 않는다(2026-11-25).
+    expect(textOf(html)).toContain("검토 결과 없음");
+    expect(textOf(html)).not.toMatch(/정적 검사|발견/);
     // AI 검토가 본체(2026-11-16): review 가 있으면 확인할 것 수와 review 가 정한 기능. 맡겼는데 받지 못했으면, 한도로 하지 않았으면 그렇게.
     const done = { ...find("succeeded"), id: "aaaaaaaaa1" };
-    const cell = (analysis: typeof done, reviews: Record<string, { check: number; features: string[]; removed: number } | null>, count = 0) =>
-      renderToStaticMarkup(<HistoryTable repository={repository} analyses={[analysis]} findings={{ [analysis.id]: count }} reviews={reviews} features={{ [analysis.id]: [] }} />);
+    const cell = (analysis: typeof done, reviews: Record<string, ReviewFacts | null>) =>
+      renderToStaticMarkup(<HistoryTable repository={repository} analyses={[analysis]} reviews={reviews} features={{ [analysis.id]: [] }} />);
     const reviewed = cell(done, { [done.id]: { check: 11, features: ["회원 가입·개인정보 수집", "로그인·본인인증", "게시판·이용자 게시물"], removed: 0 } });
     expect(textOf(reviewed)).toContain("확인할 것 11건");
     expect(textOf(reviewed)).toContain("회원 가입·개인정보 수집, 로그인·본인인증 외 1");
-    // 확인할 것이 있으면 '0이어도'는 붙지 않는다(정적 검사의 0건이 보이지 않으므로).
-    expect(textOf(reviewed)).not.toContain(SITE.zeroIsNotClearance);
+    // 확인할 것이 있으면 0의 뜻은 붙지 않는다.
+    expect(textOf(reviewed)).not.toContain(SITE.zeroCheckIsNotClearance);
     expect(textOf(reviewed)).not.toContain("감지된 기능 없음");
     expect(textOf(cell(done, { [done.id]: { check: 0, features: [], removed: 0 } }))).toContain(`확인할 것 0건`);
     expect(textOf(cell(done, { [done.id]: { check: 0, features: [], removed: 0 } }))).toContain(SITE.zeroCheckIsNotClearance);
     expect(textOf(cell(done, { [done.id]: { check: 0, features: [], removed: 0 } }))).toContain("감지된 기능 없음");
-    // 덧붙임은 수 아래 줄(좁은 칸을 길게 밀지 않게).
-    expect(cell({ ...done, review: "run" }, {})).toContain('정적 검사 발견 0건<span class="done-note"><span class="visually-hidden">, </span>검토 결과 받지 못함</span>');
-    expect(textOf(cell({ ...done, review: "limit" }, {}))).toContain("정적 검사 발견 0건, 검토 안 함");
+    expect(textOf(cell({ ...done, review: "run" }, {}))).toContain("검토 결과 받지 못함");
+    expect(textOf(cell({ ...done, review: "limit" }, {}))).toContain("검토 안 함");
     // AI 가 신호의 기능을 모두 뺐으면 기능이 없다고 하지 않는다.
     expect(textOf(cell(done, { [done.id]: { check: 0, features: [], removed: 2 } }))).toContain("AI 가 뺀 기능 2가지");
-    // review 가 없으면 프로필의 신호만 본 것이라 기능이 없다고 하지 않는다.
+    // review 가 없으면 프로필의 신호만 본 것이라 기능이 없다고 하지 않는다. 보이는 수가 없으므로 0의 뜻도 없다.
     const plain = textOf(cell(done, {}));
     expect(plain).toContain("기능 신호 없음");
+    expect(plain).toContain("검토 결과 없음");
     expect(plain).not.toContain("감지된 기능 없음");
-    expect(plain).toContain(SITE.zeroIsNotClearance);
+    expect(plain).not.toContain(SITE.zeroCheckIsNotClearance);
     expect(textOf(html)).toContain("AI 검토 중");
     // 합성 저장소의 커밋은 링크가 아니다.
     expect(html).not.toContain("/commit/");
@@ -428,7 +440,7 @@ describe("부품", () => {
     expect(live).toMatch(/<p class="live-now" role="status">대기열 2번째<\/p>/);
     expect(textOf(live)).not.toMatch(/실행 자리|사용 중|기준/);
     // 저장소 쪽의 표는 한 번 그리고 다시 읽지 않는다. 센 때(한국 표준시 시:분)를 붙인다.
-    const table = textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={[queued]} findings={{}} queue={snapshot} />));
+    const table = textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={[queued]} queue={snapshot} />));
     expect(table).toContain("대기열 2번째 (12:04 KST 기준)");
     expect(table).not.toMatch(/실행 자리|사용 중/);
     // 실행기에 보낸 분석.
@@ -437,7 +449,7 @@ describe("부품", () => {
     // 대기열을 모르면(합성, 읽지 못함) 숫자를 적지 않는다. 분석 중인 분석에는 대기열을 적지 않는다.
     expect(textOf(renderToStaticMarkup(<InProgress analysis={queued} />))).not.toContain("대기열");
     expect(textOf(renderToStaticMarkup(<InProgress analysis={find("running")} place={place} />))).not.toContain("대기열");
-    expect(textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={[queued]} findings={{}} />))).not.toContain("대기열");
+    expect(textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={[queued]} />))).not.toContain("대기열");
   });
 
   it("실행기를 깨우지 못해 대기열이 멈춰 있으면 분석 쪽에 그 사실과 까닭을 적는다(실행 자리의 수는 적지 않는다)", () => {
@@ -455,35 +467,35 @@ describe("부품", () => {
     }
   });
 
-  it("분석 기록 표: 발견 0건인 끝난 분석이 있으면 0의 뜻을 함께 적고, 없으면 적지 않는다", () => {
+  it("분석 기록 표: 확인할 것 0건인 끝난 분석이 있으면 표 아래에 0의 뜻을 한 번 적고, 없으면 적지 않는다", () => {
     const done = find("succeeded");
     const repository = repoOf(done);
     const list = analyses.filter((a) => a.name === repository.name);
-    const none = Object.fromEntries(list.map((a) => [a.id, 0]));
-    const zero = textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} findings={none} />));
-    expect(zero).toContain("0건");
-    expect(zero).toContain(SITE.zeroIsNotClearance);
-    const some = Object.fromEntries(list.map((a) => [a.id, 3]));
-    expect(textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} findings={some} />))).not.toContain(
-      SITE.zeroIsNotClearance,
+    expect(list.filter((a) => a.status === "succeeded").length).toBeGreaterThanOrEqual(2);
+    const facts = (check: number) => Object.fromEntries(list.map((a) => [a.id, { check, features: [], removed: 0 }]));
+    const zero = textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} reviews={facts(0)} />));
+    expect(zero).toContain("확인할 것 0건");
+    expect(zero.split(SITE.zeroCheckIsNotClearance)).toHaveLength(2);
+    expect(textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} reviews={facts(3)} />))).not.toContain(
+      SITE.zeroCheckIsNotClearance,
     );
   });
 
-  it("분석 기록 표: 결과가 없거나 읽지 못한 끝난 분석은 0건이라고 적지 않는다", () => {
+  it("분석 기록 표: review 가 없거나 읽지 못한 끝난 분석은 0건이라고 적지 않는다", () => {
     const done = find("succeeded");
     const repository = repoOf(done);
     const list = analyses.filter((a) => a.name === repository.name);
-    for (const findings of [{}, Object.fromEntries(list.map((a) => [a.id, null]))]) {
-      const text = textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} findings={findings} />));
+    for (const reviews of [{}, Object.fromEntries(list.map((a) => [a.id, null]))]) {
+      const text = textOf(renderToStaticMarkup(<HistoryTable repository={repository} analyses={list} reviews={reviews} />));
       expect(text).not.toContain("0건");
-      expect(text).toContain("알 수 없음");
-      expect(text).not.toContain(SITE.zeroIsNotClearance);
+      expect(text).toContain("검토 결과 없음");
+      expect(text).not.toContain(SITE.zeroCheckIsNotClearance);
     }
   });
 
   it("분석 기록 표: 대기열의 자리를 모르는 대기 중인 분석은 배지만 적는다('대기 중 대기 중'이 되지 않는다)", () => {
     const queued = find("queued");
-    const html = renderToStaticMarkup(<HistoryTable repository={repoOf(queued)} analyses={[queued]} findings={{}} queue={null} />);
+    const html = renderToStaticMarkup(<HistoryTable repository={repoOf(queued)} analyses={[queued]} queue={null} />);
     expect(textOf(html).match(/대기 중/g)).toHaveLength(1);
     expect(html).not.toContain("an-row-note");
   });
@@ -495,7 +507,7 @@ describe("부품", () => {
       steps: running.steps.map((step) => (step.name === "scan" ? { ...step, startedAt: null, endedAt: null } : step)),
     };
     expect(activeStep(between)).toBeNull();
-    const text = textOf(renderToStaticMarkup(<HistoryTable repository={repoOf(running)} analyses={[between]} findings={{}} />));
+    const text = textOf(renderToStaticMarkup(<HistoryTable repository={repoOf(running)} analyses={[between]} />));
     expect(text).not.toContain("대기 중");
     expect(text).toContain("다음 단계 기다림");
   });
@@ -536,104 +548,41 @@ describe("부품", () => {
 });
 
 describe("대시보드", () => {
-  // (D5) 분석 쪽의 결과는 /view·데모와 같은 부품(ReportSummary)을 같은 차례로 그린다(docs/redesign.md 3장 "분석").
-  const done = analyses.filter((a) => a.status === "succeeded");
+  // 분석 쪽의 결과(src/components/service/AnalysisDashboard.tsx). review 가 있으면 review 화면, 없으면 프로필의 두 단과 셋째 단의 까닭.
+  // 2026-11-25 오너 지시로 규칙 검사의 결과(정책 상자, 발견 줄, 판정자)는 보이지 않는다.
+  const heads = (html: string) => elementsOf(html, '<h2 class="tier-hd"').map(textOf);
+  const notes = (html: string) => elementsOf(html, '<p class="tier-none">').map(textOf);
+  const STATIC = /정적 검사|사람이 볼 곳|판정자|AI 가 푼 경고|발견/;
 
-  it.each(done.map((a) => [SYNTHETIC_RESULT_SOURCES[a.id], a.id] as const))("%s: 곁칸이 정책 전부를 세고 잇는다. 점수 대신 수만 센다", (_name, id) => {
-    const view = viewOf(id);
-    const html = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} />);
-    const text = textOf(html);
-    // 곁칸 `정책 N`: N 은 데이터에서 센다. 상자가 있는 정책은 상자로, 나머지는 조문 도감으로 잇는다.
-    expect(html).toContain(`정책 <span class="count">${view.policies.length}</span>`);
-    for (const policy of view.policies) {
-      const boxed = policy.locations.length > 0 || policy.evidence.length > 0;
-      if (boxed) {
-        expect(html).toContain(`href="#policy-${policy.id.replaceAll(".", "-")}"`);
-        expect(html).toContain(`id="policy-${policy.id.replaceAll(".", "-")}"`);
-      } else {
-        expect(html).toContain(linked(policyHref(policy.id)));
-        expect(html).not.toContain(`id="policy-${policy.id.replaceAll(".", "-")}"`);
-      }
-    }
-    expect(text).toContain(`사람이 볼 곳 ${view.findingCount}건`);
-    // 면책은 바닥글(모든 쪽)이 싣는다. 결과 화면 안에 되풀이하지 않는다.
-    expect(text).not.toContain(SITE.disclaimer);
-    if (view.findingCount === 0) expect(html).toContain(`<p class="zero-line">${SITE.zeroIsNotClearance}</p>`);
-    // AI 검토와 다 보지 못한 것을 숨기지 않는다: 검사 정보의 AI 줄과 "결과에 실린 ‘다 보지 못한 파일’ 없음".
-    expect(html).toContain(`<dt>판정자</dt><dd>${view.judge ?? "꺼짐"}</dd>`);
-    expect(text).toContain("결과에 실린 ‘다 보지 못한 파일’없음");
-    expect(text).not.toMatch(/%|점수|등급/);
-    expectNoBannedWording(html);
-    // 합성 저장소에는 GitHub 링크가 없다.
-    expect(html).not.toContain("target=\"_blank\"");
-  });
-
-  it("발견이 있는 정책 상자 맨 아래에 근거 조문 원문을 접어 두고(팩 그대로), 판정자를 켜 보라고 권하지 않는다", () => {
-    const id = done.find((a) => viewOf(a.id).findingCount > 0)!.id;
-    const view = viewOf(id);
-    const statutes = Object.fromEntries(
-      packMeta.policies.flatMap((policy) => {
-        const ref = policy.legal.find((legal) => legal.text);
-        return ref?.text ? [[policy.id, { label: ref.label, text: ref.text }]] : [];
-      }),
+  it("review 가 있으면 review 화면(요약 → 의무 체크리스트 → 하는 일 → 흐름 → 검증 정보)이고 그 아래에 진행 기록을 둔다. 검토가 없다는 말은 없다", () => {
+    const progress = <details className="an-progress-test" />;
+    const links = { markdown: "/api/analyses/4qqa6fdx2h/checklist/", print: "/r/example-studio/genai-chat/a/4qqa6fdx2h/checklist/" };
+    const html = renderToStaticMarkup(
+      <AnalysisDashboard code={null} review={syntheticReview} profile={profileOf("genai-chat.main")} reviewPlan="run" progress={progress} exportLinks={links} />,
     );
-    const html = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} statutes={statutes} />);
-    const withFindings = view.policies.filter((policy) => policy.locations.length > 0);
-    expect(withFindings.length).toBeGreaterThan(0);
-    for (const policy of withFindings) {
-      const text = statutes[policy.id]?.text;
-      if (text) expect(textOf(html)).toContain(textOf(renderToStaticMarkup(<pre>{text}</pre>)));
-    }
-    // 접힌 채로 둔다(details, open 없음). 이름은 "근거 조문 원문"이다. 조문 이름은 상자 머리의 조문 링크와 다를 때만 덧붙인다
-    // (같은 사실을 한 상자에 두 번 적지 않는다).
-    const folds = html.match(/<details class="lg statute-fold"><summary>근거 조문 원문(?: <span class="lg-name">[^<]*<\/span>)?<\/summary>/g) ?? [];
-    expect(folds).toHaveLength(withFindings.filter((p) => statutes[p.id]).length);
-    // (2026-11-11 오너 지시) 펼치면 조문 이름의 항만 먼저 보이고(원문에서 그대로 잘라 낸 것), 조문 전체는 그 안에서 다시 펼친다.
-    for (const policy of withFindings.filter((p) => statutes[p.id])) {
-      const statute = statutes[policy.id]!;
-      const part = paragraphOf(statute.label, statute.text);
-      if (part === null) continue;
-      expect(statute.text).toContain(part);
-      expect(html).toContain(`<div class="legal-text">${textOf(renderToStaticMarkup(<pre>{part}</pre>))}</div><details class="lg legal-all"><summary>조문 전체</summary>`);
-    }
-    for (const policy of withFindings.filter((p) => statutes[p.id])) {
-      const named = html.includes(`근거 조문 원문 <span class="lg-name">${statutes[policy.id]!.label}</span>`);
-      if (statutes[policy.id]!.label === policy.law) expect(named).toBe(false);
-    }
-    expect(html).not.toContain("로컬에서 판정자를 켜고");
-    expect(html).not.toContain("외부 API");
+    // review 화면 그대로다(프로필의 단을 따로 그리지 않는다).
+    expect(html).toContain('<div class="tiers review">');
+    expect(heads(html)).toEqual(heads(renderToStaticMarkup(<ReviewView review={syntheticReview} code={null} />)));
+    expect(heads(html)).not.toContain("2걸리는 의무");
+    expect(html.indexOf('<div class="tiers review">')).toBeLessThan(html.indexOf("an-progress-test"));
+    for (const note of [SITE.service.reviewMissing, SITE.service.reviewLimit, SITE.service.reviewNone]) expect(textOf(html)).not.toContain(note);
+    expect(html).toContain(`href="${links.markdown}"`);
+    expect(html).toContain(linked(links.print));
+    expect(textOf(html)).not.toMatch(/정적 검사|사람이 볼 곳|판정자/);
   });
 
-  it("발견이 없는 정책은 곁칸의 상태별 묶음에 모으고, 0의 뜻을 그 아래에 한 번 적는다. 상태 풀이 문장은 정책마다 적지 않는다", () => {
-    for (const analysis of done) {
-      const view = viewOf(analysis.id);
-      const html = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} />);
-      const quiet = view.policies.filter((p) => p.locations.length === 0 && p.evidence.length === 0 && p.aiCleared === 0);
-      expect((html.match(/<article class="box policy /g) ?? []).length, analysis.id).toBe(
-        view.policies.filter((p) => p.locations.length > 0 || p.evidence.length > 0).length,
-      );
-      expect((html.match(/<div class="side-group">/g) ?? []).length, analysis.id).toBe(new Set(quiet.map((p) => p.status)).size);
-      expect((html.match(/<p class="z">/g) ?? []).length, analysis.id).toBe(quiet.length > 0 ? 1 : 0);
-      expect(html).not.toContain("quiet-hint");
-      expect(html).toContain('href="/policy#status">상태의 뜻</a>');
-    }
-  });
-
-  it("세 단으로 그린다: 1·2단은 CLI 의 저장소 프로필이고, 없으면 '아직 없음'이다. 서비스 기능이 없으면 걸리는 의무가 없다고 답한다", () => {
-    const view = viewOf("64y4jdtazh");
-    const profileOf = (name: string) => parseProfile(readJson("contract", "cli-current", "profile", `${name}.json`))!;
-    const heads = (html: string) => elementsOf(html, '<h2 class="tier-hd"').map(textOf);
-    const none = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} />);
-    expect(heads(none)).toEqual(["1프로필", "2걸리는 의무", "3검토 결과"]);
-    expect(elementsOf(none, '<p class="tier-none">').map(textOf)).toEqual(["아직 없음", "아직 없음"]);
-    // 맨 위 한 문장 요약: 프로필이 없으면 셋째 단의 수만.
-    expect(textOf(elementsOf(none, '<p class="overview">')[0])).toBe(`${CHECKLIST_LABEL.check} 2건`);
+  it("review 가 없으면 세 단: 1·2단은 CLI 의 저장소 프로필이고 없으면 '아직 없음', 3단 '의무 체크리스트'에는 검토가 없는 까닭. 서비스 기능이 없으면 그렇게 답한다", () => {
+    const none = renderToStaticMarkup(<AnalysisDashboard code={null} />);
+    expect(heads(none)).toEqual(["1프로필", "2걸리는 의무", "3의무 체크리스트"]);
+    expect(notes(none)).toEqual(["아직 없음", "아직 없음", SITE.service.reviewNone]);
+    // 프로필이 없으면 맨 위 한 줄도 없다.
+    expect(none).not.toContain('<p class="overview">');
+    expect(textOf(none)).not.toMatch(STATIC);
 
     const push = profileOf("night-push.main");
-    const html = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} profile={push} />);
-    expect(textOf(elementsOf(html, '<p class="overview">')[0])).toBe(
-      `감지된 기능 ${push.features.length}가지 걸릴 수 있는 의무 ${push.totals.duties}개 ${CHECKLIST_LABEL.check} 2건`,
-    );
+    const html = renderToStaticMarkup(<AnalysisDashboard code={null} profile={push} />);
+    expect(heads(html)).toEqual(heads(none));
+    expect(textOf(elementsOf(html, '<p class="overview">')[0])).toBe(`감지된 기능 ${push.features.length}가지 걸릴 수 있는 의무 ${push.totals.duties}개`);
     expect(textOf(html)).toContain(NO_JUDGEMENT);
     // 기능마다 의무의 수만 보이고, 목록은 접혀 있다.
     for (const feature of push.features) expect(textOf(html)).toContain(`${feature.name} 걸릴 수 있는 의무 ${feature.duties.count}개`);
@@ -641,39 +590,48 @@ describe("대시보드", () => {
     expect(closedDetailsAt(html, at)).toEqual(['<details class="ob">']);
     // 처분의 말이 든 의무 한 줄은 싣지 않는다(법·조문·링크만).
     expect(textOf(html)).not.toMatch(/\u{ACFC}\u{C9D5}\u{AE08}|\u{ACFC}\u{D0DC}\u{B8CC}/u);
+    expect(textOf(html)).not.toMatch(STATIC);
+    // 사이트가 쓴 말만 본다(프로필의 의무 글은 CLI 가 낸 그대로라 법에 적힌 말이 들어 있다).
+    expectNoBannedWording(none);
+    // 저장소 주소가 없으면(합성 저장소) 근거 줄에 GitHub 링크가 없다.
+    expect(html).not.toContain('class="gh"');
 
-    const plain = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} profile={profileOf("plain.main")} />);
+    const plain = renderToStaticMarkup(<AnalysisDashboard code={null} profile={profileOf("plain.main")} />);
     expect(textOf(plain)).toContain(NO_FEATURES);
     // 신호만 본 프로필이 아무것도 찾지 못한 것은 기능·의무가 없다는 뜻이 아니다(2026-11-16): 요약 줄과 2단도 신호의 말로.
-    expect(elementsOf(plain, '<p class="tier-none">').map(textOf)).toEqual(["기능 신호가 없어 고르지 않았습니다."]);
-    expect(textOf(elementsOf(plain, '<p class="overview">')[0])).toMatch(/^기능 신호 없음 /);
+    expect(notes(plain)).toEqual(["기능 신호가 없어 고르지 않았습니다.", SITE.service.reviewNone]);
+    expect(textOf(elementsOf(plain, '<p class="overview">')[0])).toBe("기능 신호 없음");
     expect(textOf(plain)).not.toContain("감지된 기능 0가지");
-
-    // 하루 review 상한에 닿은 분석(2026-11-12 오너 지시): 프로필과 의무 목록까지, 셋째 단에 그 사실, 정적 검사는 넷째 단.
-    const limited = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} profile={push} reviewPlan="limit" />);
-    expect(heads(limited)).toEqual(["1프로필", "2걸리는 의무", "3의무 체크리스트", "4정적 검사"]);
-    expect(elementsOf(limited, '<p class="tier-none">').map(textOf)).toEqual([SITE.service.reviewLimit]);
-    // 지난날의 분석이면 "오늘"이라고 적지 않고 그날을 적는다.
-    const past = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} profile={push} reviewPlan="limit" limitDay="2026-11-12" />);
-    expect(elementsOf(past, '<p class="tier-none">').map(textOf)).toEqual(["2026-11-12 검토 한도가 차서 검토하지 않았습니다."]);
-    // review 를 맡겼는데 결과가 없으면 그렇다고 적는다. 저장된 review 를 쓰는 분석이나 스위치가 꺼진 분석은 그대로.
-    const missing = renderToStaticMarkup(<AnalysisDashboard view={view} code={null} profile={push} reviewPlan="run" />);
-    expect(elementsOf(missing, '<p class="tier-none">').map(textOf)).toEqual([SITE.service.reviewMissing]);
-    expect(heads(renderToStaticMarkup(<AnalysisDashboard view={view} code={null} profile={push} reviewPlan="stored" />))).toEqual(heads(html));
   });
 
-  it("저장소 주소가 있으면 발견 줄마다 커밋 고정 링크를 새 창으로 걸고, 새 창과 고정한 커밋을 화면 낭독기에 알린다", () => {
-    const view = viewOf("64y4jdtazh");
+  it("셋째 단의 까닭: 하루 검토 한도(지난날이면 그날), 맡겼는데 받지 못함, 그 밖(저장된 review 를 쓰는데 없음, 스위치 꺼짐)은 검토 결과 없음", () => {
+    const push = profileOf("night-push.main");
+    const third = (props: { reviewPlan?: Analysis["review"]; limitDay?: string | null }) =>
+      notes(renderToStaticMarkup(<AnalysisDashboard code={null} profile={push} {...props} />)).at(-1);
+    expect(third({ reviewPlan: "limit" })).toBe(SITE.service.reviewLimit);
+    // 지난날의 분석이면 "오늘"이라고 적지 않고 그날을 적는다.
+    expect(third({ reviewPlan: "limit", limitDay: "2026-11-12" })).toBe("2026-11-12 검토 한도가 차서 검토하지 않았습니다.");
+    expect(third({ reviewPlan: "run" })).toBe(SITE.service.reviewMissing);
+    expect(third({ reviewPlan: "stored" })).toBe(SITE.service.reviewNone);
+    expect(third({})).toBe(SITE.service.reviewNone);
+    const limited = renderToStaticMarkup(<AnalysisDashboard code={null} profile={push} reviewPlan="limit" />);
+    expect(heads(limited)).toEqual(["1프로필", "2걸리는 의무", "3의무 체크리스트"]);
+  });
+
+  it("저장소 주소가 있으면 프로필의 근거 줄마다 커밋 고정 링크를 새 창으로 걸고, 새 창과 고정한 커밋을 화면 낭독기에 알린다", () => {
+    const push = profileOf("night-push.main");
     const base = ["https:", "", "github.com", "someone", "night-push"].join("/");
     const commit = "b".repeat(40);
-    const html = renderToStaticMarkup(<AnalysisDashboard view={view} code={{ htmlUrl: base, commit }} />);
+    const html = renderToStaticMarkup(<AnalysisDashboard code={{ htmlUrl: base, commit }} profile={push} />);
     const links = [
       ...html.matchAll(
-        /<a class="gh" href="([^"]+)" target="_blank" rel="noopener noreferrer"><code>[^]*?<\/code><svg[^]*?<\/svg><span class="visually-hidden">\(GitHub, 새 창, 커밋 bbbbbbb 에 고정\)<\/span><\/a>/g,
+        /<a class="gh" href="([^"]+)" target="_blank" rel="noopener noreferrer">[^]*?<span class="visually-hidden">\(GitHub, 새 창, 커밋 bbbbbbb 에 고정\)<\/span><\/a>/g,
       ),
     ].map((m) => m[1]);
-    expect(links).toHaveLength(view.findingCount);
-    for (const link of links) expect(link.startsWith(`${base}/blob/${commit}/src/marketing/campaign.ts#L`)).toBe(true);
+    const evidence = [...push.features, ...push.testOnly].flatMap((entry) => entry.evidence);
+    expect(evidence.length).toBeGreaterThan(0);
+    expect(links).toHaveLength(evidence.length);
+    for (const [i, link] of links.entries()) expect(link).toBe(fileLink(base, commit, evidence[i].file, evidence[i].line));
   });
 });
 
@@ -700,7 +658,7 @@ describe("검색 0건 (docs/redesign.md 3장 '검색')", () => {
         outcome={{ ok: true, hits: [], total: 0 }}
         tagged={options.tagged ?? false}
         fakeGitHub={options.fakeGitHub ?? false}
-        analyzed={{ ok: true, rows: [], findings: {} }}
+        analyzed={{ ok: true, rows: [] }}
       />,
     );
 
@@ -717,22 +675,27 @@ describe("검색 0건 (docs/redesign.md 3장 '검색')", () => {
     expect(textOf(zero("zzzz", { fakeGitHub: true }))).toContain("로컬 가짜 GitHub: 합성 저장소만 찾습니다.");
     expect(textOf(zero("zzzz"))).not.toContain("가짜 GitHub");
     // 긴 합성 문장은 쓰지 않는다. 이름표다.
-    expect(textOf(zero("zzzz", { tagged: true }))).not.toContain(SITE.service.synthetic);
+    expect(textOf(zero("zzzz", { tagged: true }))).not.toContain("합성 예시입니다");
   });
 
-  it("그 아래에 이 사이트에서 분석된 저장소를 둔다. 0건 줄이 보이면 0의 뜻을 둔다", async () => {
+  it("그 아래에 이 사이트에서 분석된 저장소를 둔다. 끝난 분석은 review 의 확인할 것 수, 없으면 그 까닭. 확인할 것 0건이 보이면 0의 뜻을 둔다", async () => {
     const rows = await store.recentActivity(20);
-    const findings = await store.findingCounts(rows.map(({ analysis }) => analysis.id));
-    const html = renderToStaticMarkup(
-      <SearchResults query="zzzz" outcome={{ ok: true, hits: [], total: 0 }} tagged fakeGitHub={false} analyzed={{ ok: true, rows, findings }} />,
-    );
+    const reviews = await store.reviewFacts(rows.map(({ analysis }) => analysis.id));
+    const render = (facts: Record<string, ReviewFacts | null>) =>
+      renderToStaticMarkup(<SearchResults query="zzzz" outcome={{ ok: true, hits: [], total: 0 }} tagged fakeGitHub={false} analyzed={{ ok: true, rows, reviews: facts }} />);
+    const html = render(reviews);
     const text = textOf(html);
     expect(text).toContain("이 사이트에서 분석된 저장소");
     expect(text).toContain("합성 예시");
     for (const { repository: r } of rows) expect(html).toContain(linked(repoHref(r.owner, r.name)));
-    // plain-utils 의 끝난 분석은 발견 0건이다.
-    expect(text).toContain("발견 0건");
-    expect(text).toContain(SITE.zeroIsNotClearance);
+    // 생성형 AI 채팅 합성 저장소만 review 가 있다(확인할 것 8건). 나머지 끝난 분석은 검토 결과가 없다.
+    const reviewed = rows.find(({ analysis }) => reviews[analysis.id])!;
+    expect(reviewed.repository.name).toBe("genai-chat");
+    expect(text).toContain(`확인할 것 ${reviews[reviewed.analysis.id]!.check}건`);
+    expect(text).toContain("검토 결과 없음");
+    expect(text).not.toMatch(/정적 검사|발견/);
+    expect(text).not.toContain(SITE.zeroCheckIsNotClearance);
+    expect(textOf(render({ ...reviews, [reviewed.analysis.id]: { ...reviews[reviewed.analysis.id]!, check: 0 } }))).toContain(SITE.zeroCheckIsNotClearance);
   });
 
   it("결과가 있으면 결과 머리에 합성 예시 이름표를 단다(서버가 정한 tagged 일 때만)", () => {
@@ -757,10 +720,16 @@ describe("검색 0건 (docs/redesign.md 3장 '검색')", () => {
 
 describe("조문 이름의 줄 바꿈", () => {
   it("끝의 조·항(·호)만 줄을 바꾸지 않는 조각으로 묶고 글자는 그대로다", () => {
-    for (const label of packMeta.policies.flatMap((policy) => policy.legal.map((legal) => legal.label))) {
+    for (const label of [
+      "인공지능 발전과 신뢰 기반 조성 등에 관한 기본법 제31조 제1항",
+      "정보통신망 이용촉진 및 정보보호 등에 관한 법률 제50조 제3항",
+      "개인정보 보호법 제22조의2 제1항",
+      "청소년 보호법 제16조",
+      "전자상거래 등에서의 소비자보호에 관한 법률 제21조 제1항 제1호",
+    ]) {
       const html = renderToStaticMarkup(<>{keepArticle(label)}</>);
       expect(textOf(html)).toBe(label);
-      expect(html).toMatch(/<span class="nobreak">제\d+조(의\d+)?( 제\d+항)?<\/span>$/);
+      expect(html).toMatch(/<span class="nobreak">제\d+조(의\d+)?( 제\d+항)?( 제\d+호)?<\/span>$/);
     }
     expect(renderToStaticMarkup(<>{keepArticle("개인정보 보호법 제22조의2 제1항")}</>)).toBe('개인정보 보호법 <span class="nobreak">제22조의2 제1항</span>');
     expect(keepArticle("조문 없음")).toBe("조문 없음");
@@ -822,54 +791,61 @@ describe("최근 분석 고르기 (첫 화면의 줄)", () => {
 });
 
 describe("첫 화면·검색 빈 상태의 최근 분석 줄", () => {
-  it("줄은 분석 쪽 링크이고, 끝난 분석은 review 의 '확인할 것' 수(없으면 정적 검사의 발견 수, 화면 낭독기에는 '끝남, '), 나머지는 상태 글. 분석 중이면 단계 점과 지금 단계", async () => {
+  it("줄은 분석 쪽 링크이고, 끝난 분석은 review 의 '확인할 것' 수(없으면 그 까닭, 화면 낭독기에는 '끝남, '), 나머지는 상태 글. 분석 중이면 단계 점과 지금 단계", async () => {
     const rows = await store.recentActivity(10);
     const ids = rows.map(({ analysis }) => analysis.id);
-    const findings = await store.findingCounts(ids);
     const reviews = await store.reviewFacts(ids);
     const features = await store.featureNames(ids);
     const checks = Object.fromEntries(Object.entries(reviews).map(([id, facts]) => [id, facts?.check ?? null]));
-    const html = renderToStaticMarkup(<ActivityList rows={rows} findings={findings} reviews={reviews} features={features} variant="feed" />);
+    const html = renderToStaticMarkup(<ActivityList rows={rows} reviews={reviews} features={features} variant="feed" />);
     for (const { repository: r, analysis } of rows) expect(html).toContain(linked(analysisHref(r.owner, r.name, analysis.id)));
-    // AI 검토가 본체(2026-11-15): review 가 있는 저장소(생성형 AI 채팅 합성)는 체크리스트의 확인할 것 수, 없으면 정적 검사의 발견 수.
+    // AI 검토가 본체(2026-11-15): review 가 있는 저장소(생성형 AI 채팅 합성)는 체크리스트의 확인할 것 수, 없으면 검토 결과가 없다는 말.
     const reviewed = rows.find(({ analysis }) => analysis.status === "succeeded" && typeof checks[analysis.id] === "number")!;
     const review = (await store.getReview(reviewed.analysis.owner, reviewed.analysis.name, reviewed.analysis.commit))!;
     expect(checks[reviewed.analysis.id]).toBe(checklistDoc(review).overview.check);
     expect(html).toContain(`<span class="visually-hidden">끝남, </span>확인할 것 ${checks[reviewed.analysis.id]}건`);
-    expect(html).toContain('<span class="visually-hidden">끝남, </span>정적 검사 발견 0건');
+    expect(html).toContain('<span class="visually-hidden">끝남, </span>검토 결과 없음');
     expect(Object.values(checks).filter((n) => n !== null)).toHaveLength(1);
     expect(textOf(html)).toContain("분석 중");
     expect(textOf(html)).toContain("대기 중");
     expect(html.match(/class="act-trail"/g)).toHaveLength(1);
     expect(textOf(html)).toContain("AI 검토");
-    expect(textOf(html)).toContain(SITE.zeroIsNotClearance);
+    expect(textOf(html)).not.toMatch(/정적 검사|발견/);
+    expect(textOf(html)).not.toContain(SITE.zeroCheckIsNotClearance);
   });
 
-  it("단계 사이의 분석 중인 줄은 '다음 단계 기다림'이고, 결과를 읽지 못한 끝난 줄은 0이 아니라 '발견 수 알 수 없음'이다", async () => {
+  it("단계 사이의 분석 중인 줄은 '다음 단계 기다림'이고, review 가 없는 끝난 줄은 0이 아니라 그 까닭이다", async () => {
     const [row] = (await store.recentActivity(10)).filter(({ analysis }) => analysis.status === "running");
     const between = { ...row, analysis: { ...row.analysis, steps: row.analysis.steps.map((step) => (step.name === "scan" ? { ...step, startedAt: null } : step)) } };
-    expect(textOf(renderToStaticMarkup(<ActivityList rows={[between]} findings={{}} variant="feed" />))).toContain("다음 단계 기다림");
+    expect(textOf(renderToStaticMarkup(<ActivityList rows={[between]} variant="feed" />))).toContain("다음 단계 기다림");
     const done = (await store.recentActivity(10)).find(({ analysis }) => analysis.status === "succeeded")!;
-    const text = textOf(renderToStaticMarkup(<ActivityList rows={[done]} findings={{ [done.analysis.id]: null }} variant="box" />));
-    expect(text).toContain("발견 수 알 수 없음");
-    expect(text).not.toContain("0건");
-    expect(text).not.toContain(SITE.zeroIsNotClearance);
+    for (const [plan, said] of [
+      [undefined, "검토 결과 없음"],
+      ["run", "검토 결과 받지 못함"],
+      ["limit", "검토 안 함"],
+    ] as const) {
+      const text = textOf(renderToStaticMarkup(<ActivityList rows={[{ ...done, analysis: { ...done.analysis, review: plan } }]} reviews={{ [done.analysis.id]: null }} variant="box" />));
+      expect(text, String(plan)).toContain(said);
+      expect(text).not.toContain("0건");
+      expect(text).not.toContain(SITE.zeroCheckIsNotClearance);
+    }
   });
 
   it("검색 빈 상태: 최근 분석 상자, AI 검토가 묻는 의무(기능마다 의무 수, 조문 도감을 그 기능으로 거른 링크). 분석이 없으면 '아직 분석 없음'", async () => {
     const rows = await store.recentActivity(8);
-    const findings = await store.findingCounts(rows.map(({ analysis }) => analysis.id));
-    const html = renderToStaticMarkup(<SearchHome recent={{ ok: true, rows, findings }} tagged />);
+    const reviews = await store.reviewFacts(rows.map(({ analysis }) => analysis.id));
+    const html = renderToStaticMarkup(<SearchHome recent={{ ok: true, rows, reviews }} tagged />);
     expect(html.match(/class="pol-row pol-feat"/g)).toHaveLength(dutyMap.features.length);
     // 부품 시험에는 trailingSlash 가 걸리지 않아 Link 가 '/policy?f=' 로 적는다. 빌드된 쪽은 '/policy/?f=' 다.
     for (const feature of dutyMap.features) expect(html).toContain(`href="${dutyFeatureHref(feature.id).replace("/?", "?")}"`);
     expect(textOf(html)).toContain(`AI 검토가 묻는 의무 ${dutyMap.asked}`);
     expect(dutyMap.features.reduce((n, feature) => n + dutyMap.duties.filter((duty) => duty.feature === feature.id).length, 0)).toBe(dutyMap.asked);
-    // 정적 규칙의 정책 목록은 곁칸에 두지 않는다(정적 검사는 보조, 2026-11-15).
+    // 정적 규칙의 정책 목록은 곁칸에 두지 않는다(2026-11-15. 2026-11-25 부터 규칙 검사 자체가 없다).
     expect(textOf(html)).not.toContain("검사하는 정책");
-    expect(textOf(html)).toContain(SITE.zeroIsNotClearance);
+    expect(textOf(html)).toContain("확인할 것 8건");
+    expect(textOf(html)).not.toMatch(/정적 검사|발견/);
     expect(textOf(html)).toContain("합성 예시");
-    const empty = textOf(renderToStaticMarkup(<SearchHome recent={{ ok: true, rows: [], findings: {} }} tagged={false} />));
+    const empty = textOf(renderToStaticMarkup(<SearchHome recent={{ ok: true, rows: [] }} tagged={false} />));
     expect(empty).toContain("아직 분석 없음");
     expect(empty).not.toContain("합성 예시");
     const down = textOf(renderToStaticMarkup(<SearchHome recent={{ ok: false, message: "DB(시험)." }} tagged={false} />));
@@ -880,32 +856,38 @@ describe("첫 화면·검색 빈 상태의 최근 분석 줄", () => {
 describe("저장소 쪽의 최신 분석 상자", () => {
   const done = (id: string) => analyses.find((a) => a.id === id)!;
 
-  it("review 가 있으면(2026-11-16 오너 지시): 확인할 것 N건, 정적 검사는 '보조' 한 줄(0건인 AI 판정 줄은 없음), 0의 뜻은 둘 다 0일 때만, 기능은 review 가 정한 것", () => {
-    const zero = analyses.find((a) => a.status === "succeeded" && viewOf(a.id).findingCount === 0)!;
-    const view = viewOf(zero.id);
-    const render = (review: { check: number; features: string[]; removed?: number } | null, analysis = zero) =>
-      textOf(renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={view} features={[]} review={review && { removed: 0, ...review }} />));
+  it("review 가 있으면(2026-11-16 오너 지시): 확인할 것 N건, 기능은 review 가 정한 것, 0의 뜻은 확인할 것이 0일 때만. 규칙 검사의 줄은 없다(2026-11-25)", () => {
+    const analysis = done("w7bc479x2u");
+    const render = (review: { check: number; features: string[]; removed?: number } | null, a: Analysis = analysis, features: string[] | null = []) =>
+      textOf(renderToStaticMarkup(<LatestAnalysis repository={repoOf(a)} analysis={a} features={features} review={review && { removed: 0, ...review }} />));
     const text = render({ check: 11, features: ["회원 가입·개인정보 수집", "로그인·본인인증"] });
     expect(text).toContain("확인할 것 11건");
-    expect(text).toContain("보조: 정적 검사 발견 0건");
-    expect(text).not.toContain("사람이 볼 곳");
-    expect(text).not.toMatch(/AI 가 푼 경고 0건|빠진 판정 0건/);
-    expect(text).not.toContain(SITE.zeroIsNotClearance);
+    expect(text).not.toMatch(/정적 검사|사람이 볼 곳|AI 가 푼 경고|빠진 판정|발견/);
     expect(text).not.toContain(SITE.zeroCheckIsNotClearance);
     expect(text).toContain("회원 가입·개인정보 수집, 로그인·본인인증");
     expect(text).not.toContain("감지된 기능 없음");
-    // 둘 다 0 이면 0의 뜻(확인할 것의 말).
     expect(render({ check: 0, features: [] })).toContain(SITE.zeroCheckIsNotClearance);
-    // review 가 없으면 지금처럼 정적 검사의 수와 0의 뜻. 맡겼는데 받지 못했으면 그렇다고.
-    expect(render(null)).toContain("정적 검사 사람이 볼 곳 0건");
-    expect(render(null)).toContain(SITE.zeroIsNotClearance);
-    expect(render(null, { ...zero, review: "run" })).toContain("검토 결과 받지 못함");
+    // review 가 없으면 그 까닭(검토 결과 없음, 맡겼는데 받지 못함, 한도로 하지 않음). 보이는 수가 없으므로 0의 뜻도 없다.
+    for (const [plan, said] of [
+      [undefined, "검토 결과 없음"],
+      ["run", "검토 결과 받지 못함"],
+      ["limit", "검토 안 함"],
+    ] as const) {
+      const none = render(null, { ...analysis, review: plan });
+      expect(none, String(plan)).toContain(said);
+      expect(none).not.toContain("0건");
+      expect(none).not.toContain(SITE.zeroCheckIsNotClearance);
+    }
+    // 기능 줄: review 가 없으면 프로필의 기능. 비었거나 모르면 줄을 두지 않는다.
+    expect(render(null, analysis, ["가", "나", "다"])).toContain("가, 나 외 1");
+    for (const features of [[], null]) {
+      expect(renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} features={features} />)).not.toContain("latest-feat");
+    }
   });
 
-  it("머리 줄: 배지, id, 커밋, 시각 KST, 걸린 시간(단계의 시각에서), 사람이 볼 곳 N건, 결과 보기. 정책 줄과 발견 줄(CLI 메시지 그대로, 경로:줄, 판정 범위)", () => {
+  it("머리 줄: 배지, id, 커밋, 시각 KST, 걸린 시간(단계의 시각에서), 결과 보기", () => {
     const analysis = done("64y4jdtazh");
-    const view = viewOf(analysis.id);
-    const html = renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={view} />);
+    const html = renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} />);
     const text = textOf(html);
     expect(text).toContain("최신 분석");
     expect(text).toContain("끝남");
@@ -913,91 +895,10 @@ describe("저장소 쪽의 최신 분석 상자", () => {
     expect(text).toContain(shortCommit(analysis.commit));
     expect(text).toContain(`${formatKst(analysis.requestedAt)} KST`);
     expect(text).toContain(`걸린 시간 ${duration(analysis.steps[0].startedAt!, finishedAt(analysis)!)}`);
-    expect(text).toContain(`사람이 볼 곳 ${view.findingCount}건`);
+    expect(text).toContain("검토 결과 없음");
     expect(html).toContain(linked(analysisHref(analysis.owner, analysis.name, analysis.id)));
-    // 판정자 없이 만든 결과라 AI 가 푼 경고 수는 적지 않는다.
-    expect(text).not.toContain("AI 가 푼 경고");
-    const located = view.policies.filter((p) => p.locations.length > 0);
-    for (const policy of located) expect(text).toContain(policy.title);
-    const first = located[0].locations[0];
-    expect(text).toContain(first.finding.unsatisfied_alternatives[0].message!);
-    expect(text).toContain(`${first.file}:${first.line}`);
-    expect(text).toContain("파일 전체 판정");
+    expect(text).toContain("결과 보기");
     expect(html).not.toMatch(/\stitle="/);
-    expect(text).not.toContain(SITE.zeroIsNotClearance);
-  });
-
-  it(`발견 줄은 모두 합해 ${LATEST_FINDINGS}개까지다`, () => {
-    const analysis = done("64y4jdtazh");
-    const view = viewOf(analysis.id);
-    const many: ReportView = {
-      ...view,
-      policies: view.policies.map((p) => (p.locations.length > 0 ? { ...p, locations: Array.from({ length: 4 }, () => p.locations).flat() } : p)),
-    };
-    const html = renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={many} />);
-    expect(html.match(/class="latest-fd"/g)).toHaveLength(LATEST_FINDINGS);
-  });
-
-  it("발견이 0이면 0의 뜻을 둔다. 결과를 읽지 못했으면 0 이 아니라 알 수 없음이다", () => {
-    const analysis = done("w7bc479x2u");
-    const zero = textOf(renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={viewOf(analysis.id)} />));
-    expect(zero).toContain("사람이 볼 곳 0건");
-    expect(zero).toContain(SITE.zeroIsNotClearance);
-    const unread = textOf(renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={null} />));
-    expect(unread).toContain("발견 수 알 수 없음");
-    expect(unread).not.toContain("0건");
-    expect(unread).not.toContain(SITE.zeroIsNotClearance);
-  });
-
-  it("판정자를 켠 분석이면 머리에 AI 가 푼 경고 수(run.ai_cleared)를 더한다", () => {
-    const analysis = done("64y4jdtazh");
-    const parsed = parseReport(readJson("tests", "fixtures", "judge-on.cleared.json"));
-    if (!parsed.ok) throw new Error(parsed.errors.join("\n"));
-    const view = buildReportView(parsed.report, parsed.contract, packMeta);
-    expect(view.judge).not.toBeNull();
-    expect(view.aiCleared.length).toBeGreaterThan(0);
-    const text = textOf(renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={view} />));
-    expect(text).toContain(`AI 가 푼 경고 ${view.aiCleared.length}건`);
-  });
-
-  it("판정자를 켠 분석이면 적용 질문으로 빠진 판정 수(run.ai_dismissed)도 숨기지 않는다. 목록이 없으면 수를 모른다고 적는다", () => {
-    const analysis = done("64y4jdtazh");
-    const parsed = parseReport(readJson("tests", "fixtures", "judge-on.dismissed.json"));
-    if (!parsed.ok) throw new Error(parsed.errors.join("\n"));
-    const view = buildReportView(parsed.report, parsed.contract, packMeta);
-    expect(view.judge).not.toBeNull();
-    expect(view.aiDismissedKnown).toBe(true);
-    expect(view.aiDismissed.length).toBeGreaterThan(0);
-    const text = textOf(renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={view} />));
-    expect(text).toContain(`AI 가 적용되지 않는다고 답해 빠진 판정 ${view.aiDismissed.length}건`);
-    expect(text).toContain("AI 가 푼 경고 0건");
-    const unknown = textOf(
-      renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={{ ...view, aiDismissed: [], aiDismissedKnown: false }} />),
-    );
-    expect(unknown).toContain("AI 가 적용되지 않는다고 답해 빠진 판정 알 수 없음");
-    // 판정자 없이 만든 결과에는 둘 다 적지 않는다.
-    const off = textOf(renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={viewOf(analysis.id)} />));
-    expect(off).not.toContain("빠진 판정");
-  });
-
-  it("첫 대안의 값이 '모름'이면 발견 줄 앞에 채운 '모름' 이름표(.unk)를 단다. 합성 예시의 테두리 이름표(.tag)가 아니다", () => {
-    const analysis = done("64y4jdtazh");
-    const view = viewOf(analysis.id);
-    const unknown: ReportView = {
-      ...view,
-      policies: view.policies.map((p) => ({
-        ...p,
-        locations: p.locations.map((location) => ({
-          ...location,
-          finding: {
-            ...location.finding,
-            unsatisfied_alternatives: location.finding.unsatisfied_alternatives.map((alt, i) => (i === 0 ? { ...alt, value: "unknown" as const } : alt)),
-          },
-        })),
-      })),
-    };
-    const html = renderToStaticMarkup(<LatestAnalysis repository={repoOf(analysis)} analysis={analysis} view={unknown} />);
-    expect(html).toContain('<span class="unk">모름</span>');
-    expect(html).not.toContain('class="tag"');
+    expect(text).not.toMatch(/정적 검사|사람이 볼 곳|AI 가 푼 경고|발견/);
   });
 });

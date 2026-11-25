@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { SANCTION_TEXT } from "@/lib/duties/sanction";
-import { packMeta, policySlug } from "@/lib/pack";
 import nextConfig from "../next.config";
 import { root, walk } from "./helpers";
 import { BANNED_WORDING, SANCTION_SOURCE } from "./wording";
@@ -39,26 +38,9 @@ describe("표기 약속: 소스에 적은 문구", () => {
   });
 });
 
-describe("표기 약속: 화면에 싣는 팩 문구", () => {
-  // 팩에서 온 글 가운데 화면에 그리는 것(제목, 질문, 메시지, 고치는 법)에 단정하는 말이나 처분·액수가 없어야 한다.
-  // 걸리면 화면에서 그 필드를 빼고 docs/cli-requests.md 의 "팩 쪽에 전할 관찰"에 적는다. 조문 원문은 보지 않는다.
-  it.each(packMeta.policies.map((p) => p.id))("%s", (id) => {
-    const policy = packMeta.policies.find((p) => p.id === id)!;
-    const shown = [
-      policy.title,
-      policy.ask_developer,
-      ...policy.rules.flatMap((rule) => [
-        rule.applies_question,
-        ...rule.alternatives.flatMap((alt) => [alt.message, alt.ask_developer, alt.remediation, alt.question]),
-      ]),
-    ].filter((text): text is string => Boolean(text));
-    for (const text of shown) {
-      for (const [pattern, why] of BANNED_WORDING) {
-        expect(pattern.test(text), `${id}: "${text}" — ${why}`).toBe(false);
-      }
-    }
-  });
-
+describe("표기 약속: 팩 작성자 메모", () => {
+  // 2026-11-25 규칙 기반 검사(scan)를 폐기해 정책 팩의 글(제목, 질문, 메시지, 고치는 법)은 화면에 싣지 않는다(docs/commitments.md 의
+  // 1). 그 글을 보던 시험은 걷었다. 팩 작성자 메모(rationale)를 싣지 않는다는 약속은 그대로다.
   it("팩 작성자 메모(rationale)는 화면에 싣지 않는다", () => {
     // 조문이 아닌 글에 처분·액수 같은 법 관련 주장이 들어 있다. 실을지는 사람이 정한다.
     for (const file of code) {
@@ -78,7 +60,7 @@ const SERVER_FILE = /(^|\/)(route|proxy|middleware)\.(js|jsx|mjs|cjs|ts|tsx)$/;
 /** 비밀값의 환경 변수 이름. 서버 코드 말고는 이름조차 적지 않는다. */
 const SECRET_NAMES = ["GITHUB_TOKEN", "RUNNER_TOKEN", "RUNNER_SECRET", "ANTHROPIC_API_KEY", "DATABASE_URL"];
 
-/** 불러오는 이름을 저장소 안의 파일로 바꾼다. 패키지는 null 이다(tests/bundle.test.ts 와 같은 규칙). */
+/** 불러오는 이름을 저장소 안의 파일로 바꾼다. 패키지는 null 이다. */
 function resolveImport(from: string, spec: string): string | null {
   let base: string;
   if (spec.startsWith("@/")) base = path.join("src", spec.slice(2));
@@ -164,9 +146,9 @@ describe("서버는 정한 구조 안에만 (docs/commitments.md 의 2, CLAUDE.m
 });
 
 describe("밖으로 나가는 요청과 저장 (docs/commitments.md 의 2)", () => {
-  // 연 파일은 브라우저 안에서만 읽는다. 분석 도구·외부 글꼴·제3자 스크립트를 넣지 않는다. 브라우저 쪽 코드는 같은 사이트의
-  // /api/ 말고는 요청하지 않는다. 법제처·GitHub 링크처럼 사용자가 눌러서 가는 주소는 데이터(팩 메타데이터, GitHub 이 돌려준
-  // html_url)에서 온다. 서버 코드(src/server/)만 GitHub API 의 주소를 적는다.
+  // 분석 도구·외부 글꼴·제3자 스크립트를 넣지 않는다. 브라우저 쪽 코드는 같은 사이트의 /api/ 말고는 요청하지 않는다.
+  // 법제처·GitHub 링크처럼 사용자가 눌러서 가는 주소는 데이터(의무 지도, CLI 결과, GitHub 이 돌려준 html_url)에서 온다.
+  // 서버 코드(src/server/)만 GitHub API 의 주소를 적는다.
   const client = clientCode();
   const anywhere: [RegExp, string][] = [
     [/sendBeacon|XMLHttpRequest|WebSocket|EventSource/, "네트워크 API"],
@@ -198,20 +180,17 @@ describe("밖으로 나가는 요청과 저장 (docs/commitments.md 의 2)", () 
 });
 
 describe("합성 예시 표시와 면책", () => {
-  it("데모와 뷰어가 예시임을 밝힌다", () => {
-    expect(read("src/app/demo/page.tsx")).toContain("합성 예시");
-    expect(read("src/components/viewer/ReportViewer.tsx")).toContain("합성 예시");
+  it("합성 저장소·분석을 보이는 곳이 예시임을 밝힌다", () => {
+    // 2026-11-25 데모(/demo)와 결과 파일 열기(/view)를 지웠다(docs/commitments.md 의 1). 합성 예시는 합성 미리보기와 가짜 GitHub 의
+    // 저장소·분석이다. 그것을 그리는 첫 화면의 최근 분석, 저장소 쪽, 분석 쪽 머리, 검색 결과와 체크리스트 내보내기가 이름표를 단다.
+    const tag = '<span className="tag">합성 예시</span>';
+    for (const file of ["src/app/page.tsx", "src/app/r/[owner]/[repo]/page.tsx", "src/components/service/analysis.tsx", "src/components/service/SearchResults.tsx"]) {
+      expect(read(file), file).toContain(tag);
+    }
+    expect(read("src/server/checklist.ts")).toContain('"합성 예시"');
   });
 
   it("면책 문구가 모든 화면의 바닥에 있다", () => {
     expect(read("src/app/layout.tsx")).toContain("SITE.disclaimer");
-  });
-});
-
-describe("주소", () => {
-  it("정책 주소 이름에 점이 없고 서로 겹치지 않는다", () => {
-    const slugs = packMeta.policies.map((p) => policySlug(p.id));
-    expect(slugs.every((slug) => !slug.includes("."))).toBe(true);
-    expect(new Set(slugs).size).toBe(slugs.length);
   });
 });

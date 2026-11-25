@@ -1,73 +1,12 @@
 {
-  "captured_on": "2026-11-24",
+  "captured_on": "2026-11-25",
   "cli": {
     "version": "0.3.0.dev0",
-    "from": "Plitsoft-SDP",
-    "commit": "7cf9758",
-    "committed_on": "2026-11-24",
+    "from": "../Plitsoft-SDP",
+    "commit": "386ce07",
+    "committed_on": "2026-11-25",
     "dirty": false
   },
-  "engine": {
-    "name": "semgrep",
-    "version": "1.176.1"
-  },
-  "pack_digest": "284a5b28911a0124",
-  "command": "policyofficer scan src/ --output-format json   (판정자 없음, 기본값)",
-  "normalized": [
-    "run.static_seconds",
-    "run.ai_seconds"
-  ],
-  "files": [
-    {
-      "name": "genai-chat.fixed",
-      "file": "genai-chat.fixed.json",
-      "exit_code": 1,
-      "units": 2,
-      "findings": 2
-    },
-    {
-      "name": "genai-chat.main",
-      "file": "genai-chat.main.json",
-      "exit_code": 1,
-      "units": 2,
-      "findings": 2
-    },
-    {
-      "name": "kids-signup.fixed",
-      "file": "kids-signup.fixed.json",
-      "exit_code": 0,
-      "units": 1,
-      "findings": 0
-    },
-    {
-      "name": "kids-signup.main",
-      "file": "kids-signup.main.json",
-      "exit_code": 1,
-      "units": 1,
-      "findings": 1
-    },
-    {
-      "name": "night-push.fixed",
-      "file": "night-push.fixed.json",
-      "exit_code": 1,
-      "units": 3,
-      "findings": 3
-    },
-    {
-      "name": "night-push.main",
-      "file": "night-push.main.json",
-      "exit_code": 1,
-      "units": 2,
-      "findings": 2
-    },
-    {
-      "name": "plain.main",
-      "file": "plain.main.json",
-      "exit_code": 0,
-      "units": 0,
-      "findings": 0
-    }
-  ],
   "profile_command": "policyofficer profile .",
   "profiles": [
     {

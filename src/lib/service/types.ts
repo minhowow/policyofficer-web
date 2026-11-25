@@ -34,7 +34,7 @@ export interface Repository {
 
 export type AnalysisStatus = "queued" | "running" | "succeeded" | "failed";
 
-/** 진행 단계. 차례대로 지난다(`steps.ts` 의 `STEP_ORDER`). 정적 검사와 AI 판정은 한 단계 `scan` 이다(그 까닭은 `steps.ts`). */
+/** 진행 단계. 차례대로 지난다(`steps.ts` 의 `STEP_ORDER`). `scan` 은 기능 파악과 AI 검토를 하는 검토 단계다(그 까닭은 `steps.ts`). */
 export type StepName = "queued" | "fetch" | "scan" | "finish";
 
 export interface AnalysisStep {
@@ -74,18 +74,17 @@ export interface Analysis {
    * 도구와 팩의 판. 실행기가 CLI 를 설치한 뒤에 안다. 그 전(대기, 저장소 받기)에는 null 이다. 끝난 분석에서는 결과 JSON 의
    * `tool.version`, `run.pack_digest` 와 같다(tests/service.test.ts).
    */
-  versions: { tool: string; pack: string } | null;
+  versions: { tool: string; pack: string | null } | null;
   /**
    * 이 분석에서 review 를 어떻게 했는지(실행기에 보낼 때 정한다. `ReviewPlan`). REVIEW 스위치가 꺼져 있었거나 아직 보내지 않았으면
    * 없다.
    */
   review?: ReviewPlan;
   /**
-   * 검사 단계 안에서 실행기가 마지막으로 알린 일과 그 알림을 받은 때(2026-11-13). 검사 단계는 실행기가 CLI 명령을 차례로 부른다:
-   * 정적 검사와 AI 판정(`policyofficer scan`) → 저장소 프로필(`profile`) → `review` 가 `run` 일 때 review(`review`). 실행기는 명령
-   * 사이마다 다음 명령을 알린다(best-effort. 알림이 빠질 수 있다). 없으면(null 포함) 아직 정적 검사와 AI 판정 중이거나, 알림이
-   * 오지 않았거나, 검사 단계에 이르지 않았다. 검사 단계가 끝난 뒤에도 마지막 값이 남는다(그 뒤의 단계에서는 뜻이 없다).
-   * review 안의 단계(의무 고르기·의무별 조사·반박)는 CLI 가 알리지 않아 여기에 없다.
+   * 검토 단계 안에서 실행기가 마지막으로 알린 일과 그 알림을 받은 때(2026-11-13). 그 단계는 실행기가 CLI 명령을 차례로 부른다:
+   * 저장소 프로필(`profile`) → `review` 가 `run` 일 때 review(`review`). 실행기는 명령 사이마다 다음 명령을 알린다(best-effort. 알림이
+   * 빠질 수 있다). 없으면(null 포함) 알림이 오지 않았거나 그 단계에 이르지 않았다. 단계가 끝난 뒤에도 마지막 값이 남는다(그 뒤의
+   * 단계에서는 뜻이 없다). review 안의 단계(의무 고르기·의무별 조사·반박·직접 대조)는 CLI 가 알리지 않아 여기에 없다.
    */
   scanPart?: ScanPart | null;
 }
@@ -188,17 +187,10 @@ export interface ServiceStore {
   getAnalysis(owner: string, name: string, id: string): Promise<Analysis | null>;
   /** id 만으로 분석을 찾는다(진행 중인 분석 쪽이 몇 초마다 다시 읽는 `GET /api/analyses/{id}/`). 없으면 null. */
   findAnalysis(id: string): Promise<Analysis | null>;
-  /** 끝난 분석의 CLI 결과 JSON. 끝나지 않았거나 없으면 null. 해석은 `lib/report/parse.ts` 가 한다. */
-  getResult(id: string): Promise<unknown | null>;
-  /**
-   * 끝난 분석마다 결과에 실린 발견 수. 결과가 없거나 읽지 못한 분석은 null(0 으로 적지 않는다). 운영은 결과를 받을 때 센 값을
-   * 분석 행에서 읽는다(쪽을 열 때마다 결과 JSON 전체를 읽고 해석하지 않는다).
-   */
-  findingCounts(ids: string[]): Promise<Record<string, number | null>>;
   /**
    * 끝난 분석마다 그 저장소·커밋의 review 에서 목록 줄에 싣는 것(`ReviewFacts`): 체크리스트의 '확인할 것' 수(`checkCount`)와 review 가
    * 정한 기능(AI 가 인용과 함께 뺀 것은 빼고). 어느 분석에서 받았든 `getReview` 와 같은 것을 읽는다. review 결과가 없거나 읽지
-   * 못하면 null. 목록 줄은 정적 검사의 발견 수와 프로필의 기능보다 이것을 먼저 쓴다(AI 검토가 본체, 2026-11-15·16 오너 결정).
+   * 못하면 null. 목록 줄은 프로필의 기능보다 이것을 먼저 쓴다(AI 검토가 본체, 2026-11-15·16 오너 결정).
    */
   reviewFacts(ids: string[]): Promise<Record<string, ReviewFacts | null>>;
   /**

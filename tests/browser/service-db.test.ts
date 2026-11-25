@@ -3,6 +3,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Browser, BrowserContext } from "playwright-core";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { REVIEW_NONE } from "@/components/service/parts";
+import { featureNames, parseProfile } from "@/lib/profile";
+import { CHECKS } from "@/lib/review/text";
 import { analysisHref, repoHref } from "@/lib/service/href";
 import { STEP_ORDER } from "@/lib/service/steps";
 import { SITE } from "@/lib/site";
@@ -16,8 +19,10 @@ import { closeChrome, launchChrome, NO_STORAGE, openPage, overflow, stored, serv
 // 운영 저장소 구현(DB + GitHub)으로 띄운 사이트를 연다. DB 는 이 시험만의 PGlite 폴더, GitHub 은 가짜 GitHub(scripts/github-stub.mjs)
 // 이다. 실제 GitHub 과 DB 서버를 부르지 않는다. 합성 저장소로 띄운 사이트는 tests/browser/service.test.ts 가 본다.
 //
-// 서버를 띄우기 전에 DB 에 끝난 분석 하나(결과는 contract/cli-current 의 수집본)와 실패한 분석 하나를 넣어 둔다. PGlite 는 한
-// 폴더를 두 프로세스가 함께 열 수 없어서, 넣은 뒤 닫고 서버를 띄운다.
+// 서버를 띄우기 전에 DB 에 끝난 분석 둘(저장소 프로필은 contract/cli-current/profile 의 수집본. 하나에는 확인할 것이 0건인 review
+// 를 붙인다)과 실패한 분석, 대기 중인 분석을 넣어 둔다. 실행기 콜백이 적는 것과 같은 꼴이다(src/server/callbacks.ts: 규칙 검사의
+// 결과 JSON 칸은 비우고 프로필과 review 를 둔다. 2026-11-25 web17). PGlite 는 한 폴더를 두 프로세스가 함께 열 수 없어서, 넣은 뒤
+// 닫고 서버를 띄운다.
 
 let stub: Awaited<ReturnType<typeof startGitHubStub>>;
 let site: Site;
@@ -31,8 +36,8 @@ const SUCCEEDED = "dbk7wq2zhm";
 const RUNNER_SECRET = "browser-test-runner-secret";
 const FAILED = "dbk7wq2zhn";
 /**
- * 발견 0건으로 끝난 분석. 저장소 쪽(최신 분석 상자와 기록 표)에 0건이 보이면 0의 뜻이 함께 보이는지 본다. 첫 화면은 저장소마다
- * 한 줄이고 이 저장소에는 대기 중인 분석(WAITING)이 있어 그 줄이 보인다(재디자인 D3).
+ * 확인할 것 0건인 review 로 끝난 분석. 저장소 쪽(최신 분석 상자와 기록 표)에 0건이 보이면 0의 뜻이 함께 보이는지 본다. 첫 화면은
+ * 저장소마다 한 줄이고 이 저장소에는 대기 중인 분석(WAITING)이 있어 그 줄이 보인다(재디자인 D3).
  */
 const ZERO = "dbk7wq2zhr";
 /**
@@ -47,24 +52,40 @@ beforeAll(async () => {
   stub = await startGitHubStub();
   dataDir = mkdtempSync(path.join(tmpdir(), "policyofficer-pglite-"));
   const db = await openDatabase({ databaseUrl: null, pgliteDir: dataDir });
-  const commit = stub.head("example-org", "kids-signup");
+  const commit = stub.head("example-org", "kids-signup")!;
   const at = (minutes: number) => new Date(Date.parse("2026-11-03T01:00:00Z") + minutes * 60_000).toISOString();
-  const steps = STEP_ORDER.map((name, i) => ({ name, startedAt: at(i), endedAt: at(i + 1) }));
-  const result = readJson("contract", "cli-current", "kids-signup.main.json") as { tool: { version: string }; run: { pack_digest: string }; findings: unknown[] };
-  // 발견 수는 서버가 결과를 받을 때 세어 적는 열이다(src/server/callbacks.ts). 여기서는 같은 값을 손으로 적는다.
-  await db.query(
-    `INSERT INTO analyses (id, owner, repo, repo_key, commit_sha, branch, status, requested_at, finished_at, steps, tool_version, pack_digest, finding_count)
-     VALUES ($1, 'example-org', 'kids-signup', 'example-org/kids-signup', $2, 'main', 'succeeded', $3, $4, $5::jsonb, $6, $7, $8)`,
-    [SUCCEEDED, commit, at(0), at(5), JSON.stringify(steps), result.tool.version, result.run.pack_digest, result.findings.length],
-  );
-  await db.query("INSERT INTO results (analysis_id, json) VALUES ($1, $2)", [SUCCEEDED, JSON.stringify(result)]);
-  const empty = readJson("contract", "cli-current", "plain.main.json") as typeof result;
-  await db.query(
-    `INSERT INTO analyses (id, owner, repo, repo_key, commit_sha, branch, status, requested_at, finished_at, steps, tool_version, pack_digest, finding_count)
-     VALUES ($1, 'example-labs', 'plain.utils', 'example-labs/plain.utils', $2, 'main', 'succeeded', $3, $4, $5::jsonb, $6, $7, $8)`,
-    [ZERO, "e".repeat(40), at(-10), at(-5), JSON.stringify(STEP_ORDER.map((name, i) => ({ name, startedAt: at(i - 10), endedAt: at(i - 9) }))), empty.tool.version, empty.run.pack_digest, empty.findings.length],
-  );
-  await db.query("INSERT INTO results (analysis_id, json) VALUES ($1, $2)", [ZERO, JSON.stringify(empty)]);
+  // 끝난 분석의 기록: 도구 판과 감지된 기능의 이름(목록 줄용)은 서버가 결과를 받을 때 프로필에서 읽어 적는 열이다
+  // (src/server/callbacks.ts). 여기서는 같은 값을 손으로 적는다. 규칙 검사의 결과 JSON 칸은 비운다.
+  const finished = async (id: string, owner: string, repo: string, commitSha: string, from: number, profile: unknown, review: unknown) => {
+    const names = featureNames(parseProfile(profile)!);
+    await db.query(
+      `INSERT INTO analyses (id, owner, repo, repo_key, commit_sha, branch, status, requested_at, finished_at, steps, tool_version, feature_names)
+       VALUES ($1, $2, $3, $4, $5, 'main', 'succeeded', $6, $7, $8::jsonb, $9, $10)`,
+      [
+        id,
+        owner,
+        repo,
+        `${owner}/${repo}`.toLowerCase(),
+        commitSha,
+        at(from),
+        at(from + 5),
+        JSON.stringify(STEP_ORDER.map((name, i) => ({ name, startedAt: at(from + i), endedAt: at(from + i + 1) }))),
+        (profile as { tool: { version: string } }).tool.version,
+        JSON.stringify(names),
+      ],
+    );
+    await db.query("INSERT INTO results (analysis_id, json, profile, review) VALUES ($1, NULL, $2, $3)", [
+      id,
+      JSON.stringify(profile),
+      review === null ? null : JSON.stringify(review),
+    ]);
+  };
+  await finished(SUCCEEDED, "example-org", "kids-signup", commit, 0, readJson("contract", "cli-current", "profile", "kids-signup.main.json"), null);
+  // 확인할 것이 0건인 review(손으로 만든 것): 합성 review 예시(contract/review)에서 확인할 것 세 갈래의 항목을 걷어 냈다.
+  const review = readJson("contract", "review", "genai-chat.review.json") as { checklist: { status: string }[] };
+  const noCheck = { ...review, checklist: review.checklist.filter((item) => !(CHECKS as readonly string[]).includes(item.status)) };
+  expect(noCheck.checklist.length).toBeGreaterThan(0);
+  await finished(ZERO, "example-labs", "plain.utils", "e".repeat(40), -10, readJson("contract", "cli-current", "profile", "plain.main.json"), noCheck);
   await db.query(
     `INSERT INTO analyses (id, owner, repo, repo_key, commit_sha, branch, status, requested_at, finished_at, steps, failure_step, failure_reason)
      VALUES ($1, 'example-org', 'kids-signup', 'example-org/kids-signup', $2, 'main', 'failed', $3, $3, $4::jsonb, 'fetch', $5)`,
@@ -123,10 +144,9 @@ describe("DB + GitHub 으로 띄운 사이트", () => {
     ]);
     expect(await page.locator(".act-row .act-state").allTextContents()).toEqual(["대기 중", "대기 중", "실패"]);
     // 0건 줄이 보이지 않으므로 0의 뜻도 없다.
-    expect(await page.getByText(SITE.zeroIsNotClearance, { exact: true }).count()).toBe(0);
+    expect(await page.getByText(SITE.zeroCheckIsNotClearance, { exact: true }).count()).toBe(0);
     // GitHub 이 가짜(GITHUB_API_BASE 가 기본값이 아님)라 합성 예시 이름표를 단다. 운영 설정에서 꺼지는 것은 tests/server-config.test.ts.
     expect(await page.locator(".home-feed .tag").textContent()).toBe("합성 예시");
-    expect(await page.locator("main").textContent()).not.toContain(SITE.service.synthetic);
     expect(outside).toEqual([]);
   });
 
@@ -174,18 +194,23 @@ describe("DB + GitHub 으로 띄운 사이트", () => {
     expect(await page.locator("#request-off").count()).toBe(0);
     // 가짜 GitHub 의 저장소 주소는 github.com 이 아니라 링크를 걸지 않는다.
     expect(await page.locator("a[href^='http']").count()).toBe(0);
-    // 최신 분석 상자는 가장 나중에 끝난 분석(실패한 분석이 더 나중이어도)이다.
+    // 최신 분석 상자는 가장 나중에 끝난 분석(실패한 분석이 더 나중이어도)이다. 그 커밋의 검토 결과가 없어 그 까닭을 적고, 감지된
+    // 기능은 DB 에 적힌 이름(프로필에서 읽은 것)이다.
     expect(await page.locator(".latest-hd").innerText()).toContain(SUCCEEDED);
-    expect(await page.locator(".latest-fd").count()).toBeGreaterThan(0);
+    expect(await page.locator(".latest-hd").innerText()).toContain(REVIEW_NONE);
+    expect(await page.locator(".latest .latest-feat").innerText()).toContain("회원 가입·개인정보 수집");
+    expect(await page.locator(".an-table .an-row-out").allTextContents()).toEqual(["", REVIEW_NONE]);
     expect(outside).toEqual([]);
     expect(await stored(page)).toEqual(NO_STORAGE);
   });
 
-  it("저장소 쪽: 발견 0건인 최신 분석과 기록 표의 0건 아래에 0의 뜻", async () => {
+  it("저장소 쪽: 확인할 것 0건인 최신 분석과 기록 표의 0건 아래에 0의 뜻", async () => {
     const { page } = await open(repoHref("example-labs", "plain.utils"));
     expect(await page.locator(".latest-hd").innerText()).toContain(ZERO);
-    expect(await page.locator(".latest .zero-note").textContent()).toBe(SITE.zeroIsNotClearance);
-    expect(await page.locator(".repo-history .zero-note").textContent()).toBe(SITE.zeroIsNotClearance);
+    expect(await page.locator(".latest-hd").innerText()).toContain("확인할 것 0건");
+    expect(await page.locator(".latest .zero-note").textContent()).toBe(SITE.zeroCheckIsNotClearance);
+    expect(await page.locator(".an-table .an-row-out").allTextContents()).toEqual(["", "확인할 것 0건"]);
+    expect(await page.locator(".repo-history .zero-note").textContent()).toBe(SITE.zeroCheckIsNotClearance);
   });
 
   it.each([
@@ -223,9 +248,17 @@ describe("DB + GitHub 으로 띄운 사이트", () => {
     }
   });
 
-  it("끝난 분석은 결과 화면, 실패한 분석은 멈춘 단계와 까닭. 가짜 GitHub 이라 분석 쪽 머리에 합성 예시 이름표를 단다", async () => {
+  it("끝난 분석은 결과 화면(프로필에서 센 한 줄과 세 단), 실패한 분석은 멈춘 단계와 까닭. 가짜 GitHub 이라 분석 쪽 머리에 합성 예시 이름표를 단다", async () => {
     const { page } = await open(analysisHref("example-org", "kids-signup", SUCCEEDED));
-    await page.waitForSelector(".report");
+    await page.waitForSelector(".tiers");
+    // DB 에 둔 프로필을 읽어 그렸다(검토 결과는 없다).
+    const profile = parseProfile(readJson("contract", "cli-current", "profile", "kids-signup.main.json"))!;
+    expect((await page.locator(".overview").innerText()).replace(/\s+/g, " ").trim()).toBe(
+      `감지된 기능 ${profile.features.length}가지 걸릴 수 있는 의무 ${profile.totals.duties}개`,
+    );
+    expect(await page.locator(".tier-hd").count()).toBe(3);
+    expect(await page.locator(".tier-none").last().textContent()).toBe(SITE.service.reviewNone);
+    expect(await page.locator("main").innerText()).not.toContain("정적 검사");
     expect(await page.locator("main").textContent()).not.toContain("합성 예시입니다");
     // (D5, D3 검토 D5-TAG-1) 이름표는 서버 설정(showsSyntheticTag: 가짜 GitHub)으로 단다. DB 의 저장소 기록은 합성이 아니다
     // (가짜 GitHub 의 저장소도 실제 저장소처럼 적힌다). 저장소, 커밋, 분석 id, 시각이 머리에 함께 있다.
@@ -432,11 +465,11 @@ describe("DB + GitHub 으로 띄운 사이트", () => {
     // 하나의 한도(28초)에 닿았다.
     const runner = runLocalRunner(["--fixture", "--once", "--step-delay", "3000", "--site", site.origin], { RUNNER_SECRET });
     try {
-      // 검사 단계 안의 하위 단계(정적 검사·AI 판정)가 함께 진행 중으로 그려지는 때가 있어 첫 것만 기다린다.
-      await page.locator(".step-active .step-name", { hasText: /저장소 받기|검사/ }).first().waitFor({ timeout: 30_000 });
+      // 검토 단계 안의 하위 단계(기능 파악)가 함께 진행 중으로 그려지는 때가 있어 첫 것만 기다린다.
+      await page.locator(".step-active .step-name", { hasText: /저장소 받기|검토/ }).first().waitFor({ timeout: 30_000 });
       expect(await page.locator(".an-meta .badge").textContent()).toBe("분석 중");
       expect(await page.locator(".live-now").textContent()).not.toContain("대기열");
-      await page.locator(".report").waitFor({ timeout: 15_000 });
+      await page.locator(".tiers").waitFor({ timeout: 15_000 });
     } finally {
       await runner;
     }
@@ -448,11 +481,18 @@ describe("DB + GitHub 으로 띄운 사이트", () => {
     expect(await page.locator(".steps .step-item:not(.step-sub).step-done .step-name").allTextContents()).toEqual([
       "대기",
       "저장소 받기·도구 설치",
-      "검사",
+      "검토",
       "정리",
     ]);
-    // 로컬 실행기가 검사 단계 안의 차례를 알렸다(review 를 맡기지 않은 분석이라 AI 검토 줄은 없다).
-    expect(await page.locator(".steps .step-sub.step-done .step-name").allTextContents()).toEqual(["정적 검사·AI 판정", "기능 파악"]);
+    // 로컬 실행기가 검토 단계 안의 차례를 알렸다(review 를 맡기지 않은 분석이라 AI 검토 줄은 없다. 2026-11-25 web17 부터 규칙 검사는
+    // 돌리지 않는다).
+    expect(await page.locator(".steps .step-sub.step-done .step-name").allTextContents()).toEqual(["기능 파악"]);
+    // 결과는 로컬 실행기가 보낸 프로필(수집본)이다. 검토 결과는 없다.
+    const profile = parseProfile(readJson("contract", "cli-current", "profile", "night-push.main.json"))!;
+    expect((await page.locator(".overview").innerText()).replace(/\s+/g, " ").trim()).toBe(
+      `감지된 기능 ${profile.features.length}가지 걸릴 수 있는 의무 ${profile.totals.duties}개`,
+    );
+    expect(await page.locator(".tier-none").last().textContent()).toBe(SITE.service.reviewNone);
     // 진행은 같은 사이트의 /api/ 로만 읽었다.
     expect(site.requests.filter((r) => r.url === `/api/analyses/${id}/`).length).toBeGreaterThanOrEqual(2);
     expect(outside).toEqual([]);

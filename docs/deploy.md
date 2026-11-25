@@ -3,22 +3,20 @@
 에이전트는 계정·저장소·비밀값을 만들지 않고 배포하지 않는다(CLAUDE.md). 이 문서는 오너가 할 일과 넣을 환경 변수의 **이름**만
 적는다. 값은 어디에도 적지 않는다. 기본값과 뜻은 `docs/direction.md` 의 "기본 제한 값", 전체 목록은 `.env.example` 이다.
 
-## 0. 이름 바꾸기(2026-11-24, 제품 이름 policyofficer)
+## 0. 주소 바꾸기(2026-11-25 오너 지시, 제품 이름 policyofficer)
 
-GitHub 저장소는 이미 바뀌었다(웹 `minhowow/Plitsoft-SDP-Web` → `minhowow/policyofficer-web`, CLI `minhowow/Plitsoft-SDP` →
-`minhowow/policyofficer`). GitHub 은 옛 이름으로 온 요청을 새 이름으로 넘겨 주고, Vercel 의 GitHub 연결은 저장소 id 로 이어지므로
-배포는 그대로 된다. 오너가 바꿀 것:
+GitHub 저장소는 `minhowow/policyofficer-web`(웹)과 `minhowow/policyofficer`(CLI)다. 사이트 주소는 `https://policyofficer.vercel.app` 이다
+(2026-11-25 Vercel 프로젝트에 더함). 옛 주소 `plitsoft-sdp-web.vercel.app` 으로 온 요청은 `vercel.json` 의 `redirects` 가 새 주소로
+넘긴다(같은 경로). 같은 날 바꾼 것:
 
-| 어디 | 이름 | 지금 | 바꿀 값 | 언제 |
-|---|---|---|---|---|
-| Vercel(Production) | `RUNNER_REPO` | `minhowow/Plitsoft-SDP-Web` | `minhowow/policyofficer-web` | 지금(옛 이름도 넘겨 주지만 실행기 깨우기가 넘겨 주기에 기대지 않게) |
-| Vercel 도메인 | (설정) | `plitsoft-sdp-web.vercel.app` | `policyofficer.vercel.app` 을 **더한다**(옛 주소는 지우지 않는다) | 오너가 정할 때 |
-| Vercel(Production) | `SITE_URL` | `https://plitsoft-sdp-web.vercel.app` | `https://policyofficer.vercel.app` | 새 주소가 열린 뒤, 아래 Actions 변수와 **같은 때** |
-| Actions 변수(`minhowow/policyofficer-web`) | `SITE_URL` | `https://plitsoft-sdp-web.vercel.app` | `https://policyofficer.vercel.app` | 위와 같은 때(실행기는 콜백 주소의 출처가 이 값과 다르면 멈춘다) |
-| Vercel(Production) | `RUNNER_TOKEN` | — | 그대로 | fine-grained 토큰은 저장소 id 로 이어진다. 저장소를 다시 고를 필요가 없다(실행기 깨우기가 실패하면 그때 다시 고른다) |
-| Actions secret | `CLI_REPO_TOKEN` | — | 그대로 | CLI 저장소가 비공개일 때만 쓴다. 위와 같다 |
+| 어디 | 이름 | 값 |
+|---|---|---|
+| Vercel(Production) | `RUNNER_REPO` | `minhowow/policyofficer-web` |
+| Vercel(Production) | `SITE_URL` | `https://policyofficer.vercel.app` |
+| Actions 변수(`minhowow/policyofficer-web`) | `SITE_URL` | `https://policyofficer.vercel.app` |
 
-Vercel 의 환경 변수는 바꾼 뒤 다시 배포해야 듣는다(Vercel 이 다시 배포하라고 띄운다). `SITE_URL` 을 바꾸기 전까지 실행기 콜백은 옛 주소로 온다. 옛 주소는 계속 열려 있게 둔다(리다이렉트하지 않는다).
+`SITE_URL` 은 웹과 Actions 가 같아야 한다(실행기는 콜백 주소의 출처가 Actions 변수와 다르면 멈춘다). 실행기는 콜백의 리다이렉트를
+따르지 않으므로, 바꿀 때는 대기·진행 중인 분석이 없을 때 둘을 바꾸고 바로 다시 배포한다(Vercel 의 환경 변수는 다시 배포해야 듣는다).
 
 지금(B2)은 계정 없이 이 컴퓨터에서 돈다(PGlite + 가짜 GitHub + 로컬 실행기, 3절의 `npm run local`). 아래를 갖추면 환경 변수만
 바꿔 실제 환경으로 간다.
@@ -65,7 +63,7 @@ Vercel 의 환경 변수는 바꾼 뒤 다시 배포해야 듣는다(Vercel 이 
 | 이름 | 무엇 | 쓰는 단계 |
 |---|---|---|
 | `RUNNER_SECRET` | 웹의 `RUNNER_SECRET` 과 같은 값 | 알림·정리·멈춤(콜백) |
-| `ANTHROPIC_API_KEY` | AI 판정자 | 검사 |
+| `ANTHROPIC_API_KEY` | AI 검토(review) | review |
 | `CLI_REPO_TOKEN` | CLI 저장소(`minhowow/policyofficer`)가 비공개일 때만. 그 저장소 읽기 토큰 | 도구 설치 |
 
 - Actions 변수(variable, 비밀값이 아니다):
@@ -75,7 +73,7 @@ Vercel 의 환경 변수는 바꾼 뒤 다시 배포해야 듣는다(Vercel 이 
 | `SITE_URL` | 웹의 `SITE_URL` 과 같은 주소(`https://…`). 워크플로가 입력으로 받은 콜백 주소의 출처를 이것과 견주고, 다르면 멈춘다. 두지 않으면 모든 분석이 입력 확인에서 멈춘다 |
 
 - 저장소 tarball 은 워크플로 자체의 읽기 토큰(`github.token`)으로 받는다. 따로 만들 것이 없다.
-- 도구의 판(CLI 저장소·고정 커밋, uv 판, 딸린 꾸러미의 날짜 `CLI_EXCLUDE_NEWER`)과 AI 판정자 모델(`JUDGE_MODEL`, 지금 `claude-haiku-5-5`), 실행기 쪽 상한은 워크플로 파일의 `env` 에
+- 도구의 판(CLI 저장소·고정 커밋, uv 판, 딸린 꾸러미의 날짜 `CLI_EXCLUDE_NEWER`)과 review 모델(`REVIEW_MODEL`·`REVIEW_CHECKER`), 실행기 쪽 상한은 워크플로 파일의 `env` 에
   있다(`docs/direction.md` 의 표). 바꾸려면 그 파일을 고친다.
 - Anthropic 콘솔에서 월 지출 상한을 정한다.
 
@@ -86,7 +84,7 @@ Vercel 의 환경 변수는 바꾼 뒤 다시 배포해야 듣는다(Vercel 이 
 ```bash
 npm run local                         # http://127.0.0.1:3000 (가짜 GitHub 은 127.0.0.1:4010). 검색 예: kids, genai, example-labs
 npm run local -- --step-delay 3000    # 단계 사이 쉬는 시간(ms, 기본 1500). 진행과 대기열이 움직이는 것을 보기 좋다
-npm run local -- --cli                # 수집본 대신 옆 폴더(../Plitsoft-SDP)의 CLI 를 uv 로 실제로 돌린다(판정자 없음)
+npm run local -- --cli                # 수집본 대신 옆 폴더(../Plitsoft-SDP)의 CLI 를 uv 로 실제로 돌린다(프로필. review 는 키가 있을 때만)
 ```
 
 사이트는 `RUNNER=local`, PGlite(`.data/local`, 지우면 처음부터)로 뜨고, 실행 자리(`POOL_SIZE`)는 기본 2다. 저장소 셋 이상을
@@ -102,13 +100,13 @@ GITHUB_API_BASE=http://127.0.0.1:4010 RUNNER=local RUNNER_SECRET=local-dev npm r
 RUNNER_SECRET=local-dev npm run local-runner -- --fixture --parallel 2   # 다른 창에서. 실행 자리를 얻은 분석을 집어 끝까지 돌린다(--parallel 은 POOL_SIZE 와 같게)
 ```
 
-로컬 실행기는 GitHub 에서 받지 않고 가짜 GitHub 의 합성 저장소마다 정한 합성 데모 코드(`contract/fixtures/<이름>/main`)를 쓰고,
-판정자를 켜지 않는다. `--fixture` 는 CLI 대신 `contract/cli-current` 의 수집본을 결과로 보낸다(빼면 `uv` 와 옆 폴더의 CLI 로
-돌린다). `local-dev` 는 이 컴퓨터에서만 쓰는 아무 글이다(비밀값이 아니다). 로컬 실행기가 집어 가기를 물을 때도 서버가 대기열을
+로컬 실행기는 GitHub 에서 받지 않고 가짜 GitHub 의 합성 저장소마다 정한 합성 데모 코드(`contract/fixtures/<이름>/main`)를 쓴다.
+`--fixture` 는 CLI 대신 수집본(`contract/cli-current/profile` 의 프로필, review 를 맡긴 분석이면 `contract/review` 의 합성 review)을
+보낸다(빼면 `uv` 와 옆 폴더의 CLI 로 돌린다). `local-dev` 는 이 컴퓨터에서만 쓰는 아무 글이다(비밀값이 아니다). 로컬 실행기가 집어 가기를 물을 때도 서버가 대기열을
 넘기므로 실행 자리 수를 넘겨 돌리지 않는다. `--parallel` 이 `POOL_SIZE` 보다 작으면 자리를 얻었는데 집히지 않은 분석이 생기고,
 `DISPATCH_TIMEOUT_MINUTES`(10) 뒤에 "시작을 알리지 않아"로 실패한다.
 
-**로컬을 정직하게(재디자인 D4).** 로컬 실행기는 가짜 GitHub 의 합성 저장소 가운데 합성 데모 코드가 있는 것만 검사한다. 그 밖의
+**로컬을 정직하게(재디자인 D4).** 로컬 실행기는 가짜 GitHub 의 합성 저장소 가운데 합성 데모 코드가 있는 것만 다룬다. 그 밖의
 저장소는 저장소 받기 단계의 실패로 적는다(실제 저장소 이름에 합성 결과를 붙이지 않는다). `--source <폴더>` 를 직접 준 때만 그
 폴더를 검사한다(`--fixture` 와 함께면 수집본이 없어 실패다). 사이트도 `RUNNER=local` 인데 `GITHUB_API_BASE` 가 실제 GitHub(기본값)
 이면 분석 요청을 받지 않는다(저장소 쪽 단추 옆과 `POST /api/analyses/` 의 503 `closed` 에 까닭).

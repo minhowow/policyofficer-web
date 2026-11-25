@@ -1,16 +1,21 @@
 import type { Browser, BrowserContext, Page } from "playwright-core";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { NO_FEATURES } from "@/components/result/Tiers";
+import { NO_SIGNAL_LINE, REVIEW_NONE, REVIEW_NOT_RECEIVED, REVIEW_NOT_RUN } from "@/components/service/parts";
 import { syntheticRepositories, syntheticStore as store } from "@/lib/service/synthetic";
 import { analysisHref, repoHref } from "@/lib/service/href";
 import type { Analysis } from "@/lib/service/types";
 import { dutyFeatureHref, dutyMap } from "@/lib/duties";
+import { reviewFactsOf } from "@/lib/review";
 import { SITE } from "@/lib/site";
 import { closeChrome, launchChrome, NO_STORAGE, openPage, overflow, serveSite, stored, type Site } from "./site";
 
 // 분석 서비스(방향 B)의 다섯 쪽을 빌드된 사이트(합성 저장소, SERVICE_STORE=synthetic)에서 연다: 첫 화면, 검색(빈 상태·결과·0건), 저장소,
-// 분석(진행 중·실패·끝남).
+// 분석(진행 중·실패·끝남. 끝난 분석은 AI 검토 결과가 있는 것과 없는 것).
 // 검색이 거르는지, 저장소에서 분석으로 옮겨 가는지, 세 상태가 그려지는지, 375·1280px 의 두 테마에서 넘치지 않는지,
 // 밖으로 나가는 요청과 브라우저 저장소가 없는지 본다. 명도 대비는 tests/browser/colors.test.ts 가 본다.
+// 2026-11-25(web17) 부터 규칙 검사(정적 검사)의 결과는 어느 쪽에도 없다. 끝난 분석의 수는 AI 검토의 '확인할 것' 수이거나, 검토
+// 결과가 없으면 그 까닭이다.
 
 let site: Site;
 let browser: Browser;
@@ -64,11 +69,20 @@ const PAGES = [
 
 const rowNames = (page: Page) => page.locator(".repo-row .repo-link").allTextContents();
 
+/** review 가 있는 끝난 합성 분석(생성형 AI 채팅 합성 저장소)과 그 확인할 것의 수. 합성 review 는 커밋을 가리지 않는다. */
+const REVIEWED = analysisHref("example-studio", "genai-chat", "4qqa6fdx2h");
+const reviewed = await store.getReview("example-studio", "genai-chat", "5d34db91055d0cacd81e5aa655a6ae2a04cc7007");
+const CHECK = reviewFactsOf(reviewed!).check;
+/** 검토 결과가 없는 끝난 합성 분석(광고 푸시). 프로필의 하는 일과 걸리는 의무까지 보인다. */
+const PROFILED = analysisHref("example-org", "night-push", "64y4jdtazh");
+/** 목록 줄의 끝난 분석의 말: 확인할 것 N건, 또는 검토 결과가 없는 까닭(셋). 정적 검사의 발견 수는 없다. */
+const DONE_COUNT = new RegExp(`^끝남, (확인할 것 \\d+건|${[REVIEW_NONE, REVIEW_NOT_RECEIVED, REVIEW_NOT_RUN].join("|")})$`);
+
 describe("첫 화면", () => {
   it("머리글 없이 표지(서비스 이름), 큰 검색창, 최근 분석(저장소마다 한 줄, 합성 예시 이름표, 모두 보기). 설명 구획은 없다", async () => {
     const { page, outside } = await open("/");
     const main = (await page.locator("main").innerText()).replace(/\s+/g, " ");
-    for (const gone of ["어떻게 쓰나요", "이 도구가 아닌 것", "다른 길", SITE.service.synthetic, SITE.tagline, "검사하는 정책"]) expect(main).not.toContain(gone);
+    for (const gone of ["어떻게 쓰나요", "이 도구가 아닌 것", "다른 길", SITE.tagline, "검사하는 정책", "정적 검사"]) expect(main).not.toContain(gone);
     // 재디자인 D3: 첫 화면에만 머리글이 없다(HTML 은 그대로이고 CSS 가 감춘다). 바닥글은 있다.
     expect(await page.locator(".site-header").isVisible()).toBe(false);
     expect(await page.locator(".site-footer").isVisible()).toBe(true);
@@ -83,11 +97,16 @@ describe("첫 화면", () => {
     expect(new Set(names).size).toBe(4);
     expect(await page.locator(".act-row[data-status=running]").getAttribute("href")).toBe(analysisHref("example-org", "night-push", byStatus("running").id));
     expect(await page.locator(".act-row[data-status=running] .act-step").innerText()).toContain("AI 검토");
-    // 끝난 분석의 수: review 가 있으면 체크리스트의 확인할 것 수(AI 검토가 본체, 2026-11-15), 없으면 정적 검사의 발견 수.
-    expect(main).toMatch(/확인할 것 \d+건/);
-    // 정적 검사 발견 0건 줄이 보이므로 0의 뜻이 목록 아래에 보인다.
-    expect(main).toContain("정적 검사 발견 0건");
-    expect(await page.getByText(SITE.zeroIsNotClearance, { exact: true }).isVisible()).toBe(true);
+    // 끝난 분석의 수: review 가 있으면 체크리스트의 확인할 것 수(AI 검토가 본체, 2026-11-15), 없으면 그 까닭(2026-11-25 web17 부터
+    // 정적 검사의 발견 수는 없다). 화면 낭독기에는 앞에 "끝남, " 이 붙는다.
+    const done = await page.locator(".act-row[data-status=succeeded] .act-state").allTextContents();
+    expect(done.length).toBeGreaterThan(0);
+    for (const text of done) expect(text).toMatch(DONE_COUNT);
+    expect(done).toContain(`끝남, 확인할 것 ${CHECK}건`);
+    expect(done).toContain(`끝남, ${REVIEW_NONE}`);
+    // 0건 줄(확인할 것 0건)이 보이지 않으므로 0의 뜻도 없다.
+    expect(CHECK).toBeGreaterThan(0);
+    expect(await page.getByText(SITE.zeroCheckIsNotClearance, { exact: true }).count()).toBe(0);
     // 요청 시각의 시간대는 목록 머리에 한 번 적는다.
     expect(await page.locator(".home-feed-hd .home-kst").textContent()).toBe("시각 KST");
     // 줄의 저장소 이름은 한 굵기다(owner 를 옅게 두는 것은 저장소 쪽 h1 뿐. 목업 home-feed 의 500).
@@ -102,13 +121,13 @@ describe("첫 화면", () => {
     expect(await page.locator(".site-footer").evaluate((footer) => getComputedStyle(footer).textAlign)).toBe("center");
     // 재디자인 D2: 넓은 화면의 메뉴(.hdr-nav)와 좁은 화면의 펼치는 메뉴(.menu-pop)가 같은 링크를 갖는다. 머리글은 감춰져 있어도 HTML 은 같다.
     // 재디자인 D4: 메뉴 맨 앞에 최근 분석(질의 없는 /search/)을 더했다(목업 search-home).
-    // 2026-11-11: 최근 분석 뒤에 사례(미리 돌린 공개 저장소 결과)를 더했다. 2026-11-13: 맨 뒤에 구조(구조 그림)를 더했다.
-    expect(await page.locator(".site-header .hdr-nav a").allTextContents()).toEqual(["최근 분석", "사례", "조문 도감", "구조"]);
-    expect(await page.locator(".site-header .menu-pop a").allTextContents()).toEqual(["최근 분석", "사례", "조문 도감", "구조"]);
-    expect(await page.locator("a[href='/view/']").count()).toBe(0);
+    // 2026-11-13: 맨 뒤에 구조(구조 그림)를 더했다. 2026-11-25(web17): 사례 쪽과 결과 파일 열기(/view/)를 걷었다.
+    expect(await page.locator(".site-header .hdr-nav a").allTextContents()).toEqual(["최근 분석", "조문 도감", "구조"]);
+    expect(await page.locator(".site-header .menu-pop a").allTextContents()).toEqual(["최근 분석", "조문 도감", "구조"]);
+    expect(await page.locator("a[href='/view/'], a[href^='/cases/'], a[href^='/demo/']").count()).toBe(0);
     const view = await fetch(`${site.origin}/view/`);
     await view.arrayBuffer();
-    expect(view.status).toBe(200);
+    expect(view.status).toBe(404);
     expect(outside).toEqual([]);
   });
 
@@ -130,14 +149,19 @@ describe("첫 화면", () => {
 });
 
 describe("검색 빈 상태 (/search/)", () => {
-  it("검색창, 최근 분석 상자(저장소마다 한 줄, 0의 뜻), 곁칸의 AI 검토가 묻는 의무(기능마다 의무 수, 누르면 조문 도감을 그 기능으로 거른다)", async () => {
+  it("검색창, 최근 분석 상자(저장소마다 한 줄, 끝난 분석은 확인할 것 수나 검토 결과가 없는 까닭), 곁칸의 AI 검토가 묻는 의무(기능마다 의무 수, 누르면 조문 도감을 그 기능으로 거른다)", async () => {
     const { page, outside } = await open("/search/", 1280);
     expect(await page.locator("main h1").getAttribute("class")).toBe("visually-hidden");
     expect(await page.locator("#search-page-q").inputValue()).toBe("");
     expect(await page.locator("#recent-title + .tag").textContent()).toBe("합성 예시");
     const repos = hits.filter((hit) => hit.analyses > 0).length;
     expect(await page.locator(".search-home-recent .act-row").count()).toBe(Math.min(8, repos));
-    expect(await page.getByText(SITE.zeroIsNotClearance, { exact: true }).isVisible()).toBe(true);
+    const done = await page.locator(".search-home-recent .act-row[data-status=succeeded] .act-state").allTextContents();
+    expect(done.length).toBeGreaterThan(0);
+    for (const text of done) expect(text).toMatch(DONE_COUNT);
+    // 확인할 것 0건인 줄이 없으므로 0의 뜻도 없다(0의 뜻은 보이는 0 바로 아래에만 둔다).
+    expect(await page.getByText(SITE.zeroCheckIsNotClearance, { exact: true }).count()).toBe(0);
+    expect(await page.locator("main").innerText()).not.toContain("정적 검사");
     expect((await page.locator("#duties-title").textContent())?.replace(/\s+/g, " ")).toBe(`AI 검토가 묻는 의무 ${dutyMap.asked}`);
     expect(await page.locator(".search-home-side .pol-row").count()).toBe(dutyMap.features.length);
     // 넓은 화면에서 곁칸은 오른쪽이다.
@@ -193,7 +217,7 @@ describe("검색", () => {
     await page.locator("#recent-title").waitFor();
   });
 
-  it("0건: 한글 자판으로 친 질의에는 영문 글쇠로 찾는 링크, 그 아래 이 사이트에서 분석된 저장소. 0건 줄이 보이면 0의 뜻", async () => {
+  it("0건: 한글 자판으로 친 질의에는 영문 글쇠로 찾는 링크, 그 아래 이 사이트에서 분석된 저장소(확인할 것 수나 검토 결과가 없는 까닭)", async () => {
     const { page, outside } = await open("/search/?q=ㅁㅁ");
     expect(await page.locator(".empty-head").textContent()).toBe("‘ㅁㅁ’에 맞는 저장소 없음");
     const link = page.getByRole("link", { name: "영문 자판으로 친 ‘aa’로 찾기" });
@@ -202,7 +226,11 @@ describe("검색", () => {
     expect(await page.locator("main").innerText()).not.toContain("가짜 GitHub");
     expect(await page.locator("#analyzed-title + .tag").textContent()).toBe("합성 예시");
     expect(await page.locator(".sr-list .repo-row").count()).toBe(hits.filter((hit) => hit.analyses > 0).length);
-    expect(await page.getByText(SITE.zeroIsNotClearance, { exact: true }).isVisible()).toBe(true);
+    const list = await page.locator(".sr-list").innerText();
+    expect(list).toContain(`확인할 것 ${CHECK}건`);
+    expect(list).toContain(REVIEW_NONE);
+    expect(list).not.toContain("정적 검사");
+    expect(await page.getByText(SITE.zeroCheckIsNotClearance, { exact: true }).count()).toBe(0);
     await link.click();
     await page.waitForURL(/\/search\/\?q=aa$/);
     expect(await page.locator("#search-page-q").inputValue()).toBe("aa");
@@ -238,7 +266,9 @@ describe("저장소 → 분석", () => {
     // 최신 분석 상자(가장 나중에 끝난 분석)와 분석 기록 표. 요청에 관한 풀이 문장과 실행 자리 문구는 없다.
     expect(await page.locator("#latest-title").textContent()).toBe("최신 분석");
     expect(await page.locator(".latest .latest-hd").innerText()).toContain("64y4jdtazh");
-    expect(await page.locator(".latest-fd").count()).toBeGreaterThan(0);
+    // 그 커밋의 검토 결과가 없으면 그 까닭을 적는다(정적 검사의 발견 수는 없다). 감지된 기능은 프로필에서 한 줄.
+    expect(await page.locator(".latest .latest-hd").innerText()).toContain(REVIEW_NONE);
+    expect(await page.locator(".latest .latest-feat").innerText()).toContain("광고성 정보 발송");
     expect(await page.locator(".an-table tbody tr").count()).toBe(2);
     const text = await page.locator("main").innerText();
     for (const gone of ["실행 자리", "다시 분석 요청", "로그인 없이 누구나 요청하고", "진행 중인 분석"]) expect(text).not.toContain(gone);
@@ -252,8 +282,10 @@ describe("저장소 → 분석", () => {
     await page.goBack();
     await page.locator(".an-table").getByRole("link", { name: "64y4jdtazh" }).click();
     await page.waitForURL(`${site.origin}${analysisHref("example-org", "night-push", "64y4jdtazh")}`);
-    // (D5) 끝난 분석은 결과 화면(.report)이다. 결과 파일 열기·데모와 같은 부품이다.
-    await page.waitForSelector(".report");
+    // 끝난 분석은 세 단(프로필, 걸리는 의무, 의무 체크리스트)이다. 이 분석에는 검토 결과가 없어 셋째 단에 그 사실을 적는다.
+    await page.waitForSelector(".tiers");
+    expect(await page.locator(".tier-hd").count()).toBe(3);
+    expect(await page.locator(".tier-none").last().textContent()).toBe(SITE.service.reviewNone);
     expect(outside).toEqual([]);
   });
 
@@ -268,13 +300,16 @@ describe("저장소 → 분석", () => {
 describe("분석 쪽의 세 상태", () => {
   it("진행 중: 단계별 진행과 지금의 단계", async () => {
     const { page } = await open(hrefOf(byStatus("running")));
-    // 단계 넷과 검사 단계 안의 차례 셋(정적 검사·AI 판정, 기능 파악, AI 검토). 지금인 것은 AI 검토 한 줄이다.
+    // 단계 넷과 검토 단계 안의 차례 둘(기능 파악, AI 검토. 2026-11-25 web17 에서 정적 검사·AI 판정을 걷었다). 지금인 것은 AI 검토
+    // 한 줄이다.
     expect(await page.locator(".step-item:not(.step-sub)").count()).toBe(4);
-    expect(await page.locator(".step-sub").count()).toBe(3);
-    expect(await page.locator(".step-item:not(.step-sub).step-active .step-name").allTextContents()).toEqual(["검사"]);
+    expect(await page.locator(".step-sub .step-name").evaluateAll((names) => names.map((name) => name.firstChild?.textContent))).toEqual(["기능 파악", "AI 검토"]);
+    expect(await page.locator(".step-sub.step-done .step-name").allTextContents()).toEqual(["기능 파악"]);
+    expect(await page.locator(".step-item:not(.step-sub).step-active .step-name").allTextContents()).toEqual(["검토"]);
     expect(await page.locator("[aria-current=step] .step-name").innerText()).toContain("AI 검토");
     expect(await page.locator("[aria-current=step] .step-inner").innerText()).toContain("이 안의 차례는 알 수 없음");
-    expect(await page.locator(".report").count()).toBe(0);
+    expect(await page.locator(".tiers").count()).toBe(0);
+    expect(await page.locator("main").innerText()).not.toContain("정적 검사");
     // (D5) `진행` 상자 하나에 지금 단계(role=status)와 단계 표. 합성 예시라는 것은 제목 옆의 이름표가 밝힌다.
     expect(await page.locator(".live-box .live-now").textContent()).toBe("지금 ‘AI 검토’ 단계");
     expect(await page.locator(".an-head .tag").textContent()).toBe("합성 예시");
@@ -294,33 +329,57 @@ describe("분석 쪽의 세 상태", () => {
     expect(await page.locator(".fail-box").textContent()).toContain(failed.failure!.reason);
     expect(await page.locator(".fail-box .zero-line").textContent()).toContain("검토할 곳이 없다는 뜻이 아닙니다");
     expect(await page.locator(".step-failed .step-name").allTextContents()).toEqual(["저장소 받기·도구 설치"]);
-    expect(await page.locator(".report").count()).toBe(0);
+    expect(await page.locator(".tiers").count()).toBe(0);
   });
 
-  it("끝남: 요약 한 줄, 곁칸(정책 N → 상자로 옮겨 가기), 그리고 조문별 검사 기록", async () => {
+  it("끝남(검토 결과 없음): 맨 위 한 줄(감지된 기능 · 걸릴 수 있는 의무), 세 단, 셋째 단에 검토 결과가 없다는 말. 진행 기록은 접어 둔다", async () => {
     const { page } = await open(analysisHref("example-org", "kids-signup", "wtk33e9zuf"), 1280);
-    // (D5) 수 여섯 칸(.tile)을 요약 한 줄로 줄였다(docs/redesign.md 2.3 낱말 표). 숫자인 사실만 둔다.
-    expect(await page.locator(".tile").count()).toBe(0);
-    // (2026-11-11 오너 지시) 맨 위는 요약(사람이 볼 곳 N건과 정책마다의 수), 그 아래 옅은 줄에 숫자인 사실.
-    expect((await page.locator(".headline").innerText()).replace(/\s+/g, " ")).toBe("사람이 볼 곳 1건 만 14세 미만 아동의 개인정보 처리 1건");
-    expect((await page.locator(".sumline").innerText()).replace(/\s+/g, " ")).toBe("검사한 파일 1개");
-    // 넓은 화면에서 곁칸(정책 N)은 오른쪽 칸이다.
-    const side = await page.locator(".report-side").boundingBox();
-    const main = await page.locator(".report-main").boundingBox();
-    expect(side!.x).toBeGreaterThan(main!.x + main!.width - 1);
-    await page.locator(".side-found a").first().click();
-    expect(new URL(page.url()).hash).toBe("#policy-kr-pipa-22-2");
-    await page.getByRole("button", { name: `${SITE.record.title} 인쇄용`, exact: true }).click();
-    await page.waitForSelector(".record");
-    expect(await page.locator(".record").textContent()).toContain("example-org/kids-signup · 분석 wtk33e9zuf");
-    expect(await page.locator(".report").isVisible()).toBe(false);
+    // 맨 위 한 줄은 저장소 프로필에서 센 수다(감지된 기능, 걸릴 수 있는 의무).
+    const profile = (await store.getProfile("wtk33e9zuf"))!;
+    expect((await page.locator(".overview").innerText()).replace(/\s+/g, " ").trim()).toBe(
+      `감지된 기능 ${profile.features.length}가지 걸릴 수 있는 의무 ${profile.totals.duties}개`,
+    );
+    expect(await page.locator(".tier-hd").evaluateAll((heads) => heads.map((head) => (head.textContent ?? "").replace(/\s+/g, "")))).toEqual([
+      "1프로필",
+      "2걸리는의무",
+      "3의무체크리스트",
+    ]);
+    expect(await page.locator(".tier-none").last().textContent()).toBe(SITE.service.reviewNone);
+    // review 화면(요약, 체크리스트)과 규칙 검사의 결과 화면·조문별 검사 기록은 없다(2026-11-25 web17).
+    expect(await page.locator(".rv-sum, #rv-checklist, .report, .record, .record-btn").count()).toBe(0);
+    expect(await page.locator("main").innerText()).not.toContain("정적 검사");
+    const log = page.locator("details.an-steps");
+    expect(await log.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(false);
+    expect((await log.locator("> summary").innerText()).replace(/\s+/g, " ")).toBe("진행 기록 4단계");
   });
 
-  it("저장소 쪽: 최신 분석이 발견 0건이면 상자 안에, 기록 표에 0건이 있으면 표 아래에 0의 뜻을 보인다", async () => {
+  it("끝남(검토 결과 있음): 요약(확인할 것 N건)과 의무 체크리스트, 하는 일, 개인정보 흐름, 검증 정보, 접어 둔 진행 기록", async () => {
+    const { page } = await open(REVIEWED, 1280);
+    expect((await page.locator(".rv-sum .rv-big").innerText()).replace(/\s+/g, " ").trim()).toBe(`확인할 것 ${CHECK}건`);
+    expect(await page.locator("#rv-checklist li.rv-item > details.rv-row").count()).toBeGreaterThanOrEqual(CHECK);
+    expect(await page.locator(".tier-hd").evaluateAll((heads) => heads.map((head) => (head.textContent ?? "").replace(/\s+/g, "")))).toEqual([
+      "1의무체크리스트",
+      "2이저장소가하는일",
+      "3개인정보흐름",
+    ]);
+    expect(await page.locator(".rv-verify").isVisible()).toBe(true);
+    // 검토 결과가 없는 분석의 한 줄(.overview)과 셋째 단의 말은 없다.
+    expect(await page.locator(".overview, .tier-none").count()).toBe(0);
+    // 진행 기록은 맨 아래에 접혀 있다.
+    const last = await page.locator(".tiers > *").last().evaluate((el) => [el.tagName.toLowerCase(), el.className, (el as HTMLDetailsElement).open]);
+    expect(last).toEqual(["details", "lg an-steps", false]);
+  });
+
+  it("저장소 쪽: 최신 분석에 검토 결과가 없으면 그 까닭을 적고 0의 뜻은 붙이지 않는다(보이는 0 이 없다)", async () => {
     const { page } = await open(repoHref("example-labs", "plain-utils"));
-    expect(await page.locator(".latest").innerText()).toContain("사람이 볼 곳 0건");
-    expect(await page.locator(".latest .zero-note").textContent()).toBe(SITE.zeroIsNotClearance);
-    expect(await page.locator(".repo-history .zero-note").textContent()).toBe(SITE.zeroIsNotClearance);
+    expect(await page.locator(".latest").innerText()).toContain(REVIEW_NONE);
+    expect(await page.locator(".an-table .an-row-out").allTextContents()).toEqual([REVIEW_NONE]);
+    expect(await page.locator(".zero-note").count()).toBe(0);
+    // 검토 결과가 있는 저장소는 최신 분석 상자와 기록 표에 확인할 것 N건(0 이 아니라 0의 뜻은 없다).
+    await page.goto(`${site.origin}${repoHref("example-studio", "genai-chat")}`);
+    expect(await page.locator(".latest").innerText()).toContain(`확인할 것 ${CHECK}건`);
+    expect(await page.locator(".an-table .an-row-out").allTextContents()).toEqual([`확인할 것 ${CHECK}건`, "", `확인할 것 ${CHECK}건`]);
+    expect(await page.locator(".zero-note").count()).toBe(0);
     // 끝난 분석이 없는 저장소에는 최신 분석 상자가 없다.
     await page.goto(`${site.origin}${repoHref("example-labs", "shop-front")}`);
     expect(await page.locator(".latest").count()).toBe(0);
@@ -329,70 +388,54 @@ describe("분석 쪽의 세 상태", () => {
     expect((await page.locator(".an-table tbody tr").innerText()).match(/대기 중/g)).toHaveLength(1);
   });
 
-  it("발견이 0인 분석: 0의 뜻을 함께 보인다", async () => {
+  it("기능 신호가 없는 분석: 기능이 없다고 하지 않고 신호가 없다고 적는다(맨 위 한 줄과 첫째 단)", async () => {
     const { page } = await open(analysisHref("example-labs", "plain-utils", "w7bc479x2u"));
-    // (D5) 요약 바로 아래에 굵게(docs/redesign.md 3장 "발견 0").
-    expect(await page.locator(".report > .cols .zero-line").textContent()).toBe(SITE.zeroIsNotClearance);
+    expect((await page.locator(".overview").innerText()).trim()).toBe(NO_SIGNAL_LINE);
+    expect(await page.locator("main").innerText()).toContain(NO_FEATURES);
+    expect(await page.locator("main").innerText()).not.toContain("감지된 기능 없음");
   });
 });
 
-describe("분석 쪽의 완료 조건 (재디자인 D5, docs/redesign.md 6장)", () => {
-  // 표준 예시: 광고 푸시의 끝난 분석(발견 둘, 같은 파일·같은 줄의 서로 다른 규칙. 목업 analysis 와 같은 결과).
-  const STANDARD = analysisHref("example-org", "night-push", "64y4jdtazh");
-  /** 발견 줄의 첫 줄(메시지)마다: 창 안에 온전히 들어와 있는지(처음 화면, 스크롤 전). */
-  const sentences = (page: Page) =>
-    page.locator("li.finding .msg").evaluateAll((all) =>
-      all.map((el) => {
-        const box = el.getBoundingClientRect();
-        return { text: el.textContent, inView: box.height > 0 && box.top >= 0 && box.bottom <= window.innerHeight };
-      }),
-    );
-
-  /** 맨 위 요약과 세 단의 머리의 아래 끝, 첫 발견 문장의 위 끝(처음 화면, 스크롤 전). */
+describe("분석 쪽의 첫 화면", () => {
+  /** 맨 위 요약(검토 결과가 없으면 한 줄, 있으면 요약)과 세 단의 머리, 셋째 단의 말의 아래 끝(처음 화면, 스크롤 전). */
   const layout = (page: Page) =>
     page.evaluate(() => ({
-      overview: document.querySelector(".overview")!.getBoundingClientRect().bottom,
+      top: document.querySelector(".overview, .rv-sum")!.getBoundingClientRect().bottom,
       tiers: [...document.querySelectorAll(".tier-hd")].map((el) => el.getBoundingClientRect().bottom),
-      finding: document.querySelector("li.finding .msg")!.getBoundingClientRect().top,
+      none: [...document.querySelectorAll(".tier-none")].at(-1)?.getBoundingClientRect().bottom ?? null,
+      firstRow: document.querySelector("#rv-checklist .rv-item > details > summary")?.getBoundingClientRect().bottom ?? null,
       height: document.documentElement.scrollHeight,
     }));
 
-  it("1280×900: 첫 화면에 맨 위 요약과 세 단의 머리가 보이고, 발견 두 줄의 문장은 두 화면 안에 서로 다르게 있다", async () => {
-    // (2026-11-11 오너 지시) 결과 화면이 맨 위 한 문장 요약과 세 단(프로필, 걸리는 의무, 검토 결과)이 되어 발견은 셋째 단에 있다.
-    const { page } = await openPage(browser, site, STANDARD, { viewport: { width: 1280, height: 900 }, contexts, problems });
+  it.each([
+    [1280, 900],
+    [390, 844],
+  ] as const)("검토 결과 없음 %i×%i: 맨 위 한 줄, 세 단의 머리, 검토 결과가 없다는 말이 첫 화면에 있고 쪽은 두 화면 이하다", async (width, height) => {
+    const { page } = await openPage(browser, site, PROFILED, { viewport: { width, height }, contexts, problems });
     const at = await layout(page);
-    expect(at.overview).toBeLessThanOrEqual(900);
+    expect(at.top).toBeLessThanOrEqual(height);
     expect(at.tiers).toHaveLength(3);
-    for (const bottom of at.tiers) expect(bottom).toBeLessThanOrEqual(900);
-    expect(at.finding).toBeLessThan(2 * 900);
-    const shown = await sentences(page);
-    expect(shown).toHaveLength(2);
-    expect(new Set(shown.map((entry) => entry.text)).size).toBe(2);
-  });
-
-  it("390×844: 맨 위 요약이 첫 화면 안에 있고, 첫 발견 문장은 두 화면 안, 쪽 길이는 3,000px 이하다", async () => {
-    const { page } = await openPage(browser, site, STANDARD, { viewport: { width: 390, height: 844 }, contexts, problems });
-    const at = await layout(page);
-    expect(at.overview).toBeLessThanOrEqual(844);
-    expect(at.finding).toBeLessThan(2 * 844);
-    expect(at.height).toBeLessThanOrEqual(3000);
+    for (const bottom of at.tiers) expect(bottom).toBeLessThanOrEqual(height);
+    expect(at.none).not.toBeNull();
+    expect(at.none!).toBeLessThanOrEqual(height);
+    expect(at.height).toBeLessThanOrEqual(2 * height);
     expect(await overflow(page)).toMatchObject({ page: 0, over: [] });
   });
 
-  it("발견 0인 분석: 요약 바로 아래에 0의 뜻(굵게), 그다음 검사에 들지 않는 파일과 정보를 펼친 채로 둔다", async () => {
-    const { page } = await open(analysisHref("example-labs", "plain-utils", "w7bc479x2u"), 1280);
-    const order = await page.locator(".report").evaluate((report) =>
-      [".sumline", ".zero-line", ".empty-report", ".not-seen-box", ".side-pol", ".info"].map((selector) => {
-        const el = report.querySelector(selector);
-        return el ? Math.round(el.getBoundingClientRect().top) : null;
-      }),
-    );
-    // 곁칸(.side-pol)은 넓은 화면에서 오른쪽 칸이라 위쪽 끝이 본문의 맨 위와 같다. 나머지는 위에서부터 차례다.
-    const [sum, zero, empty, scope, , info] = order as number[];
-    expect([sum, zero, empty, scope, info].every((top) => top !== null)).toBe(true);
-    expect([sum, zero, empty, scope, info]).toEqual([...[sum, zero, empty, scope, info]].sort((a, b) => a - b));
-    expect(await page.locator(".zero-line").evaluate((el) => getComputedStyle(el).fontWeight)).toBe("600");
-    expect(await page.locator(".not-seen-box .not-seen").isVisible()).toBe(true);
+  it.each([
+    [1280, 900],
+    [390, 844],
+  ] as const)("검토 결과 있음 %i×%i: 요약과 의무 체크리스트의 머리·첫 행이 첫 화면에 있다", async (width, height) => {
+    const { page } = await openPage(browser, site, REVIEWED, { viewport: { width, height }, contexts, problems });
+    const at = await layout(page);
+    expect(at.top).toBeLessThanOrEqual(height);
+    expect(at.tiers).toHaveLength(3);
+    expect(at.tiers[0]).toBeLessThanOrEqual(height);
+    expect(at.firstRow).not.toBeNull();
+    expect(at.firstRow!).toBeLessThanOrEqual(height);
+    // 세 단은 차례대로다(의무 체크리스트 → 하는 일 → 개인정보 흐름).
+    expect([...at.tiers].sort((a, b) => a - b)).toEqual(at.tiers);
+    expect(await overflow(page, ".flow-scroll")).toMatchObject({ page: 0, over: [] });
   });
 });
 

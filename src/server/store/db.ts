@@ -241,33 +241,6 @@ export function createDbStore(deps: DbStoreDeps): ServiceStore {
       return rows.rows[0] ? rowToAnalysis(rows.rows[0]) : null;
     },
 
-    async getResult(id) {
-      const db = await database();
-      const rows = await db.query<{ json: string }>(
-        "SELECT r.json FROM results r JOIN analyses a ON a.id = r.analysis_id WHERE r.analysis_id = $1 AND a.status = 'succeeded'",
-        [id],
-      );
-      const text = rows.rows[0]?.json;
-      if (text === undefined) return null;
-      // 받은 그대로 두었다. JSON 이 아니면 글 그대로 넘긴다(파서가 읽지 못한다고 말한다).
-      try {
-        return JSON.parse(text) as unknown;
-      } catch {
-        return text;
-      }
-    },
-
-    async findingCounts(ids) {
-      const wanted = ids.filter(isAnalysisId);
-      if (wanted.length === 0) return {};
-      const db = await database();
-      const rows = await db.query<{ id: string; finding_count: number | null }>(
-        "SELECT id, finding_count FROM analyses WHERE id = ANY($1::text[]) AND status = 'succeeded'",
-        [wanted],
-      );
-      return Object.fromEntries(rows.rows.map((row) => [row.id, row.finding_count]));
-    },
-
     async reviewFacts(ids) {
       const wanted = ids.filter(isAnalysisId);
       if (wanted.length === 0) return {};

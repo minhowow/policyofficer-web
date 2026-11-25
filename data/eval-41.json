@@ -23,8 +23,7 @@
       "usd": 4.24,
       "seconds": 5023,
       "emptyChecklists": 0,
-      "withSeenInCode": 19,
-      "staticWithFindings": 8
+      "withSeenInCode": 19
     },
     {
       "kind": "화면만(웹)",
@@ -45,8 +44,7 @@
       "usd": 1.42,
       "seconds": 1610,
       "emptyChecklists": 0,
-      "withSeenInCode": 9,
-      "staticWithFindings": 2
+      "withSeenInCode": 9
     },
     {
       "kind": "서버만",
@@ -67,8 +65,7 @@
       "usd": 0.61,
       "seconds": 592,
       "emptyChecklists": 0,
-      "withSeenInCode": 3,
-      "staticWithFindings": 1
+      "withSeenInCode": 3
     },
     {
       "kind": "모바일 앱",
@@ -89,8 +86,7 @@
       "usd": 0.31,
       "seconds": 388,
       "emptyChecklists": 0,
-      "withSeenInCode": 2,
-      "staticWithFindings": 2
+      "withSeenInCode": 2
     },
     {
       "kind": "그 밖(package.json 없음 등)",
@@ -111,8 +107,7 @@
       "usd": 0.16,
       "seconds": 229,
       "emptyChecklists": 0,
-      "withSeenInCode": 1,
-      "staticWithFindings": 0
+      "withSeenInCode": 1
     },
     {
       "kind": "기능 없음",
@@ -133,8 +128,7 @@
       "usd": 0.01,
       "seconds": 59,
       "emptyChecklists": 5,
-      "withSeenInCode": 0,
-      "staticWithFindings": 0
+      "withSeenInCode": 0
     }
   ],
   "total": {
@@ -155,13 +149,6 @@
     "usd": 6.75,
     "seconds": 7900,
     "emptyChecklists": 5,
-    "withSeenInCode": 34,
-    "staticWithFindings": 13
-  },
-  "static": {
-    "withFindings": 13,
-    "both": 13,
-    "reviewOnly": 21,
-    "staticOnly": 0
+    "withSeenInCode": 34
   }
 }

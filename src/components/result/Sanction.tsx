@@ -2,7 +2,7 @@ import { Icon } from "@/components/Icon";
 import { SANCTION_TEXT, sanctionTier, sanctionWhen, type Sanction } from "@/lib/duties/sanction";
 
 /**
- * 의무마다 법에 적힌 제재(2026-11-24 오너 승인, `lib/duties/sanction`). 결과 쪽·사례 쪽의 체크리스트와 조문 도감의 의무 줄이 함께
+ * 의무마다 법에 적힌 제재(2026-11-24 오너 승인, `lib/duties/sanction`). 결과 쪽의 체크리스트와 조문 도감의 의무 줄이 함께
  * 쓴다. 어디에도 요청하지 않는다(조문 도감의 브라우저 부품도 그린다). 글은 제재 표의 것과 `SANCTION_TEXT` 뿐이다.
  */
 

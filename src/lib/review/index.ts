@@ -5,7 +5,7 @@
  *
  * 화면이 쓰는 필드만 읽는다. 판이 2 가 아니거나 화면이 쓰는 필드의 모양이 다르면 읽지 않는다(null). 인용은 관문을 통과한 것
  * (`ok`)만 화면에 보인다. 체크리스트 항목의 `title` 에는 처분 액수가 덧붙은 것이 있어 쓰지 않고 `duty_text`(의무 한 줄)를 쓴다.
- * `quote`(조문 인용)는 이 사이트가 조문 원문을 팩 메타데이터에서만 싣기로 했으므로 읽지 않는다(CLAUDE.md).
+ * `quote`(조문 인용)는 읽지 않는다(조문 원문은 제재 표의 원문 인용만 싣는다. CLAUDE.md).
  */
 
 import { checkCount } from "./text";
@@ -52,7 +52,7 @@ export interface ReviewEvidence {
 export interface ReviewFeature {
   id: string;
   name: string;
-  /** signal(규칙 신호) · model(이해 단계가 인용과 함께 더함) · static(내장 팩 정적 검사). */
+  /** signal(규칙 신호) · model(이해 단계가 인용과 함께 더함). handoff-w13-4 전의 결과에는 static 도 있다(쓰지 않는다). */
   sources: string[];
   evidence: ReviewEvidence[];
   evidenceTotal: number;

@@ -1,15 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { Icon } from "@/components/Icon";
 import { SanctionBadge, SanctionDetails } from "@/components/result/Sanction";
 import type { Sanction } from "@/lib/duties/sanction";
-import { DutyJump } from "./DutyFilter";
 
 /**
  * 의무 지도의 줄(법령 묶음과 의무 줄). 빌드할 때 서버에서 HTML 로 그려 두고(브라우저 부품도 미리 그린다), 쪽을 옮겨 올 때 받는
  * 내용에는 줄마다 글만 짧게 싣는다(줄 220개를 요소의 나무로 실으면 쪽 하나에 0.5MB 였다). 어디에도 요청하지 않는다. 글은 서버
- * (`DutyMap`)가 고른 것 그대로이고, 정적 규칙(정책)의 내용은 서버가 그린 것을 받아 그 의무 줄 안에 넣는다.
+ * (`DutyMap`)가 고른 것 그대로다.
  */
 
 export interface DutyRowData {
@@ -30,15 +28,11 @@ export interface DutyRowData {
   /** 법령 이름과 조문(`fullArticle`). */
   full: string;
   url: string | null;
-  /** 정적 규칙이 있는지. */
-  rule: boolean;
-  /** 정책의 내용이 다른 의무 줄에 있으면 그 줄(정책 이름, 자리, 조문). */
-  jump: { title: string; id: string; full: string } | null;
   /** 법에 적힌 제재(2026-11-24 오너 승인). 제재 표가 없는 판이면 null. */
   sanction: Sanction | null;
 }
 
-export function DutyRows({ groups, statics }: { groups: { name: string; rows: DutyRowData[] }[]; statics: Record<string, ReactNode> }) {
+export function DutyRows({ groups }: { groups: { name: string; rows: DutyRowData[] }[] }) {
   return (
     <div className="dm-list">
       {groups.map((group, l) => (
@@ -48,7 +42,7 @@ export function DutyRows({ groups, statics }: { groups: { name: string; rows: Du
           </h2>
           <div className="box rows">
             {group.rows.map((row) => (
-              <DutyRow key={row.id} row={row} statik={statics[row.id]} />
+              <DutyRow key={row.id} row={row} />
             ))}
           </div>
         </section>
@@ -58,10 +52,10 @@ export function DutyRows({ groups, statics }: { groups: { name: string; rows: Du
 }
 
 /**
- * 의무 한 줄(접는 줄). 첫 줄은 제목(없으면 조문)과 제재 표지(좁은 화면에서는 제목 아래), 둘째 줄은 조문·기능·정적 규칙 표시. 펼치면
- * 의무 한 줄과 사실 줄(기능, 걸리는 코드, 조문과 법제처 링크, 어기면 받는 제재), 정적 규칙.
+ * 의무 한 줄(접는 줄). 첫 줄은 제목(없으면 조문)과 제재 표지(좁은 화면에서는 제목 아래), 둘째 줄은 조문·기능. 펼치면 의무 한 줄과
+ * 사실 줄(기능, 걸리는 코드, 조문과 법제처 링크, 어기면 받는 제재).
  */
-function DutyRow({ row, statik }: { row: DutyRowData; statik: ReactNode }) {
+function DutyRow({ row }: { row: DutyRowData }) {
   return (
     <details className="duty-row" id={row.id} data-f={row.f} data-s={row.s}>
       <summary>
@@ -73,7 +67,6 @@ function DutyRow({ row, statik }: { row: DutyRowData; statik: ReactNode }) {
         <span className="dr-sub">
           {row.title && <span className="dr-law">{row.article}</span>}
           <span>{row.cond[0]}</span>
-          {row.rule && <span className="tag">정적 규칙</span>}
         </span>
       </summary>
       <div className="dr-body">
@@ -105,13 +98,6 @@ function DutyRow({ row, statik }: { row: DutyRowData; statik: ReactNode }) {
           </div>
         </dl>
         {row.sanction && <SanctionDetails sanction={row.sanction} />}
-        {row.jump ? (
-          <p className="dr-static-link">
-            <span className="tag">정적 규칙</span> {row.jump.title}: <DutyJump target={row.jump.id}>{row.jump.full}</DutyJump> 항목에 있음
-          </p>
-        ) : (
-          statik
-        )}
       </div>
     </details>
   );

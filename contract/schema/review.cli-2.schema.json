@@ -604,7 +604,8 @@
             "error",
             "ran"
           ],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "description": "handoff-w13-4(2026-11-25) 부터 내지 않는다. 그 전의 결과에만 있다"
         },
         "questions": {
           "type": "array",
@@ -635,7 +636,6 @@
         "searches",
         "searches_rejected",
         "seconds",
-        "static",
         "status_counts",
         "understanding",
         "usage",
@@ -918,7 +918,7 @@
         "sources"
       ],
       "additionalProperties": false,
-      "description": "sources: signal(규칙 신호) · model(이해 단계가 인용과 함께 더함) · static(내장 팩 정적 검사). removed 가 있으면 이해 단계가 인용과 함께 뺀 기능이다"
+      "description": "sources: signal(규칙 신호) · model(이해 단계가 인용과 함께 더함) (옛 결과에는 static 도 있다). removed 가 있으면 이해 단계가 인용과 함께 뺀 기능이다"
     },
     "verification": {
       "type": "object",
@@ -1086,13 +1086,15 @@
           "type": "string"
         },
         "krcore": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "handoff-w13-4(2026-11-25) 부터 내지 않는다. 그 전의 결과에만 있다"
         },
         "static": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/static"
-          }
+          },
+          "description": "handoff-w13-4(2026-11-25) 부터 내지 않는다. 그 전의 결과에만 있다"
         },
         "sanction": {
           "$ref": "#/$defs/sanction"
@@ -1304,14 +1306,12 @@
         "duty_text",
         "feature",
         "first",
-        "krcore",
         "law",
         "question",
         "quote",
         "rank",
         "reason",
         "searches",
-        "static",
         "status",
         "status_label",
         "title",

@@ -1,9 +1,10 @@
 # 분석 실행기(설계 8). 사이트(src/server/runner.ts)가 workflow_dispatch 로 부른다. 공개 저장소 하나를 그 커밋으로 받아
-# policyofficer CLI(고정 커밋)로 검사하고, 단계마다 사이트에 서명한 콜백을 보낸다. 대상 코드는 읽기만 한다(설치·빌드·실행 없음).
+# policyofficer CLI(고정 커밋)로 기능 파악과 AI 검토를 하고, 단계마다 사이트에 서명한 콜백을 보낸다. 대상 코드는 읽기만 한다
+# (설치·빌드·실행 없음). 2026-11-25 오너 지시로 규칙 검사(scan)는 돌리지 않는다(CLI handoff-w13-4 부터 그 명령이 없다).
 #
 # 비밀값(Actions secret, 값은 오너가 만든다. docs/deploy.md):
 #   RUNNER_SECRET      콜백 서명 열쇠. 사이트의 RUNNER_SECRET 과 같은 값. 콜백 단계(notify·part·finish·fail)에만 넘긴다.
-#   ANTHROPIC_API_KEY  AI 판정자와 review. 검사·review 단계에만 넘긴다(CLI 를 돌리는 단계에는 콜백 열쇠를 넘기지 않는다).
+#   ANTHROPIC_API_KEY  review. review 단계에만 넘긴다(CLI 를 돌리는 단계에는 콜백 열쇠를 넘기지 않는다).
 #   CLI_REPO_TOKEN     (CLI 저장소가 비공개일 때만) 읽기 토큰. 도구 설치 단계에만 넘긴다.
 #
 # 워크플로 입력은 셸 글에 끼워 넣지 않고 환경 변수로만 넘긴다(입력으로 명령을 끼워 넣지 못하게). runner/run.mjs 가 모양을 본다.
@@ -27,7 +28,7 @@ on:
         required: true
         type: string
       commit:
-        description: 검사할 커밋(40자리)
+        description: 검토할 커밋(40자리)
         required: true
         type: string
       callback_url:
@@ -51,24 +52,21 @@ jobs:
   analyze:
     runs-on: ubuntu-24.04
     # 실행 시간 상한. 사이트는 실행기에 보낸 뒤 32분(RUN_TIMEOUT_MINUTES)이 지나도 끝나지 않은 분석을 '시간 초과'로 적는다.
-    # 검사 15분, 프로필 3분, review 7분(켰을 때. 아래 상한 420초)에 받기·설치가 들어갈 자리를 남긴다.
+    # 프로필 3분, review 7분(켰을 때. 아래 상한 420초)에 받기·설치가 들어갈 자리를 넉넉히 남긴다.
     timeout-minutes: 30
     env:
       # 도구는 워크플로 입력이 아니라 이 파일에서 고정한다(요청하는 쪽이 바꾸지 못한다).
       CLI_REPO: minhowow/policyofficer
-      CLI_COMMIT: 7cf9758f6fbf17eac1382a3b3d5d53f4d6e88b47
+      CLI_COMMIT: 386ce077a1f2f310ef73f9d157470890120d5e20
       UV_VERSION: 0.13.0
       # 딸린 꾸러미는 이 날짜까지 나온 판에서만 고른다(git 설치는 CLI 의 uv.lock 을 쓰지 않는다). CLI 고정 커밋의 날짜
-      # (2026-11-24)로 둔다. 그 커밋의 uv.lock 에 있는 판은 모두 이보다 앞서 나왔다. CLI_COMMIT 을 바꿀 때 함께 바꾼다.
-      CLI_EXCLUDE_NEWER: "2026-11-24T00:00:00Z"
-      # AI 판정자 모델(전체 id). 별칭(haiku 등)은 CLI 판마다 다른 모델로 풀린다.
-      JUDGE_MODEL: claude-haiku-5-5
+      # (2026-11-25, 태그 handoff-w13-4)로 둔다. 그 커밋의 uv.lock 에 있는 판은 모두 이보다 앞서 나왔다. CLI_COMMIT 을 바꿀 때 함께 바꾼다.
+      CLI_EXCLUDE_NEWER: "2026-11-25T00:00:00Z"
       MAX_TARBALL_MB: "100"
       MAX_EXTRACT_MB: "400"
       MAX_JSTS_FILES: "3000"
       RESULT_MAX_KB: "4000"
-      SCAN_TIMEOUT_MINUTES: "15"
-      # 검사 뒤의 저장소 프로필(policyofficer profile, 모델 호출 없음)의 시간 상한. 넘으면 결과만 보낸다.
+      # 저장소 프로필(policyofficer profile, 모델 호출 없음)의 시간 상한. 넘으면 그것을 빼고 보낸다.
       PROFILE_TIMEOUT_MINUTES: "3"
       # review(policyofficer review, 모델 호출. 입력 review 가 "true" 일 때만 돈다). 분석 한 건의 상한을 CLI 옵션으로 넘긴다.
       # 값은 오너가 비용을 정한 뒤 바꾼다(2026-11-12: 12곳 실측 뒤 $4·420초, 같은 날 CLI 가 공식 단가로 세게 된 판에서 $3). 조사
@@ -117,17 +115,12 @@ jobs:
           CLI_REPO_TOKEN: ${{ secrets.CLI_REPO_TOKEN }}
         run: node runner/run.mjs install
 
-      - name: "알림: 검사 시작"
+      - name: "알림: 검토 시작"
         env:
           RUNNER_SECRET: ${{ secrets.RUNNER_SECRET }}
         run: node runner/run.mjs notify scan
 
-      - name: 검사(정적 검사와 AI 판정)
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: node runner/run.mjs scan
-
-      # 검사 단계 안의 일(프로필, review)을 시작할 때 알린다. 진행 표시에만 쓰인다. 알리지 못해도 이 단계는 성공으로 끝난다.
+      # 검토 단계 안의 일(프로필, review)을 시작할 때 알린다. 진행 표시에만 쓰인다. 알리지 못해도 이 단계는 성공으로 끝난다.
       - name: "알림: 저장소 프로필 시작"
         env:
           RUNNER_SECRET: ${{ secrets.RUNNER_SECRET }}

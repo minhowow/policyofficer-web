@@ -1,59 +1,31 @@
 import type { ReactNode } from "react";
-import type { CodeSource } from "@/components/result/PolicyCard";
-import { ReportSummary, type Statute } from "@/components/result/ReportSummary";
 import { ObligationTier, ProfileTier, Tier } from "@/components/result/Tiers";
-import { StaticRecord } from "@/components/result/ReportWithRecord";
-import { StaticAux } from "@/components/review/StaticAux";
 import { ReviewView } from "@/components/review/ReviewView";
-import type { PackIndex } from "@/lib/pack/types";
 import type { Profile } from "@/lib/profile";
 import type { Review } from "@/lib/review";
-import { seenCount } from "@/lib/review/text";
-import type { RecordSource } from "@/lib/report/record";
-import { CHECKLIST_LABEL } from "@/lib/report/status";
-import type { ReportView } from "@/lib/report/view-model";
+import type { CodeSource } from "@/lib/service/href";
 import type { ReviewPlan } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
 import { NO_SIGNAL_LINE } from "./parts";
-import { staticParts } from "./static-parts";
-
-export type { Statute } from "@/components/result/ReportSummary";
-
-/** 체크리스트 묶음의 발견 수(접힌 곳까지). */
-const placesIn = (view: ReportView, pick: "checks" | "unknowns") =>
-  view.policies.reduce((sum, policy) => sum + policy[pick].reduce((n, group) => n + group.shown.length + group.folded.length, 0), 0);
 
 /**
- * 맨 위 한 문장 요약(2026-11-11 오너 지시): 감지된 기능 N가지 · 걸릴 수 있는 의무 M개 · 확인할 것 K건. 코드로는 알 수 없는 발견이
- * 있으면 그 수도 잇는다(빼면 그 발견이 요약에서 사라진다). 프로필이 없으면 셋째 단의 수만 적는다. 개수만 센다. 사례 쪽도 쓴다.
+ * 검토 결과가 없는 분석의 맨 위 한 줄: 감지된 기능 N가지 · 걸릴 수 있는 의무 M개(저장소 프로필에서). 프로필이 없으면 두지 않는다.
+ * 개수만 센다.
  */
-export function OverviewLine({ profile, check, unknown }: { profile: Profile | null; check: number; unknown: number }) {
+export function OverviewLine({ profile }: { profile: Profile | null }) {
+  if (!profile) return null;
   return (
     <p className="overview">
-      {profile &&
-        (profile.features.length === 0 ? (
-          // 신호만 본 프로필(AI 검토 없음)이 아무것도 찾지 못한 것은 기능이 없다는 뜻이 아니다(2026-11-16).
-          <>
-            <span>{NO_SIGNAL_LINE}</span>{" "}
-          </>
-        ) : (
-          <>
-            <span>
-              감지된 기능 <b>{profile.features.length}가지</b>
-            </span>{" "}
-            <span>
-              걸릴 수 있는 의무 <b>{profile.totals.duties}개</b>
-            </span>{" "}
-          </>
-        ))}
-      <span>
-        {CHECKLIST_LABEL.check} <b>{check}건</b>
-      </span>
-      {unknown > 0 && (
+      {profile.features.length === 0 ? (
+        // 신호만 본 프로필(AI 검토 없음)이 아무것도 찾지 못한 것은 기능이 없다는 뜻이 아니다(2026-11-16).
+        <span>{NO_SIGNAL_LINE}</span>
+      ) : (
         <>
-          {" "}
           <span>
-            {CHECKLIST_LABEL.unknown} <b>{unknown}건</b>
+            감지된 기능 <b>{profile.features.length}가지</b>
+          </span>{" "}
+          <span>
+            걸릴 수 있는 의무 <b>{profile.totals.duties}개</b>
           </span>
         </>
       )}
@@ -62,94 +34,58 @@ export function OverviewLine({ profile, check, unknown }: { profile: Profile | n
 }
 
 /**
- * 끝난 분석의 결과 화면(분석 쪽). 맨 위 한 문장 요약 다음에 세 단으로 읽힌다(2026-11-11 오너 지시): 1 프로필, 2 걸리는 의무,
- * 3 검토 결과. 1·2단은 CLI 의 저장소 프로필(`profile`)이고, 프로필이 없는 분석(그 명령이 없던 판으로 돌린 것)에는 "아직
- * 없음"이다. 3단은 결과 파일 열기(`/view`)와 데모가 쓰는 결과 화면(`ReportSummary`)을 같은 부품, 같은 차례로 쓴다(docs/redesign.md
- * 3장).
- *
- * 분석 쪽만 더하는 것은 셋이다: 발견 줄의 GitHub 커밋 고정 링크(`code`), 정책 상자 맨 아래에 접어 두는 근거 조문 원문
- * (`statutes`, 서버가 팩 메타데이터에서 고른다), 검사 정보 안의 진행 기록(`progress`). 판정자를 켜 보라고 권하지 않는다(서버의
- * 분석은 판정자를 늘 켠다. docs/commitments.md 의 "CLI 가 이미 약속한 것").
+ * 끝난 분석의 결과 화면(분석 쪽). 같은 커밋의 review 결과가 있으면 그 화면(`ReviewView`: 요약 → 의무 체크리스트 → 하는 일 → 흐름 →
+ * 검증 정보)이고 그 아래 진행 기록을 접어 둔다. 없으면(오늘의 검토 한도에 닿았거나, 맡겼는데 받지 못했거나, 검토를 켜기 전의 분석)
+ * 저장소 프로필의 하는 일과 걸릴 수 있는 의무까지 보이고 셋째 단에 그 사실을 적는다(2026-11-12 오너 지시). 2026-11-25 오너 지시로
+ * 규칙 검사의 결과는 보이지 않는다.
  */
 export function AnalysisDashboard({
-  view,
   code,
-  statutes = {},
   progress,
   profile = null,
   review = null,
   reviewPlan,
   limitDay = null,
   exportLinks,
-  record,
 }: {
-  view: ReportView;
   code: CodeSource | null;
-  /** 정책 id → 대표 근거 조문. 없으면 조문을 싣지 않는다. */
-  statutes?: Record<string, Statute | undefined>;
   progress?: ReactNode;
   /** 저장소 프로필. 없으면 1·2단에 "아직 없음"이라고 적는다. */
   profile?: Profile | null;
-  /**
-   * 같은 커밋의 review 결과(policyofficer review 2판, 실행기에서 켰을 때만 있다). 있으면 맨 위가 review 화면(하는 일, 개인정보 흐름,
-   * 의무 체크리스트, 검증 정보)이고, 정적 검사의 결과는 그 아래 접힌 보조 한 줄 안이다(2026-11-25 web16). 조문별 검사 기록 단추(`record`)도
-   * 그 안에 둔다.
-   */
+  /** 같은 커밋의 review 결과(policyofficer review 2판). */
   review?: Review | null;
-  /**
-   * 이 분석에서 review 를 어떻게 했는지. review 결과가 없는데 `limit`(오늘의 review 실행 수 상한)이나 `run`(맡겼는데 결과가 없음)이면
-   * 프로필과 의무 목록까지 보이고, 셋째 단에 그 사실을 적은 뒤 정적 검사를 넷째 단에 둔다(2026-11-12 오너 지시).
-   */
+  /** 이 분석에서 review 를 어떻게 했는지(run: 맡김, stored: 같은 커밋의 것을 씀, limit: 오늘의 한도에 닿음). */
   reviewPlan?: ReviewPlan;
   /** 한도에 닿은 분석이 오늘(한국 표준시)의 것이 아니면 그날(YYYY-MM-DD). 오늘이면 null 이고 "오늘 검토 한도가 찼습니다"라고 적는다. */
   limitDay?: string | null;
   /** review 체크리스트 내보내기의 주소(마크다운 파일, 인쇄용 보기). */
   exportLinks?: { markdown: string; print: string };
-  /** review 가 있을 때 정적 검사 구역 안에 두는 조문별 검사 기록(팩 색인과 기록의 출처). 없으면 기록 단추가 없다. */
-  record?: { pack: PackIndex; source: RecordSource };
 }) {
-  if (!review && (reviewPlan === "limit" || reviewPlan === "run")) {
-    return (
-      <div className="tiers">
-        <OverviewLine profile={profile} check={placesIn(view, "checks")} unknown={placesIn(view, "unknowns")} />
-        <ProfileTier profile={profile} code={code} />
-        <ObligationTier profile={profile} />
-        <Tier n={3} name="의무 체크리스트">
-          <p className="tier-none">
-            {reviewPlan === "run" ? SITE.service.reviewMissing : limitDay ? `${limitDay} 검토 한도가 차서 검토하지 않았습니다.` : SITE.service.reviewLimit}
-          </p>
-        </Tier>
-        <Tier n={4} name="정적 검사">
-          <ReportSummary view={view} code={code} statutes={statutes} progress={progress} />
-        </Tier>
-      </div>
-    );
-  }
   if (review) {
-    const summary = <ReportSummary view={view} code={code} statutes={statutes} progress={progress} />;
     return (
       <div className="tiers">
         <ReviewView review={review} code={code} exportLinks={exportLinks} />
-        <StaticAux parts={[...staticParts(view), `AI 검토가 코드에서 본 것 ${seenCount(review.checklist)}건`]}>
-          {record ? (
-            <StaticRecord view={view} pack={record.pack} source={record.source}>
-              {summary}
-            </StaticRecord>
-          ) : (
-            summary
-          )}
-        </StaticAux>
+        {progress}
       </div>
     );
   }
+  const note =
+    reviewPlan === "run"
+      ? SITE.service.reviewMissing
+      : reviewPlan === "limit"
+        ? limitDay
+          ? `${limitDay} 검토 한도가 차서 검토하지 않았습니다.`
+          : SITE.service.reviewLimit
+        : SITE.service.reviewNone;
   return (
     <div className="tiers">
-      <OverviewLine profile={profile} check={placesIn(view, "checks")} unknown={placesIn(view, "unknowns")} />
+      <OverviewLine profile={profile} />
       <ProfileTier profile={profile} code={code} />
       <ObligationTier profile={profile} />
-      <Tier n={3} name="검토 결과">
-        <ReportSummary view={view} code={code} statutes={statutes} progress={progress} />
+      <Tier n={3} name="의무 체크리스트">
+        <p className="tier-none">{note}</p>
       </Tier>
+      {progress}
     </div>
   );
 }

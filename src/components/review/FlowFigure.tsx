@@ -2,7 +2,7 @@
 
 import { useState, type KeyboardEvent } from "react";
 import { Icon } from "@/components/Icon";
-import type { CodeSource } from "@/components/result/PolicyCard";
+import type { CodeSource } from "@/lib/service/href";
 import { Where } from "@/components/result/Where";
 import type { FlowEdge, FlowKind, FlowNode, ReviewCitation } from "@/lib/review";
 import type { FlowLayout } from "@/lib/review/flow";

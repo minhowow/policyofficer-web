@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { articleLabel, dutyAnchor, dutyFeatureHref, dutyMap, fullArticle, lawGroups, policyHomeDuty } from "@/lib/duties";
+import { articleLabel, dutyAnchor, dutyFeatureHref, dutyMap, fullArticle, lawGroups } from "@/lib/duties";
 import { lawArticle } from "@/lib/duties/article";
-import { packMeta } from "@/lib/pack";
 import { SANCTION } from "@/lib/review/text";
 import { BANNED_WORDING } from "./wording";
 
@@ -37,16 +36,6 @@ describe("의무 지도의 자료", () => {
         expect(item.quote.trim().length, duty.id).toBeGreaterThan(0);
       }
     }
-  });
-
-  it("정적 규칙 팩의 정책은 모두 의무 지도의 의무를 가리키고, 정책이 붙은 의무는 팩의 정책만 가리킨다. 정책마다 내용을 싣는 의무는 팩에 적힌 첫 의무다", () => {
-    for (const policy of packMeta.policies) expect(policyHomeDuty(policy.id)?.policies, policy.id).toContain(policy.id);
-    // 국외 이전 정책(제28조의8, 제26조)은 표의 차례로는 제26조가 먼저지만 팩에 적힌 첫 의무는 제28조의8 이다.
-    expect(policyHomeDuty("kr.pipa.28-8")?.id).toBe("pipa-28-8-1");
-    expect(dutyMap.duties.findIndex((duty) => duty.id === "pipa-26-2")).toBeLessThan(dutyMap.duties.findIndex((duty) => duty.id === "pipa-28-8-1"));
-    for (const policy of packMeta.policies) expect(dutyMap.duties.some((duty) => duty.policies.includes(policy.id)), policy.id).toBe(true);
-    const known = new Set(packMeta.policies.map((policy) => policy.id));
-    for (const duty of dutyMap.duties) for (const id of duty.policies) expect(known.has(id), `${duty.id} → ${id}`).toBe(true);
   });
 
   it("화면에 싣는 글(제목, 의무 한 줄, 걸리는 코드)에 쓰지 않는 말과 처분의 말이 없다. 제목 끝의 조사자 메모([…])는 뗐다", () => {

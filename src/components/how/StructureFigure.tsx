@@ -1,3 +1,4 @@
+import { keepParticles } from "@/components/text";
 import { markerIds, MONO, type Figure, type Tone } from "@/lib/how/draw";
 
 const TONE_CLASS: Record<Tone, string> = { plain: "", out: " t-out", model: " t-model", tool: " t-tool", keep: " t-keep" };
@@ -89,7 +90,7 @@ export function StructureFigure({ figure }: { figure: Figure }) {
                     {item.lines.length > 0 && (
                       <ul>
                         {item.lines.map((line) => (
-                          <li key={line}>{line}</li>
+                          <li key={line}>{keepParticles(line)}</li>
                         ))}
                       </ul>
                     )}

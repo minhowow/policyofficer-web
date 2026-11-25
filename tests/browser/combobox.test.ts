@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import type { Browser, BrowserContext, Page } from "playwright-core";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { featureNames, parseProfile } from "@/lib/profile";
 import { STEP_ORDER } from "@/lib/service/steps";
 import { SITE } from "@/lib/site";
 import { openDatabase } from "@/server/db";
@@ -33,14 +34,16 @@ beforeAll(async () => {
   const db = await openDatabase({ databaseUrl: null, pgliteDir: dataDir });
   const at = (minutes: number) => new Date(Date.parse("2026-11-03T01:00:00Z") + minutes * 60_000).toISOString();
   const steps = (start: number) => JSON.stringify(STEP_ORDER.map((name, i) => ({ name, startedAt: at(start + i), endedAt: at(start + i + 1) })));
+  // 끝난 분석: 실행기 콜백이 적는 꼴(src/server/callbacks.ts. 규칙 검사의 결과 JSON 칸은 비우고 저장소 프로필을 둔다. 도구 판과
+  // 감지된 기능의 이름은 프로필에서 읽어 적는다). 프로필은 contract/cli-current/profile 의 수집본이다.
   const insert = async (id: string, owner: string, repo: string, commit: string, minutes: number, capture: string) => {
-    const result = readJson("contract", "cli-current", `${capture}.json`) as { tool: { version: string }; run: { pack_digest: string }; findings: unknown[] };
+    const profile = readJson("contract", "cli-current", "profile", `${capture}.json`) as { tool: { version: string } };
     await db.query(
-      `INSERT INTO analyses (id, owner, repo, repo_key, commit_sha, branch, status, requested_at, finished_at, steps, tool_version, pack_digest, finding_count)
-       VALUES ($1, $2, $3, $4, $5, 'main', 'succeeded', $6, $7, $8::jsonb, $9, $10, $11)`,
-      [id, owner, repo, `${owner}/${repo}`.toLowerCase(), commit, at(minutes), at(minutes + 5), steps(minutes), result.tool.version, result.run.pack_digest, result.findings.length],
+      `INSERT INTO analyses (id, owner, repo, repo_key, commit_sha, branch, status, requested_at, finished_at, steps, tool_version, feature_names)
+       VALUES ($1, $2, $3, $4, $5, 'main', 'succeeded', $6, $7, $8::jsonb, $9, $10)`,
+      [id, owner, repo, `${owner}/${repo}`.toLowerCase(), commit, at(minutes), at(minutes + 5), steps(minutes), profile.tool.version, JSON.stringify(featureNames(parseProfile(profile)!))],
     );
-    await db.query("INSERT INTO results (analysis_id, json) VALUES ($1, $2)", [id, JSON.stringify(result)]);
+    await db.query("INSERT INTO results (analysis_id, json, profile) VALUES ($1, NULL, $2)", [id, JSON.stringify(profile)]);
   };
   await insert("cbxk7wq2zh", "example-org", "kids-signup", stub.head("example-org", "kids-signup")!, 10, "kids-signup.main");
   await insert("cbxk7wq2zm", "example-labs", "plain.utils", "e".repeat(40), 0, "plain.main");

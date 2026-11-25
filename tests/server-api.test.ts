@@ -5,7 +5,7 @@ import { featureNames, parseProfile } from "@/lib/profile";
 import { parseReview, reviewFactsOf } from "@/lib/review";
 import { checkCount } from "@/lib/review/text";
 import type { Analysis } from "@/lib/service/types";
-import { syntheticRepositories, syntheticStore } from "@/lib/service/synthetic";
+import { syntheticStore } from "@/lib/service/synthetic";
 import { getAnalysis, postAnalysis, postRunnerClaim, postRunnerEvent, type ApiDeps } from "@/server/api";
 import { MAX_REASON_LENGTH } from "@/server/callbacks";
 import { readConfig, type ServerConfig } from "@/server/config";
@@ -99,14 +99,24 @@ const row = async (id: string) =>
     failure_reason: string | null;
     tool_version: string | null;
     pack_digest: string | null;
+    finding_count: number | null;
+    feature_names: string | null;
     runner_run_id: string | null;
     runner_run_url: string | null;
     steps: { name: string; startedAt: string | null; endedAt: string | null }[];
   };
 
-const capture = readFileSync(path.join(root, "contract", "cli-current", "kids-signup.main.json"), "utf8");
-// 수집본의 팩 판. 다시 수집하면 따라 바뀐다.
-const capturedPack = (JSON.parse(capture) as { run: { pack_digest: string } }).run.pack_digest;
+const resultRow = async (id: string) =>
+  (await db.query<{ json: string | null; profile: string | null; review: string | null }>("SELECT json, profile, review FROM results WHERE analysis_id = $1", [id])).rows[0];
+
+/** 저장소 프로필 수집본(policyofficer profile 의 JSON, contract/cli-current/profile/<표본>.json). */
+const profileOf = (sample: string) => JSON.parse(readFileSync(path.join(root, "contract", "cli-current", "profile", `${sample}.json`), "utf8")) as Record<string, unknown>;
+/** 2026-11-25 부터 실행기가 보내는 결과: 프로필(와 켰을 때 review). 규칙 검사의 결과(output)는 없다. */
+const profileCapture = profileOf("kids-signup.main");
+const reviewCapture = JSON.parse(readFileSync(path.join(root, "contract", "review", "genai-chat.review.json"), "utf8")) as Record<string, unknown>;
+const RESULT = { event: "result", profile: profileCapture };
+/** 프로필도 review 도 없을 때 적는 까닭(src/server/callbacks.ts). */
+const NO_RESULT = "결과를 받지 못함: 기능 파악과 AI 검토의 결과가 모두 없습니다.";
 
 async function runToFinish(deps: ApiDeps, id: string) {
   for (const step of ["fetch", "scan", "finish"]) expect((await event(deps, id, { event: "step", step })).status).toBe(200);
@@ -255,7 +265,7 @@ describe("실행기 콜백: 서명 (설계 6)", () => {
     const { deps } = setup({ RESULT_MAX_KB: "2" });
     const id = (await requestAnalysis(deps)).body.analysis!.id;
     await runToFinish(deps, id);
-    const big = await event(deps, id, { event: "result", output: "x".repeat(3_000) });
+    const big = await event(deps, id, { event: "result", profile: { ...profileCapture, pad: "x".repeat(3_000) } });
     expect(big.status).toBe(413);
     expect((await row(id)).status).toBe("running");
     expect((await db.query("SELECT * FROM results")).rows).toHaveLength(0);
@@ -268,7 +278,6 @@ describe("실행기 콜백: 서명 (설계 6)", () => {
       { event: "step", step: "queued" },
       { event: "step", step: "judge" },
       { event: "step", step: "fetch", run: { id: "1", url: "https://evil.example/actions/runs/1" } },
-      { event: "result" },
       { event: "fail", step: "scan", reason: "   " },
       { event: "other" },
       [],
@@ -338,65 +347,104 @@ describe("실행기 콜백: 머리를 먼저 보고, 저장소·커밋을 묶는
     }
     expect((await row(id)).status).toBe("queued");
     await runToFinish(deps, id);
-    // 다른 저장소를 검사한 결과는 붙지 않는다.
-    expect((await event(deps, id, { event: "result", output: capture, target: { ...target, repo: "night-push" } })).status).toBe(409);
+    // 다른 저장소를 검토한 결과는 붙지 않는다.
+    expect((await event(deps, id, { ...RESULT, target: { ...target, repo: "night-push" } })).status).toBe(409);
     expect((await db.query("SELECT * FROM results")).rows).toHaveLength(0);
     const upper = { ...target, owner: target.owner.toUpperCase(), repo: target.repo.toUpperCase() };
-    expect((await event(deps, id, { event: "result", output: capture, target: upper })).status).toBe(200);
+    expect((await event(deps, id, { ...RESULT, target: upper })).status).toBe(200);
     expect((await row(id)).status).toBe("succeeded");
   });
 });
 
-describe("발견 수를 결과를 받을 때 세어 둔다 (검토 1)", () => {
-  it("끝난 분석의 발견 수는 결과 화면과 같은 파서로 센 값이고, 쪽은 결과 JSON 을 읽지 않고 그 값을 읽는다. 읽지 못한 결과·끝나지 않은 분석은 없음", async () => {
+describe("결과는 프로필과 review 뿐이다 (2026-11-25, 규칙 검사 없앰)", () => {
+  it("결과 칸(json)은 비우고, 앞선 실행기가 함께 보내는 output 은 받되 쓰지 않는다. 도구 판은 review, 없으면 프로필의 것이고 팩 판·발견 수는 적지 않는다", async () => {
     const { deps, stub, later } = setup({ POOL_SIZE: "5" });
-    const good = (await requestAnalysis(deps)).body.analysis!.id;
-    await runToFinish(deps, good);
-    expect((await event(deps, good, { event: "result", output: capture })).status).toBe(200);
-    stub.setHead("example-org", "kids-signup", "2");
-    later(1);
-    const bad = (await requestAnalysis(deps)).body.analysis!.id;
-    await runToFinish(deps, bad);
-    expect((await event(deps, bad, { event: "result", output: "{}" })).status).toBe(200);
-    const waiting = (await requestAnalysis(deps, "example-org", "night-push")).body.analysis!.id;
-    const expected = (JSON.parse(capture) as { findings: unknown[] }).findings.length;
-    expect(expected).toBeGreaterThan(0);
-    expect(await deps.store().findingCounts([good, bad, waiting, "not-an-id"])).toEqual({ [good]: expected });
-    expect((await db.query<{ finding_count: number | null }>("SELECT finding_count FROM analyses WHERE id = $1", [bad])).rows[0].finding_count).toBeNull();
-    // 합성 저장소도 같은 뜻이다.
-    // 저장소마다 한 줄인 최근 분석이 아니라 모든 합성 분석의 끝난 것(6개)을 본다.
-    const synthetic = (
-      await Promise.all(syntheticRepositories().map(({ repository: r }) => syntheticStore.listAnalyses(r.owner, r.name)))
-    )
-      .flat()
-      .filter((analysis) => analysis.status === "succeeded")
-      .map((analysis) => analysis.id);
-    expect(synthetic).toHaveLength(6);
-    const counts = await syntheticStore.findingCounts(synthetic);
-    expect(Object.keys(counts).sort()).toEqual([...synthetic].sort());
+    const withOutput = (await requestAnalysis(deps)).body.analysis!.id;
+    await runToFinish(deps, withOutput);
+    expect((await event(deps, withOutput, { ...RESULT, output: "not json at all" })).body.status).toBe("succeeded");
+    expect(await resultRow(withOutput)).toEqual({ json: null, profile: JSON.stringify(profileCapture), review: null });
+    expect(await row(withOutput)).toMatchObject({ tool_version: "0.3.0.dev0", pack_digest: null, finding_count: null });
+    // review 가 있으면 그 판이 먼저다. review 의 판이 판 모양이 아니면 프로필의 판이다.
+    const tool = (version: string) => ({ ...reviewCapture, tool: { ...(reviewCapture.tool as object), version } });
+    for (const [version, expected] of [
+      ["0.4.0", "0.4.0"],
+      ["판 아님", "0.3.0.dev0"],
+    ] as const) {
+      stub.setHead("example-org", "kids-signup", version === "0.4.0" ? "2" : "3");
+      later(1);
+      const id = (await requestAnalysis(deps)).body.analysis!.id;
+      await runToFinish(deps, id);
+      expect((await event(deps, id, { ...RESULT, review: tool(version) })).body.status).toBe("succeeded");
+      expect((await row(id)).tool_version, version).toBe(expected);
+    }
+    // review 만 있어도 끝남이다(프로필이 없으면 도구 판은 review 의 것, 기능 이름은 모름).
+    const reviewOnly = (await requestAnalysis(deps, "example-org", "night-push")).body.analysis!.id;
+    await runToFinish(deps, reviewOnly);
+    expect((await event(deps, reviewOnly, { event: "result", review: reviewCapture })).body.status).toBe("succeeded");
+    expect(await row(reviewOnly)).toMatchObject({ tool_version: "0.3.0.dev0", feature_names: null });
+    expect(await resultRow(reviewOnly)).toEqual({ json: null, profile: null, review: JSON.stringify(reviewCapture) });
+    // 분석의 판에는 도구 판만 있고 팩 판은 없다(규칙 검사를 없앴다).
+    expect((await deps.store().findAnalysis(withOutput))?.versions).toEqual({ tool: "0.3.0.dev0", pack: null });
+  });
+
+  it("프로필도 review 도 없거나 읽히지 않으면 같은 커밋의 저장된 review 가 없는 한 실패('결과를 받지 못함', 정리 단계)로 적는다. 저장된 review 가 있으면 끝남이다", async () => {
+    const { deps, later } = setup({ POOL_SIZE: "5", REVIEW: "on" });
+    const claim = async () => ((await (await postRunnerClaim(signed("claim", {}, { at: deps.now() }), deps)).json()) as { analysis: { id: string; review: boolean } }).analysis;
+    const commit = (await requestAnalysis(deps)).body.analysis!.commit;
+    // 같은 커밋을 차례로 분석한다(실패한 분석은 다시 요청하면 새로 만든다).
+    for (const payload of [
+      { event: "result" },
+      { event: "result", output: '{"tool":{"name":"policyofficer"}}' },
+      { event: "result", profile: { profile_version: 99 }, review: { review_version: 99 } },
+      { event: "result", profile: null, review: null },
+    ]) {
+      const id = (await requestAnalysis(deps)).body.analysis!.id;
+      expect((await claim()).id).toBe(id);
+      await runToFinish(deps, id);
+      expect((await event(deps, id, payload)).body, JSON.stringify(payload)).toMatchObject({ ok: true, status: "failed" });
+      expect(await row(id)).toMatchObject({ status: "failed", failure_step: "finish", failure_reason: NO_RESULT, tool_version: null, feature_names: null });
+      // 읽히지 않은 것은 두지 않는다.
+      expect(await resultRow(id)).toEqual({ json: null, profile: null, review: null });
+      expect((await deps.store().findAnalysis(id))?.failure).toEqual({ step: "finish", reason: NO_RESULT });
+      later(1);
+    }
+    expect(await deps.store().getReview("example-org", "kids-signup", commit)).toBeNull();
+
+    // 같은 커밋의 review 를 받은 분석이 끝나면, 그 커밋의 다음 분석은 review 를 맡기지 않고 결과가 비어도(프로필을 만들지 못함) 끝남이다.
+    const first = (await requestAnalysis(deps)).body.analysis!.id;
+    expect(await claim()).toMatchObject({ id: first, review: true });
+    await runToFinish(deps, first);
+    expect((await event(deps, first, { event: "result", review: reviewCapture })).body.status).toBe("succeeded");
+    later(61);
+    const again = (await requestAnalysis(deps)).body.analysis!;
+    expect(again.commit).toBe(commit);
+    expect(again.review).toBe("stored");
+    expect(await claim()).toMatchObject({ id: again.id, review: false });
+    await runToFinish(deps, again.id);
+    expect((await event(deps, again.id, { event: "result" })).body.status).toBe("succeeded");
+    expect(await deps.store().getReview("example-org", "kids-signup", commit)).toEqual(parseReview(reviewCapture));
+    expect(await deps.store().reviewFacts([again.id])).toEqual({ [again.id]: reviewFactsOf(parseReview(reviewCapture)!) });
   });
 });
 
 describe("저장소 프로필을 결과와 함께 받아 둔다 (2026-11-11)", () => {
-  const profileCapture = readFileSync(path.join(root, "contract", "cli-current", "profile", "kids-signup.main.json"), "utf8");
-
-  it("읽히는 프로필은 받은 그대로 두고 목록의 기능 이름을 적는다. 없거나 읽히지 않으면 비우고 분석은 끝남이다", async () => {
+  it("읽히는 프로필은 받은 그대로 두고 목록의 기능 이름을 적는다. 없거나 읽히지 않으면 비운다(review 가 있으면 분석은 끝남이다)", async () => {
     const { deps, stub, later } = setup({ POOL_SIZE: "5" });
     const withProfile = (await requestAnalysis(deps)).body.analysis!.id;
     await runToFinish(deps, withProfile);
-    expect((await event(deps, withProfile, { event: "result", output: capture, profile: JSON.parse(profileCapture) })).body.status).toBe("succeeded");
+    expect((await event(deps, withProfile, RESULT)).body.status).toBe("succeeded");
     stub.setHead("example-org", "kids-signup", "2");
     later(1);
     const broken = (await requestAnalysis(deps)).body.analysis!.id;
     await runToFinish(deps, broken);
-    expect((await event(deps, broken, { event: "result", output: capture, profile: { profile_version: 2 } })).body.status).toBe("succeeded");
+    expect((await event(deps, broken, { event: "result", profile: { profile_version: 2 }, review: reviewCapture })).body.status).toBe("succeeded");
     stub.setHead("example-org", "kids-signup", "3");
     later(2);
     const none = (await requestAnalysis(deps)).body.analysis!.id;
     await runToFinish(deps, none);
-    expect((await event(deps, none, { event: "result", output: capture })).body.status).toBe("succeeded");
+    expect((await event(deps, none, { event: "result", review: reviewCapture })).body.status).toBe("succeeded");
 
-    const expected = parseProfile(JSON.parse(profileCapture))!;
+    const expected = parseProfile(profileCapture)!;
     expect(expected.features.length).toBeGreaterThan(0);
     expect(await deps.store().getProfile(withProfile)).toEqual(expected);
     expect(await deps.store().getProfile(broken)).toBeNull();
@@ -414,8 +462,6 @@ describe("저장소 프로필을 결과와 함께 받아 둔다 (2026-11-11)", (
 });
 
 describe("review 를 결과와 함께 받아 두고, 같은 커밋이면 다시 돌리지 않는다 (2026-11-11)", () => {
-  const reviewCapture = JSON.parse(readFileSync(path.join(root, "contract", "review", "genai-chat.review.json"), "utf8")) as Record<string, unknown>;
-
   it("읽히는 review 는 받은 그대로 두고 읽히지 않으면 비운다(분석은 끝남). 같은 커밋의 review 는 어느 분석에서 왔든 가장 새것을 대소문자 없이 읽고, 있으면 실행기에 맡기지 않는다", async () => {
     const { deps, stub, later } = setup({ POOL_SIZE: "5", REVIEW: "on" });
     const once = async (review: unknown) => {
@@ -423,7 +469,8 @@ describe("review 를 결과와 함께 받아 두고, 같은 커밋이면 다시 
       const claimed = (await (await postRunnerClaim(signed("claim", {}, { at: deps.now() }), deps)).json()) as { analysis: { id: string; review: boolean } };
       expect(claimed.analysis.id).toBe(analysis.id);
       await runToFinish(deps, analysis.id);
-      expect((await event(deps, analysis.id, { event: "result", output: capture, review })).body.status).toBe("succeeded");
+      // 프로필과 함께 보낸다(review 가 읽히지 않아도 프로필이 있으면 끝남이다).
+      expect((await event(deps, analysis.id, { ...RESULT, review })).body.status).toBe("succeeded");
       // DEDUPE_MINUTES 를 넘겨 같은 커밋의 새 분석을 만든다.
       later(61);
       return { analysis, review: claimed.analysis.review };
@@ -457,7 +504,7 @@ describe("review 를 결과와 함께 받아 두고, 같은 커밋이면 다시 
     later(1);
     const other = (await requestAnalysis(deps, "example-org", "night-push")).body.analysis!.id;
     await runToFinish(deps, other);
-    expect((await event(deps, other, { event: "result", output: capture })).body.status).toBe("succeeded");
+    expect((await event(deps, other, { event: "result", profile: profileOf("night-push.main") })).body.status).toBe("succeeded");
     stub.setHead("example-org", "night-push", "2");
     later(61);
     const waiting = (await requestAnalysis(deps, "example-org", "night-push")).body.analysis!.id;
@@ -480,7 +527,7 @@ describe("review 를 결과와 함께 받아 두고, 같은 커밋이면 다시 
 });
 
 describe("실행기 콜백: 상태 전이 (설계 6)", () => {
-  it("차례대로: 저장소 받기 → 검사 → 정리 → 결과. 끝나면 succeeded, 도구·팩 판을 결과에서 적고 결과는 받은 글 그대로다", async () => {
+  it("차례대로: 저장소 받기 → 검토 → 정리 → 결과. 끝나면 succeeded, 도구 판을 결과에서 적고 프로필은 받은 그대로다", async () => {
     const { deps, later } = setup();
     const id = (await requestAnalysis(deps)).body.analysis!.id;
     const run = { id: "987654", url: "https://github.com/owner/runner/actions/runs/987654" };
@@ -489,9 +536,9 @@ describe("실행기 콜백: 상태 전이 (설계 6)", () => {
     await event(deps, id, { event: "step", step: "scan" });
     later(2);
     await event(deps, id, { event: "step", step: "finish" });
-    expect((await event(deps, id, { event: "result", output: capture })).body).toMatchObject({ ok: true, status: "succeeded" });
+    expect((await event(deps, id, RESULT)).body).toMatchObject({ ok: true, status: "succeeded" });
     const stored = await row(id);
-    expect(stored).toMatchObject({ status: "succeeded", tool_version: "0.3.0.dev0", pack_digest: capturedPack, runner_run_id: "987654", runner_run_url: run.url });
+    expect(stored).toMatchObject({ status: "succeeded", tool_version: "0.3.0.dev0", pack_digest: null, runner_run_id: "987654", runner_run_url: run.url });
     // 시각은 콜백을 받은 때다. 단계마다 시작과 끝이 있고, 앞 단계의 끝이 다음 단계의 시작이다.
     expect(stored.steps.map((s) => [s.name, s.startedAt, s.endedAt])).toEqual([
       ["queued", T0.toISOString(), T0.toISOString()],
@@ -499,10 +546,9 @@ describe("실행기 콜백: 상태 전이 (설계 6)", () => {
       ["scan", new Date(T0.getTime() + 60_000).toISOString(), new Date(T0.getTime() + 180_000).toISOString()],
       ["finish", new Date(T0.getTime() + 180_000).toISOString(), new Date(T0.getTime() + 180_000).toISOString()],
     ]);
-    expect((await db.query<{ json: string }>("SELECT json FROM results WHERE analysis_id = $1", [id])).rows[0].json).toBe(capture);
-    const { store } = { store: deps.store() };
-    expect(await store.getResult(id)).toEqual(JSON.parse(capture));
-    expect((await store.findAnalysis(id))?.versions).toEqual({ tool: "0.3.0.dev0", pack: capturedPack });
+    expect(await resultRow(id)).toEqual({ json: null, profile: JSON.stringify(profileCapture), review: null });
+    expect(await deps.store().getProfile(id)).toEqual(parseProfile(profileCapture));
+    expect(stored.feature_names).toBe(JSON.stringify(featureNames(parseProfile(profileCapture)!)));
   });
 
   it("같은 단계를 다시 알리면 바꾸지 않고 받는다(실행기가 다시 보낸 것)", async () => {
@@ -519,12 +565,12 @@ describe("실행기 콜백: 상태 전이 (설계 6)", () => {
     const { deps } = setup();
     const id = (await requestAnalysis(deps)).body.analysis!.id;
     expect((await event(deps, id, { event: "step", step: "scan" })).status).toBe(409);
-    expect((await event(deps, id, { event: "result", output: capture })).status).toBe(409);
+    expect((await event(deps, id, RESULT)).status).toBe(409);
     await event(deps, id, { event: "step", step: "fetch" });
     expect((await event(deps, id, { event: "step", step: "finish" })).status).toBe(409);
     await event(deps, id, { event: "step", step: "scan" });
     expect((await event(deps, id, { event: "step", step: "fetch" })).status).toBe(409);
-    expect((await event(deps, id, { event: "result", output: capture })).status).toBe(409);
+    expect((await event(deps, id, RESULT)).status).toBe(409);
     expect((await row(id)).status).toBe("running");
     expect((await db.query("SELECT * FROM results")).rows).toHaveLength(0);
   });
@@ -533,10 +579,11 @@ describe("실행기 콜백: 상태 전이 (설계 6)", () => {
     const { deps } = setup();
     const id = (await requestAnalysis(deps)).body.analysis!.id;
     await runToFinish(deps, id);
-    await event(deps, id, { event: "result", output: capture });
+    await event(deps, id, RESULT);
     const done = await row(id);
     for (const payload of [
-      { event: "result", output: "{}" },
+      RESULT,
+      { event: "result" },
       { event: "fail", step: "finish", reason: "덮어쓰기" },
       { event: "step", step: "fetch" },
       { event: "step", step: "finish" },
@@ -552,25 +599,6 @@ describe("실행기 콜백: 상태 전이 (설계 6)", () => {
     expect((await row(other)).failure_reason).toBe("받지 못함");
   });
 
-  it("읽히지 않는 결과는 받은 그대로 두고 실패('결과를 읽지 못함', 정리 단계)로 적는다. 화면에는 결과로 내지 않는다", async () => {
-    const { deps } = setup({ POOL_SIZE: "5" });
-    for (const [repo, output] of [
-      ["kids-signup", "not json at all"],
-      ["night-push", JSON.stringify({ tool: { name: "policypack" } })],
-    ] as const) {
-      const id = (await requestAnalysis(deps, "example-org", repo)).body.analysis!.id;
-      await runToFinish(deps, id);
-      expect((await event(deps, id, { event: "result", output })).body).toMatchObject({ ok: true, status: "failed" });
-      const stored = await row(id);
-      expect(stored.status).toBe("failed");
-      expect(stored.failure_step).toBe("finish");
-      expect(stored.failure_reason).toMatch(/^결과를 읽지 못함: /);
-      expect(stored.tool_version).toBeNull();
-      expect((await db.query<{ json: string }>("SELECT json FROM results WHERE analysis_id = $1", [id])).rows[0].json).toBe(output);
-      expect(await deps.store().getResult(id)).toBeNull();
-    }
-  });
-
   it("실패: 지금 단계나 그다음 단계에서만 받는다. 까닭은 제어 문자를 빼고 자른다. 멈춘 시각은 받은 때다", async () => {
     const { deps, later } = setup();
     const id = (await requestAnalysis(deps)).body.analysis!.id;
@@ -584,7 +612,7 @@ describe("실행기 콜백: 상태 전이 (설계 6)", () => {
     expect(stored.failure_step).toBe("scan");
     expect(stored.failure_reason!.startsWith("줄 바꿈 가")).toBe(true);
     expect(stored.failure_reason!.length).toBe(MAX_REASON_LENGTH);
-    // 저장소 받기가 언제 끝났는지는 모른다(적지 않는다). 검사 단계는 시작을 알리지 않았고 멈춘 때만 안다.
+    // 저장소 받기가 언제 끝났는지는 모른다(적지 않는다). 검토 단계는 시작을 알리지 않았고 멈춘 때만 안다.
     expect(stored.steps.find((s) => s.name === "fetch")).toMatchObject({ endedAt: null });
     expect(stored.steps.find((s) => s.name === "scan")).toMatchObject({ startedAt: null, endedAt: new Date(T0.getTime() + 120_000).toISOString() });
   });
@@ -606,15 +634,15 @@ describe("실행기 콜백: 상태 전이 (설계 6)", () => {
   });
 });
 
-describe("실행기 콜백: 검사 단계 안의 일 (2026-11-13)", () => {
+describe("실행기 콜백: 검토 단계 안의 일 (2026-11-13)", () => {
   const partOf = async (id: string) =>
     (await db.query<{ scan_part: string | null; scan_part_at: Date | null }>("SELECT scan_part, scan_part_at FROM analyses WHERE id = $1", [id])).rows[0];
   const readBack = async (deps: ApiDeps, id: string) => ((await (await getAnalysis(id, deps)).json()) as { analysis: Analysis }).analysis;
 
-  it("검사 단계에서만 받고 앞으로만 간다(프로필 → review). 같은 일은 바꾸지 않고 받는다. 진행 읽기(GET)가 그것을 준다", async () => {
+  it("검토 단계에서만 받고 앞으로만 간다(프로필 → review). 같은 일은 바꾸지 않고 받는다. 진행 읽기(GET)가 그것을 준다", async () => {
     const { deps, later } = setup({ REVIEW: "on" });
     const id = (await requestAnalysis(deps)).body.analysis!.id;
-    // 검사 단계 전(보냄, 저장소 받기)에는 받지 않는다.
+    // 검토 단계 전(보냄, 저장소 받기)에는 받지 않는다.
     expect((await event(deps, id, { event: "part", part: "profile" })).status).toBe(409);
     await event(deps, id, { event: "step", step: "fetch" });
     expect((await event(deps, id, { event: "part", part: "profile" })).status).toBe(409);
@@ -638,7 +666,7 @@ describe("실행기 콜백: 검사 단계 안의 일 (2026-11-13)", () => {
     // 정리 단계에 들어가면 받지 않는다. 마지막 값은 남는다.
     await event(deps, id, { event: "step", step: "finish" });
     expect((await event(deps, id, { event: "part", part: "review" })).status).toBe(409);
-    expect((await event(deps, id, { event: "result", output: capture })).body.status).toBe("succeeded");
+    expect((await event(deps, id, RESULT)).body.status).toBe("succeeded");
     expect((await event(deps, id, { event: "part", part: "review" })).status).toBe(409);
     expect((await deps.store().findAnalysis(id))?.scanPart).toEqual({ name: "review", startedAt: reviewAt });
   });
@@ -711,7 +739,7 @@ describe("대기열과 실행 자리 (2026-11-03)", () => {
     const c = (await requestAnalysis(deps, "example-studio", "genai-chat")).body.analysis!.id;
     await runToFinish(withWake, a);
     expect(woken).toEqual([]);
-    expect((await event(withWake, a, { event: "result", output: capture })).body.status).toBe("succeeded");
+    expect((await event(withWake, a, RESULT)).body.status).toBe("succeeded");
     expect(woken).toEqual([b]);
     expect((await row(b)).status).toBe("queued");
     expect((await deps.store().queue())).toMatchObject({ inUse: 1, waiting: [c], dispatched: [b] });
@@ -742,7 +770,7 @@ describe("로컬 실행기가 집어 가기 (RUNNER=local)", () => {
     expect((await claim())?.id).toBe(first);
     expect(await claim()).toBeNull();
     await runToFinish(deps, first);
-    await event(deps, first, { event: "result", output: capture });
+    await event(deps, first, RESULT);
     expect((await claim())?.id).toBe(second);
     expect(await claim()).toBeNull();
   });

@@ -14,7 +14,6 @@
     "test:browser": "vitest run --config vitest.browser.config.mts",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:browser",
     "capture": "node scripts/capture-cli-output.mjs",
-    "pack-meta": "node scripts/export-pack-meta.mjs",
     "github-stub": "node scripts/github-stub.mjs",
     "local-runner": "node scripts/local-runner.mjs",
     "local": "node scripts/dev-local.mjs"

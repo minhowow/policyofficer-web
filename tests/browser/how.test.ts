@@ -1,12 +1,14 @@
 import type { Browser, BrowserContext, Page } from "playwright-core";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { casesFile, casesHref } from "@/lib/cases";
-import { buildFigures, TRACE } from "@/lib/how/figures";
-import { SITE } from "@/lib/site";
+import { buildFigures, traceSourceLine, type TraceSource } from "@/lib/how/figures";
+import { analysisHref } from "@/lib/service/href";
+import { PRERUNS } from "@/lib/service/prerun";
 import { closeChrome, contrast, launchChrome, NO_STORAGE, openPage, overflow, serveSite, stored, textContrast, type Site } from "./site";
 
 // 구조 쪽(/how/, 2026-11-13 오너 지시). 빌드된 사이트를 Chrome 으로 연다.
-// - 맨 위에 쉬운 판 셋과 따라가 보기, 그 아래 '자세히 보기'(접힘)에 자세한 판 셋.
+// - 맨 위에 쉬운 판 둘과 따라가 보기, 그 아래 '자세히 보기'(접힘)에 자세한 판 둘(2026-11-25 web17 에서 정적 검사의 판을 걷었다).
+// - 따라가 보기 아래의 출처 줄: 미리 돌려 넣은 분석(src/lib/service/prerun.ts)의 저장소 이름이 그 분석 쪽으로 가는 링크이고, 그 뒤에
+//   커밋·미리 돌린 날·모델. 맨 아래에 데모로 가는 링크는 없다(데모 쪽을 걷었다).
 // - 1100px 부터: 그림이 SVG 로 보이고(글은 그림 자료 그대로), 같은 내용의 목록은 화면 낭독기에만 읽힌다. SVG 의 글은 제 뒤의
 //   네모 바탕과 4.5:1 이상이다(두 테마).
 // - 좁은 화면: 그림 대신 목록이 보이고, 쪽이 가로로 넘치지 않는다. 글의 대비를 잰다(두 테마).
@@ -37,7 +39,10 @@ afterAll(async () => {
   await site?.close();
 });
 
-const { simple, trace, detailed } = buildFigures(casesFile);
+/** 따라가 보기가 읽는 분석: 미리 돌려 넣은 첫 분석(쪽과 같은 것). */
+const RUN = PRERUNS[0];
+const SOURCE: TraceSource = { owner: RUN.owner, name: RUN.name, commit: RUN.commit, ranOn: RUN.ranOn, review: RUN.review };
+const { simple, trace, detailed } = buildFigures(SOURCE);
 const FIGURES = [...simple, trace, ...detailed];
 
 const open = (width: number, colorScheme: "light" | "dark") =>
@@ -61,16 +66,28 @@ const svgContrast = (page: Page) =>
   });
 
 describe("구조 쪽", () => {
-  it.each(["light", "dark"] as const)("%s 1280px: 그림 셋이 SVG 로 보이고 목록은 화면 낭독기에만 읽힌다. 머리글이 지금 쪽을 표시한다", async (scheme) => {
+  it.each(["light", "dark"] as const)("%s 1280px: 그림이 SVG 로 보이고 목록은 화면 낭독기에만 읽힌다. 머리글이 지금 쪽을 표시한다", async (scheme) => {
     const { page, outside } = await open(1280, scheme);
+    expect(simple).toHaveLength(2);
+    expect(detailed).toHaveLength(2);
     expect(await page.locator("main h2").allTextContents()).toEqual([...simple, trace].map((figure, i) => `${i + 1}. ${figure.title}`));
-    // 따라가 보기 아래에 그 사례 쪽으로 가는 링크와, 미리 돌린 결과이고 판정 규칙만 다시 적용했다는 것.
-    expect(await page.locator(".how-src a").getAttribute("href")).toBe(casesHref(TRACE.slug));
-    expect(await page.locator(".how-src").textContent()).toContain(SITE.cases.prerun);
-    expect(await page.locator(".how-src").textContent()).toContain(SITE.cases.regate);
+    // 따라가 보기 아래의 출처 줄: 저장소 이름은 그 분석 쪽으로 가는 링크(합성 미리보기에는 그 분석이 없어 누르지는 않는다)이고, 그 뒤에
+    // 커밋·미리 돌린 결과·돌린 날·모델이 그림 자료의 글 그대로 붙는다.
+    const link = page.locator(".how-src a");
+    expect(await link.count()).toBe(1);
+    expect(await link.getAttribute("href")).toBe(analysisHref(RUN.owner, RUN.name, RUN.id));
+    expect(await link.getAttribute("href")).toBe("/r/vactor0911/jobtalk/a/jbtk24nv7q/");
+    expect(await link.textContent()).toBe(`${RUN.owner}/${RUN.name}`);
+    expect(await page.locator(".how-src").textContent()).toBe(traceSourceLine(SOURCE));
+    expect(traceSourceLine(SOURCE)).toBe(
+      "Vactor0911/jobtalk · 커밋 bbfb3ab · 미리 돌린 결과 2026-11-24 (조사 claude-haiku-5-5 · 반박 claude-sonnet-5-5)",
+    );
+    // 데모 쪽은 걷었다(web17). 구조 쪽 맨 아래의 데모 링크도 없다.
+    expect(await page.locator(".how-demo").count()).toBe(0);
+    expect(await page.locator("a[href^='/demo/']").count()).toBe(0);
     // 자세한 판은 접혀 있다. 펼치면 보인다.
     expect(await page.locator("details.how-more").evaluate((d) => (d as HTMLDetailsElement).open)).toBe(false);
-    expect(await page.locator(".hw-wide:visible").count()).toBe(4);
+    expect(await page.locator(".hw-wide:visible").count()).toBe(simple.length + 1);
     await page.locator("details.how-more > summary").click();
     expect(await page.locator("details.how-more h3").allTextContents()).toEqual(detailed.map((figure, i) => `${i + 1}. ${figure.title}`));
     expect(await page.locator(".hw-wide svg").count()).toBe(FIGURES.length);

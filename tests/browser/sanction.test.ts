@@ -1,15 +1,17 @@
 import type { Browser, BrowserContext } from "playwright-core";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { findCase } from "@/lib/cases";
-import { dutyAnchor, dutyMap, sanctionOf } from "@/lib/duties";
+import { dutyMap, sanctionOf } from "@/lib/duties";
 import { SANCTION_TIERS } from "@/lib/duties/sanction";
 import { parseReview } from "@/lib/review";
+import { analysisHref, checklistHref } from "@/lib/service/href";
+import genaiChatReview from "@contract/review/genai-chat.review.json";
 import { closeChrome, launchChrome, openPage, overflow, serveSite, type OpenOptions, type Site } from "./site";
 
-// 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 실제 브라우저로 본다: 사례 쪽의 맨 위 요약(누르면 그 항목만 남고 첫 항목으로
-// 옮겨 가며 '모두 보기'로 돌아온다), 좁은 화면에서 표지가 제목 아래로 내려가고 가로로 넘치지 않는지(두 테마), 조문 도감의 제재
-// 거르개가 기능 거르개(?f=)와 함께 듣는지, 인쇄용 보기의 표지가 흑백(검은 선·기호)으로 찍히는지. 의무 지도에 제재가 없는 판이면
-// 그 어느 것도 화면에 없어야 한다.
+// 의무마다 법에 적힌 제재(2026-11-24 오너 승인)를 실제 브라우저로 본다: review 가 있는 합성 분석 쪽의 맨 위 요약(누르면 그 항목만
+// 남고 첫 항목으로 옮겨 가며 '모두 보기'로 돌아온다), 좁은 화면에서 표지가 제목 아래로 내려가고 가로로 넘치지 않는지(두 테마), 조문
+// 도감의 제재 거르개가 기능 거르개(?f=)와 함께 듣는지, 인쇄용 보기의 표지가 흑백(검은 선·기호)으로 찍히는지. 의무 지도에 제재가 없는
+// 판이면 그 어느 것도 화면에 없어야 한다. 2026-11-25 web17 에서 사례 쪽을 걷어, 사례 쪽에서 보던 것을 합성 분석 쪽으로 옮겼다.
+// 합성 예시의 의무 id 는 대부분 의무 지도에 없어 제재가 붙지 않는다. 그래서 무게마다의 수는 적어 두지 않고 review 와 의무 지도에서 센다.
 
 let site: Site;
 let browser: Browser;
@@ -39,8 +41,10 @@ afterAll(async () => {
 const open = (pathname: string, options: Omit<OpenOptions, "contexts" | "problems"> = {}) => openPage(browser, site, pathname, { ...options, contexts, problems });
 
 const sanctioned = dutyMap.duties.some((duty) => duty.sanction);
-const CASE = "jobtalk";
-const review = parseReview(findCase(CASE)!.review)!;
+/** review 가 있는 합성 분석(생성형 AI 채팅 합성 저장소)과 그 인쇄용 보기. */
+const REVIEWED = analysisHref("example-studio", "genai-chat", "4qqa6fdx2h");
+const PRINT = checklistHref("example-studio", "genai-chat", "4qqa6fdx2h");
+const review = parseReview(genaiChatReview)!;
 const CHECKS = ["seen-in-code", "check-outside", "check-applicability"];
 /** 확인할 것 가운데 강조 무게(징역·과징금)의 제재가 걸리는 항목. */
 const heavy = review.checklist.filter((item) => {
@@ -49,8 +53,10 @@ const heavy = review.checklist.filter((item) => {
 });
 
 describe.runIf(sanctioned)("제재가 있는 판", () => {
-  it("사례 쪽: 요약의 제재 단추를 누르면 그 무게의 행만 남고 목록 머리에 띠가 붙어 그리로 옮겨 가며, '모두 보기'로 돌아온다", async () => {
-    const { page } = await open(`/cases/${CASE}/`);
+  it("분석 쪽: 요약의 제재 단추를 누르면 그 무게의 행만 남고 목록 머리에 띠가 붙어 그리로 옮겨 가며, '모두 보기'로 돌아온다", async () => {
+    // 합성 예시에 강조 무게의 확인할 것이 없으면 이 시험은 볼 것이 없다.
+    expect(heavy.length, "합성 예시의 확인할 것 가운데 징역·과징금이 걸리는 항목이 없습니다").toBeGreaterThan(0);
+    const { page } = await open(REVIEWED);
     const button = page.locator(".rv-sum .sanc-filter.sf-0");
     await expect.poll(() => button.textContent()).toBe(`!${SANCTION_TIERS[0].label} ${heavy.length}`);
     const visible = () =>
@@ -74,7 +80,7 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
   });
 
   it.each(["light", "dark"] as const)("360px(%s): 가로로 넘치지 않고, 조문 도감의 표지는 제목 아래로 내려간다", async (colorScheme) => {
-    for (const pathname of [`/cases/${CASE}/`, "/policy/"]) {
+    for (const pathname of [REVIEWED, "/policy/"]) {
       const { page } = await open(pathname, { viewport: { width: 360, height: 800 }, colorScheme });
       await page.evaluate(() => {
         for (const details of document.querySelectorAll("details")) details.open = true;
@@ -106,30 +112,8 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
     expect(shown).toEqual(Array.from({ length: want }, () => "0"));
   });
 
-  it("조문 도감: 정적 규칙의 이동 링크가 제재 거르개에 감춰진 줄을 가리키면 거른 것을 풀고 그 줄을 펼쳐 옮긴다", async () => {
-    const tier = (id: string) => {
-      const sanction = dutyMap.duties.find((duty) => duty.id === id)!.sanction!;
-      return SANCTION_TIERS.findIndex((t) => t.classes.includes(sanction.class));
-    };
-    const pair = Object.entries(dutyMap.policyHome)
-      .flatMap(([policy, home]) => dutyMap.duties.filter((duty) => duty.id !== home && duty.policies.includes(policy)).map((duty) => ({ from: duty.id, to: home })))
-      .find(({ from, to }) => tier(from) !== tier(to));
-    expect(pair, "무게가 다른 두 의무를 잇는 정적 규칙이 의무 지도에 없습니다").toBeDefined();
-    const { page } = await open("/policy/");
-    await page.locator(".dm-filter select").nth(2).selectOption(String(tier(pair!.from)));
-    const target = page.locator(`#${dutyAnchor(pair!.to)}`);
-    await expect.poll(() => target.isVisible()).toBe(false);
-    const from = page.locator(`#${dutyAnchor(pair!.from)}`);
-    await from.locator(":scope > summary").click();
-    await from.locator(".dr-static-link a").click();
-    await expect.poll(() => target.isVisible()).toBe(true);
-    expect(await target.evaluate((row) => (row as HTMLDetailsElement).open)).toBe(true);
-    expect(await page.locator(".dm-filter select").nth(2).inputValue()).toBe("-1");
-    await expect.poll(() => page.evaluate((id) => document.activeElement?.id === id, dutyAnchor(pair!.to))).toBe(true);
-  });
-
   it("인쇄용 보기: 표지는 검은 선과 기호로 찍힌다(강조는 굵은 글·두꺼운 선·느낌표)", async () => {
-    const { page } = await open(`/cases/${CASE}/checklist/`);
+    const { page } = await open(PRINT);
     await page.emulateMedia({ media: "print", colorScheme: "dark" });
     const looks = await page.evaluate(() =>
       [...document.querySelectorAll(".ck-sheet .sanc")].map((badge) => {
@@ -146,7 +130,7 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
 
 describe.skipIf(sanctioned)("제재가 없는 판", () => {
   it("표지·요약·거르개가 없다", async () => {
-    for (const pathname of [`/cases/${CASE}/`, "/policy/", `/cases/${CASE}/checklist/`]) {
+    for (const pathname of [REVIEWED, "/policy/", PRINT]) {
       const { page } = await open(pathname);
       expect(await page.locator(".sanc, .sanc-filter, .sanc-caution").count(), pathname).toBe(0);
     }
