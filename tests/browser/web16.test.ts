@@ -79,3 +79,69 @@ describe("a. 쳐내기", () => {
     await page.waitForURL(`${site.origin}/demo/`);
   });
 });
+
+/** 첫 화면에 보이는 것: 요약 부품들의 아래 끝과, 아래 끝이 화면 안에 든 행(접힌 두 줄)의 수. */
+const firstScreen = (page: import("playwright-core").Page) =>
+  page.evaluate(() => {
+    const bottom = (selector: string) => [...document.querySelectorAll(selector)].map((el) => Math.round(el.getBoundingClientRect().bottom));
+    const rows = [...document.querySelectorAll("#rv-checklist .rv-item > details > summary")].map((el) => el.getBoundingClientRect().bottom);
+    return {
+      height: window.innerHeight,
+      big: bottom(".rv-sum .rv-big")[0],
+      buttons: bottom(".rv-sum .sanc-filter"),
+      caution: bottom(".rv-sum .sanc-caution")[0],
+      rows: rows.filter((b) => b <= window.innerHeight).length,
+      rowBottoms: rows.map(Math.round),
+    };
+  });
+
+describe("b. 요약과 목록: 첫 화면", () => {
+  // 심사위원은 포스터의 QR 로 사례 쪽에 들어온다(휴대폰 포함). 분석 쪽도 같은 틀이다.
+  for (const pathname of ["/cases/jobtalk/", REVIEWED]) {
+    it(`${pathname} 1280×800: 요약과 체크리스트 행 5개 이상. 확인할 것은 모두 두 화면(1600px) 안`, async () => {
+      const { page } = await open(pathname, { viewport: { width: 1280, height: 800 } });
+      const at = await firstScreen(page);
+      expect(at.big).toBeLessThanOrEqual(800);
+      expect(at.buttons).toHaveLength(3);
+      for (const b of at.buttons) expect(b).toBeLessThanOrEqual(800);
+      expect(at.caution).toBeLessThanOrEqual(800);
+      expect(at.rows).toBeGreaterThanOrEqual(5);
+      // 확인할 것의 세 갈래(열린 목록)의 마지막 행까지 두 화면 안.
+      const last = await page.evaluate(() => {
+        const sections = [...document.querySelectorAll("#rv-checklist > section.ck")];
+        const rows = sections.flatMap((section) => [...section.querySelectorAll(".rv-item > details > summary")]);
+        return rows.length === 0 ? 0 : rows.at(-1)!.getBoundingClientRect().bottom + window.scrollY;
+      });
+      expect(last).toBeLessThanOrEqual(1600);
+    });
+
+    it(`${pathname} 390×844: 요약·제재 단추·주의 문구·첫 행이 첫 화면에 보이고 가로로 넘치지 않는다`, async () => {
+      for (const colorScheme of ["light", "dark"] as const) {
+        const { page } = await open(pathname, { viewport: { width: 390, height: 844 }, colorScheme });
+        const at = await firstScreen(page);
+        expect(at.big, colorScheme).toBeLessThanOrEqual(844);
+        expect(at.buttons).toHaveLength(3);
+        for (const b of at.buttons) expect(b, colorScheme).toBeLessThanOrEqual(844);
+        expect(at.caution, colorScheme).toBeLessThanOrEqual(844);
+        expect(at.rows, colorScheme).toBeGreaterThanOrEqual(1);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
+      }
+    });
+  }
+
+  it("행을 누르면 그 자리에서 펼쳐지고, 주소의 #의무id 로 들어오면 그 행이 펼쳐져 있다. 모두 펼치기·모두 접기", async () => {
+    const { page } = await open("/cases/jobtalk/#duty-pipa-28-8-1");
+    const row = page.locator("#duty-pipa-28-8-1");
+    await expect.poll(() => row.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(true);
+    await expect.poll(() => row.evaluate((el) => el.getBoundingClientRect().top >= 0 && el.getBoundingClientRect().top < window.innerHeight)).toBe(true);
+    expect(await row.locator(".cite-text").first().innerText()).toContain("openai.responses.create");
+    const other = page.locator("#duty-tcra-3-2");
+    await other.locator("> summary").click();
+    expect(await other.evaluate((el) => (el as HTMLDetailsElement).open)).toBe(true);
+    const states = () => page.evaluate(() => [...document.querySelectorAll<HTMLDetailsElement>("#rv-checklist details.rv-row")].map((el) => el.open));
+    await page.getByRole("button", { name: "모두 펼치기" }).click();
+    expect((await states()).every(Boolean)).toBe(true);
+    await page.getByRole("button", { name: "모두 접기" }).click();
+    expect((await states()).some(Boolean)).toBe(false);
+  });
+});

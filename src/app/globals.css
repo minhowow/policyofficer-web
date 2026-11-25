@@ -5461,6 +5461,93 @@ details.ob[open] > summary::before {
   border-top: 1px solid var(--rule-muted);
 }
 
+/* 띠의 자리(제재 단추를 누른 동안만 채워진다)와 접어 둔 나머지 갈래의 묶음. 비었으면 선을 긋지 않는다. */
+.rv-band-slot:empty,
+.rv-folded:empty {
+  display: none;
+}
+
+.rv-band-slot:empty + * {
+  border-top: 0;
+}
+
+.rv-folded > * + * {
+  border-top: 1px solid var(--rule-muted);
+}
+
+.rv-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-soft);
+  font-size: var(--text-sm);
+}
+
+/* 요약(쪽 첫 화면 안): 큰 글씨 확인할 것 N건과 제재 단추 셋, 회색 한 줄, 주의 문구. */
+.rv-sum {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.rv-sum-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.rv-big {
+  margin: 0;
+  font-size: var(--text-h1);
+  line-height: var(--leading-tight);
+}
+
+.rv-big b {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-meta {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.rv-down {
+  text-decoration: none;
+}
+
+.rv-unseen {
+  font-size: var(--text-xs);
+}
+
+/* 머리 오른쪽의 것(체크리스트의 펼치기·내보내기 링크). 좁으면 머리 아래로. */
+.tier-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-4);
+}
+
+/* 링크처럼 보이는 단추(모두 펼치기). */
+.link-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
 .rv-items {
   display: grid;
   margin: 0;
@@ -5469,12 +5556,112 @@ details.ob[open] > summary::before {
 }
 
 .rv-item {
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--rule-muted);
   line-height: var(--leading-snug);
   min-width: 0;
+}
+
+/*
+ * 의무 한 건의 행(2026-11-25 web16, 조문 도감의 의무 줄을 본떴다). 접힌 두 줄: 어기면 칸(폭 고정, 강조 무게만 테두리와 느낌표) · 짧은
+ * 제목 · 인용한 자리 / 조문 · 제재(작고 옅게). 누르면 그 자리에서 상세가 펼쳐진다.
+ */
+details.rv-row > summary {
+  display: grid;
+  gap: 2px;
+  padding: 8px var(--space-4) 8px 40px;
+}
+
+details.rv-row > summary::before {
+  left: 20px;
+  top: calc(8px + 0.75em - 3px);
+}
+
+details.rv-row[open] > summary::before {
+  top: calc(8px + 0.75em - 4px);
+}
+
+@media (hover: hover) {
+  details.rv-row > summary:hover {
+    background: var(--bg-muted);
+  }
+}
+
+.rv-r1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--space-3);
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+/* 어기면 칸: 제재 갈래 한 낱말. 강조 무게(.sanc-0)만 테두리·느낌표가 남고, 나머지는 테두리를 걷는다(흐림은 옅은 글). */
+.rv-sev {
+  flex: none;
+  justify-content: center;
+  width: 76px;
+  white-space: nowrap;
+}
+
+.rv-sev.sanc-1,
+.rv-sev.sanc-2 {
+  border-color: transparent;
+}
+
+.rv-name {
+  flex: 1 1 12em;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.rv-at {
+  flex: none;
+  max-width: 100%;
+  margin-left: auto;
+  overflow: hidden;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rv-r2 {
+  padding-left: calc(76px + var(--space-3));
+  font-size: var(--text-xs);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* 둘째 줄의 제재는 표지의 테두리 없이 글로만. */
+.rv-r2 .sanc {
+  display: inline;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font-size: inherit;
+  font-weight: 400;
+}
+
+.rv-body {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: 0 var(--space-4) var(--space-3) 40px;
+}
+
+@media (max-width: 599px) {
+  details.rv-row > summary,
+  .rv-body {
+    padding-left: 32px;
+  }
+
+  details.rv-row > summary::before {
+    left: 14px;
+  }
+
+  .rv-r2 {
+    padding-left: 0;
+  }
 }
 
 .rv-law {
@@ -5540,40 +5727,6 @@ details.ob[open] > summary::before {
   font-size: 10px;
   font-weight: 600;
   line-height: 1;
-}
-
-/* 항목의 제목(의무 한 줄)과 제재 표지: 넓은 화면에서는 나란히(표지는 오른쪽), 좁은 화면에서는 표지가 제목 아래로. */
-.rv-title {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-1) var(--space-3);
-  min-width: 0;
-}
-
-.rv-title > .rv-duty {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.rv-title > .sanc {
-  flex: 0 1 auto;
-  max-width: 50%;
-  margin-left: auto;
-}
-
-.rv-title > .sanc:only-child {
-  margin-left: 0;
-}
-
-@media (max-width: 599px) {
-  .rv-title {
-    flex-direction: column;
-  }
-
-  .rv-title > .sanc {
-    max-width: 100%;
-    margin-left: 0;
-  }
 }
 
 /* 항목 상세의 제재 조문: 걸리는 때(옅게), 제재 문구(굵게), 법과 조항(옅게)과 법제처 링크, 접어 둔 원문. */
@@ -5654,9 +5807,33 @@ details.sanc-quote .statute {
   font-weight: 600;
 }
 
+.sanc-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* 첫 단추(강조 무게)는 채운 강조: 옅게 채운 바탕, 두꺼운 테두리, 느낌표. */
+.sanc-filter.sf-0 {
+  border: 2px solid var(--st-review);
+  background: var(--st-review-bg);
+  color: var(--st-review);
+  font-weight: 600;
+}
+
+.sanc-filter.sf-2 {
+  border-style: dashed;
+}
+
+.sanc-filter:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
 .sanc-filter[aria-pressed="true"] {
   border: 2px solid var(--accent);
   background: var(--accent-soft);
+  color: var(--ink);
 }
 
 .sanc-all {

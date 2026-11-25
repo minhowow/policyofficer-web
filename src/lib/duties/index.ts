@@ -76,6 +76,14 @@ export function sanctionOf(id: string): Sanction | null {
   return byId.get(id)?.sanction ?? null;
 }
 
+/**
+ * 의무의 짧은 제목(의무 지도의 title, 조문 도감의 의무 줄과 같은 글). 의무 지도에 없거나 제목이 없으면 null(부르는 쪽이 의무 한 줄로
+ * 대신한다). 결과 쪽·사례 쪽 체크리스트의 행이 쓴다(2026-11-25 web16).
+ */
+export function dutyTitle(id: string): string | null {
+  return byId.get(id)?.title ?? null;
+}
+
 /** 정책의 내용을 싣는 의무(팩에 적힌 그 정책의 첫 의무). */
 export function policyHomeDuty(policyId: string): MapDuty | null {
   const id = dutyMap.policyHome[policyId];

@@ -1,11 +1,14 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import CasePage from "@/app/cases/[slug]/page";
+import { ReviewView } from "@/components/review/ReviewView";
 import { casesFile } from "@/lib/cases";
+import { dutyAnchor } from "@/lib/duties";
+import { SANCTION_TEXT } from "@/lib/duties/sanction";
 import { parseReview } from "@/lib/review";
 import { costText, modelLabel } from "@/lib/review/text";
 import { SITE } from "@/lib/site";
-import { elementAt, readJson, textOf } from "./helpers";
+import { elementAt, elementsOf, readJson, textOf } from "./helpers";
 
 // 결과 쪽을 "요약 → 한 줄 목록 → 누르면 펼침"으로(2026-11-25 web16, SOFTCON 심사 대비). 자료는 사례 jobtalk(2026-11-12 실측)과
 // 합성 예시(contract/review/genai-chat.review.json)다.
@@ -64,5 +67,71 @@ describe("a. 쳐내기", () => {
     expect(summary).not.toContain(SITE.zeroIsNotClearance);
     // 펼치면 지금까지의 구역 전체(규칙만 / AI 를 켠 뒤, 정책별 결과)가 있고, 규칙만 상자의 0 에는 그 뜻이 붙어 있다.
     for (const kept of ["규칙만", "AI 를 켠 뒤", "정책별 결과", SITE.zeroIsNotClearance]) expect(textOf(aux)).toContain(kept);
+  });
+});
+
+describe("b. 요약과 목록", () => {
+  it("쪽의 차례: 머리 → 요약 → 1 의무 체크리스트 → 2 이 저장소가 하는 일 → 3 개인정보 흐름 → 검증 정보 → 보조(정적 검사)", async () => {
+    const html = await casePage("jobtalk");
+    const at = (needle: string) => {
+      const i = html.indexOf(needle);
+      expect(i, needle).toBeGreaterThan(-1);
+      return i;
+    };
+    const order = [
+      at('<div class="case-head">'),
+      at('<section class="rv-sum"'),
+      at('id="tier-1">'),
+      at('id="tier-2">'),
+      at('id="tier-3">'),
+      at('<section class="box info rv-verify"'),
+      at('<details class="aux" id="aux">'),
+    ];
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    const heads = elementsOf(html, '<h2 class="tier-hd"').map(textOf);
+    expect(heads).toEqual(["1의무 체크리스트", "2이 저장소가 하는 일", "3개인정보 흐름"]);
+  });
+
+  it("요약: 큰 글씨 확인할 것 N건, 회색 한 줄(감지된 기능 · 걸릴 수 있는 의무 · 외부로 보냄 ↓), 주의 문구 한 번. 점수·비율·예상 금액은 없다", async () => {
+    const html = await casePage("jobtalk");
+    const sum = elementsOf(html, '<section class="rv-sum"')[0];
+    expect(textOf(elementsOf(sum, '<p class="rv-big">')[0])).toBe("확인할 것 17건");
+    const meta = elementsOf(sum, '<p class="rv-meta">')[0];
+    expect(textOf(meta)).toBe(
+      "감지된 기능 6가지 · 걸릴 수 있는 의무 111개 중 · 외부로 보냄: Gmail SMTP 메일 발송 · OpenAI Responses API (gpt-4o-mini) ↓개인정보 흐름으로",
+    );
+    expect(meta).toContain('href="#tier-3"');
+    expect(sum.split(SANCTION_TEXT.note)).toHaveLength(2);
+    expect(textOf(sum)).not.toMatch(/점|%|등급|원|가장/);
+  });
+
+  it("'외부로 보냄'은 화살표가 들어오는 외부 마디만이다(외부에서 받기만 하는 마디는 넣지 않고, 없으면 그 조각이 없다)", () => {
+    const sample = readJson("contract", "review", "genai-chat.review.json") as { data_flow: { nodes: { id: string; kind: string; label: string }[]; edges: { from: string; to: string }[] } };
+    const flow = sample.data_flow;
+    const outward = flow.nodes.filter((node) => node.kind === "external" && flow.edges.some((edge) => edge.to === node.id)).map((node) => node.label);
+    expect(outward.length).toBeGreaterThan(0);
+    const meta = (data: unknown) => textOf(elementsOf(renderToStaticMarkup(<ReviewView review={parseReview(data)!} />), '<p class="rv-meta">')[0]);
+    expect(meta(sample)).toContain(`외부로 보냄: ${outward.join(" · ")}`);
+    // 외부 마디로 들어오는 화살표를 모두 뒤집으면(외부에서 받기만 한다) 그 조각이 없다.
+    const inbound = { ...sample, data_flow: { ...flow, edges: flow.edges.map((edge) => (flow.nodes.find((node) => node.id === edge.to)?.kind === "external" ? { ...edge, from: edge.to, to: edge.from } : edge)) } };
+    expect(meta(inbound)).not.toContain("외부로 보냄");
+  });
+
+  it("행: 접힌 두 줄(어기면 칸 · 짧은 제목 · 인용한 자리 / 조문 · 제재)이고, 주소의 자리는 의무 id 다. 목록 아래 보지 못한 것 한 줄", async () => {
+    const html = await casePage("jobtalk");
+    const review = parseReview(jobtalk().review)!;
+    const rows = elementsOf(html, '<li class="rv-item"');
+    expect(rows).toHaveLength(review.checklist.length);
+    const row = rows.find((li) => li.includes(`id="${dutyAnchor("pipa-28-8-1")}"`))!;
+    expect(row).toMatch(/^<li class="rv-item" data-tier="0"><details class="rv-row" id="duty-pipa-28-8-1"><summary>/);
+    expect(textOf(elementsOf(row, '<span class="rv-r1">')[0])).toBe("!과징금국외 제공·처리위탁·보관은 별도 동의·처리방침 공개 등 근거가 있을 때만chatController.ts:135");
+    expect(textOf(elementsOf(row, '<span class="rv-r2">')[0])).toBe("개인정보 보호법 제28조의8제1항(시행령 제29조의7) · 어기면 · 과징금 매출 3%");
+    // 해당 여부부터 확인할 항목: 제재 앞에 '해당되면'.
+    const child = rows.find((li) => li.includes(`id="${dutyAnchor("pipa-22-2-1")}"`))!;
+    expect(textOf(elementsOf(child, '<span class="rv-r2">')[0])).toMatch(/ · 해당되면 · 어기면 · 징역 5년 · 과징금 매출 3%$/);
+    const unseen = textOf(elementsOf(html, '<p class="hint rv-unseen">')[0]);
+    expect(unseen).toBe("이번 검토가 보지 못한 것 — 저장소 밖(처리방침·약관·배포 설정) · 읽지 않는 파일(.env 등) · 판단 못 한 의무 0건");
+    // 목록 위: 모두 펼치기 · 마크다운으로 받기 · 인쇄용 보기.
+    expect(textOf(elementsOf(html, '<p class="rv-export">')[0])).toBe("모두 펼치기마크다운으로 받기인쇄용 보기");
   });
 });

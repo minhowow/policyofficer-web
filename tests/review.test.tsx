@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { ReviewView } from "@/components/review/ReviewView";
 import { parseReview } from "@/lib/review";
-import { gateText } from "@/lib/review/text";
+import { gateText, shortStatus } from "@/lib/review/text";
 import { layoutFlow } from "@/lib/review/flow";
 import CasePage from "@/app/cases/[slug]/page";
 import CasesPage from "@/app/cases/page";
@@ -50,14 +50,19 @@ describe("review 결과 (2판)", () => {
     expect(layout.paths.filter((p) => p.outward).map((p) => `${p.from}>${p.to}`).sort()).toEqual(["n3>n8", "n4>n7"]);
   });
 
-  it("체크리스트: 코드에서 본 것의 맨 위 다섯 건은 펼쳐 두고, 나머지 갈래는 접는다. 해당 없음은 찾아본 말과 다시 센 건수를 펼치면 보인다", () => {
+  it("체크리스트: 확인할 것의 세 갈래는 열린 목록(의무 한 건이 접힌 두 줄 행), 나머지 갈래는 그 아래에 접는다. 해당 없음은 찾아본 말과 다시 센 건수를 펼치면 보인다", () => {
     const html = renderToStaticMarkup(<ReviewView review={parseReview(sample())!} />);
-    const lead = elementsOf(html, '<ol class="rv-items">')[0];
-    expect(elementsOf(lead, '<li class="rv-item"')).toHaveLength(5);
-    expect(closedDetailsAt(html, html.indexOf('<ol class="rv-items">'))).toEqual([]);
-    for (const status of ["check-outside", "check-applicability", "unknown", "evidence-found", "likely-not-applicable", "not-applicable"] as const) {
+    // 세 갈래는 섹션(접히지 않음)이고, 머리는 짧은 이름과 수다. 행은 저마다 접혀 있다.
+    for (const [status, n] of [["seen-in-code", 6], ["check-outside", 1], ["check-applicability", 1]] as const) {
+      const section = elementsOf(html, `<section class="ck ck-check rv-${status}">`)[0];
+      expect(textOf(elementsOf(section, '<h3 class="ck-hd ck-hd-check">')[0]), status).toBe(`${shortStatus(status)} ${n}건`);
+      expect(elementsOf(section, '<li class="rv-item"'), status).toHaveLength(n);
+      expect(elementsOf(section, '<details class="rv-row"'), status).toHaveLength(n);
+      expect(section, status).not.toContain("rv-group");
+    }
+    for (const status of ["unknown", "evidence-found", "likely-not-applicable", "not-applicable"] as const) {
       const at = html.indexOf(`<details class="rv-group rv-${status}">`);
-      expect(at, status).toBeGreaterThan(-1);
+      expect(at, status).toBeGreaterThan(html.indexOf('<div class="rv-folded">'));
       expect(textOf(elementsOf(html.slice(at), "<summary>")[0])).toBe(`${REVIEW_STATUS_LABEL[status]} 1건`);
     }
     const na = html.slice(html.indexOf('<details class="rv-group rv-not-applicable">'));
@@ -120,14 +125,14 @@ describe("review 결과 (2판)", () => {
       i === 0
         ? {
             ...item,
-            duty_text: `처리방침 공개 \u{acfc}\u{d0dc}\u{b8cc} 대상`,
+            duty_text: `시험용_의무_한_줄 \u{acfc}\u{d0dc}\u{b8cc} 대상`,
             citations: [...(item.citations as object[]), { file: "src/x.ts", line: 1, text: "REJECTED_LINE", ok: false, why: "not-found" }],
           }
         : item,
     );
     const html = renderToStaticMarkup(<ReviewView review={parseReview({ ...data, checklist })!} />);
     expect(html).not.toContain("REJECTED_LINE");
-    expect(html).not.toContain("처리방침 공개");
+    expect(html).not.toContain("시험용_의무_한_줄");
   });
 
   it("흐름 그림: 내보내기만 하는 외부는 첫 단의 아래에, 같은 단 안의 화살표는 위아래로 곧게", () => {
@@ -229,15 +234,13 @@ describe("review 결과 (2판)", () => {
     const html = renderToStaticMarkup(<ReviewView review={review} code={{ htmlUrl: "https://github.com/o/r", commit: "a".repeat(40) }} />);
     const text = textOf(html);
     for (const raw of ["goods-not-detected", "cost-cap", "applies", "condition", "충족 근거 있음"]) expect(text, raw).not.toContain(raw);
-    // 품목 묶음: '해당 여부부터' 갈래 바로 뒤의 한 줄. 맨 위 한 줄의 확인할 것은 품목 의무를 빼고 센다(2건).
+    // 품목 묶음: 목록 아래 접어 둔 갈래 가운데 한 줄. 맨 위 요약의 확인할 것은 품목 의무를 빼고 센다(4건).
     const at = html.indexOf('<details class="rv-group rv-goods">');
-    expect(at).toBeGreaterThan(html.indexOf('<details class="rv-group rv-check-applicability">'));
+    expect(at).toBeGreaterThan(html.indexOf('<section class="ck ck-check rv-check-applicability">'));
     expect(textOf(elementsOf(html.slice(at), "<summary>")[0])).toBe(`${REVIEW_GOODS_LABEL} 2건`);
     expect(textOf(elementAt(html, at))).toContain("주류도 판매하나요?");
-    expect(textOf(elementsOf(html, '<p class="overview">')[0])).toContain("확인할 것 4건");
-    expect(textOf(elementsOf(html.slice(html.indexOf('<details class="rv-group rv-check-applicability">')), "<summary>")[0])).toBe(
-      `${REVIEW_STATUS_LABEL["check-applicability"]} 3건`,
-    );
+    expect(textOf(elementsOf(html, '<p class="rv-big">')[0])).toBe("확인할 것 4건");
+    expect(textOf(elementsOf(html, '<section class="ck ck-check rv-check-applicability">')[0]).startsWith(`${shortStatus("check-applicability")} 3건`)).toBe(true);
     // CLI 2a24d94 의 까닭도 이 사이트의 말로(메모를 그대로 싣지 않는다).
     expect(text).toContain("AI 가 걸리는지 모른다고 답해 '해당 여부부터 확인할 것'으로 옮겼습니다.");
     expect(text).not.toContain("모름 메모.");
@@ -256,14 +259,15 @@ describe("review 결과 (2판)", () => {
     expect(text).toContain("저장소당 금액 상한에 걸려 묻지 못했습니다");
   });
 
-  it("확인할 것이 0건이면 맨 위 한 줄 바로 아래에 0의 뜻을 둔다(목록 줄과 같은 수, docs/commitments.md 의 1)", () => {
+  it("확인할 것이 0건이면 맨 위 요약의 그 수 바로 아래에 0의 뜻을 둔다(목록 줄과 같은 수, docs/commitments.md 의 1)", () => {
     const data = sample();
     const all = (data.checklist as Record<string, unknown>[]).map((item) => ({ ...item, status: "not-applicable" }));
     const zero = parseReview({ ...data, checklist: all })!;
     const html = renderToStaticMarkup(<ReviewView review={zero} />);
-    expect(textOf(elementsOf(html, '<p class="overview">')[0])).toContain("확인할 것 0건");
+    expect(textOf(elementsOf(html, '<p class="rv-big">')[0])).toBe("확인할 것 0건");
     expect(html).toContain(`<p class="hint zero-note">${SITE.zeroCheckIsNotClearance}</p>`);
-    expect(html.indexOf("zero-note")).toBeGreaterThan(html.indexOf('<p class="overview">'));
+    expect(html.indexOf("zero-note")).toBeGreaterThan(html.indexOf('<p class="rv-big">'));
+    expect(html.indexOf("zero-note")).toBeLessThan(html.indexOf('<p class="rv-meta">'));
     // 0이 아니면 두지 않는다.
     expect(renderToStaticMarkup(<ReviewView review={parseReview(data)!} />)).not.toContain("zero-note");
   });

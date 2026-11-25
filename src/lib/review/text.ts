@@ -9,6 +9,11 @@ import type { ReviewItem, ReviewStatus } from "./index";
 /** 확인할 것의 세 갈래. */
 export const CHECKS: readonly ReviewStatus[] = ["seen-in-code", "check-outside", "check-applicability"];
 
+/** 갈래 이름의 짧은 꼴(`확인할 것 · 코드에서 본 것` → `코드에서 본 것`). 요약이 이미 '확인할 것 N건'이라 목록의 갈래 머리는 뒤만 적는다. */
+export function shortStatus(status: ReviewStatus): string {
+  return REVIEW_STATUS_LABEL[status].split(" · ").at(-1)!;
+}
+
 /** 확인할 것(세 갈래)의 수. 묻지 않은 품목 의무(group goods)는 세지 않는다(화면의 '확인할 것' 머리와 같은 수). */
 export function checkCount(items: readonly ReviewItem[]): number {
   return items.filter((item) => CHECKS.includes(item.status) && item.group !== "goods").length;

@@ -6,7 +6,7 @@ import { ChecklistSheet } from "@/components/review/ChecklistSheet";
 import { ReviewView } from "@/components/review/ReviewView";
 import { findCase } from "@/lib/cases";
 import { caseChecklist } from "@/lib/cases/checklist";
-import { dutyMap, sanctionOf } from "@/lib/duties";
+import { dutyAnchor, dutyMap, sanctionOf } from "@/lib/duties";
 import { lawArticle } from "@/lib/duties/article";
 import { byWeight, SANCTION_TEXT, SANCTION_TIERS, sanctionTier, type Sanction } from "@/lib/duties/sanction";
 import { parseReview } from "@/lib/review";
@@ -30,7 +30,7 @@ const fixtures = Object.values(FIXTURE_SANCTIONS);
 const expectNoBanned = (rest: string) => {
   for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(rest), `${pattern} — ${why}`).toBe(false);
 };
-/** 그린 체크리스트에서 갈래 하나(코드에서 본 것은 섹션, 나머지는 접는 묶음)의 의무 차례. 항목의 법·조문 줄로 가린다. */
+/** 그린 체크리스트에서 갈래 하나(확인할 것의 세 갈래는 섹션, 나머지는 접는 묶음)의 의무 차례. 펼친 상세의 법·조문 줄로 가린다. */
 const lawOf = (duty: string) => {
   const item = review.checklist.find((i) => i.duty === duty)!;
   return lawArticle(item.law, item.article);
@@ -92,9 +92,10 @@ describe("제재 표의 모양과 무게", () => {
 describe("결과 체크리스트의 표지·정렬·요약 (사례 jobtalk)", () => {
   const html = renderToStaticMarkup(<ReviewView review={review} />);
 
-  it("항목 제목 옆에 '어기면 · 표지 말'. 강조는 기호와 굵은 모양, 보통·흐림은 다른 모양이다", () => {
-    const badges = elementsOf(html, '<span class="sanc ');
-    expect(badges.map(textOf)).toHaveLength(fixtures.length);
+  it("행의 어기면 칸은 제재 갈래 한 낱말(강조만 느낌표), 둘째 줄은 조문 · '어기면 · 표지 말', 펼친 상세의 조문 줄에 표지. 강조는 기호와 굵은 모양, 보통·흐림은 다른 모양이다", () => {
+    // 펼친 상세의 표지(조문 줄): 의무마다 하나.
+    const badges = elementsOf(html, '<span class="sanc ').filter((b) => /^<span class="sanc sanc-\d">/.test(b));
+    expect(badges).toHaveLength(fixtures.length);
     for (const badge of badges) expect(textOf(badge)).toMatch(/^(! )?어기면 · /);
     const heavy = badges.filter((b) => b.startsWith('<span class="sanc sanc-0">'));
     expect(heavy.length).toBe(4);
@@ -103,12 +104,25 @@ describe("결과 체크리스트의 표지·정렬·요약 (사례 jobtalk)", ()
       expect.arrayContaining(["어기면 · 과태료 3천만원", "어기면 · 과태료 1천만원", "어기면 · 벌금 3천만원"]),
     );
     expect(badges.filter((b) => b.startsWith('<span class="sanc sanc-2">')).map(textOf).sort()).toEqual(["어기면 · 시정명령 불이행 시 과태료", "어기면 · 제재 조항 없음"]);
-    // 표지는 제목(의무 한 줄)과 한 묶음에 있다(좁은 화면에서는 CSS 가 제목 아래로 내린다).
-    for (const title of elementsOf(html, '<div class="rv-title">').filter((t) => t.includes('class="sanc '))) expect(title).toMatch(/^<div class="rv-title">(<p class="rv-duty">[\s\S]*?<\/p> )?<span class="sanc /);
+    // 어기면 칸: 갈래 한 낱말, 강조 무게만 느낌표. 화면 낭독기에는 '어기면 …'으로 읽힌다.
+    const columns = elementsOf(html, '<span class="sanc sanc-').filter((b) => b.includes(" rv-sev"));
+    expect(columns).toHaveLength(fixtures.length);
+    for (const column of columns) {
+      const word = textOf(column).replace(/^!/, "");
+      expect(["징역", "과징금", "벌금", "과태료", "명령", "없음"]).toContain(word);
+      expect(column).toContain(`aria-label="어기면 ${word}"`);
+      expect(column.includes("sanc-mark"), word).toBe(column.startsWith('<span class="sanc sanc-0 rv-sev"'));
+    }
+    // 둘째 줄: 조문 · 어기면 · 표지 말. 해당 여부부터 확인할 항목은 '해당되면' 한정어가 앞에 온다.
+    const row = (duty: string) => elementsOf(html, '<li class="rv-item"').find((li) => li.includes(`id="${dutyAnchor(duty)}"`))!;
+    const second = (duty: string) => textOf(elementsOf(row(duty), '<span class="rv-r2">')[0]);
+    expect(second("tcra-3-2")).toBe(`${lawOf("tcra-3-2")} · 어기면 · 징역 5년 · 과징금 매출 3%`);
+    expect(second("pipa-22-2-1")).toBe(`${lawOf("pipa-22-2-1")} · ${SANCTION_TEXT.ifApplies} · 어기면 · ${FIXTURE_SANCTIONS["pipa-22-2-1"].label}`);
+    expect(second("pipa-15-2")).toBe(lawOf("pipa-15-2"));
   });
 
-  it("상태 묶음 안에서 무거운 차례로, 같은 무게는 지금 차례(코드에서 본 것은 요약이 고른 다섯 먼저). 펼쳐 둔 다섯은 그 차례의 앞 다섯이다", () => {
-    const seen = orderIn(html, '<section class="ck ck-check">');
+  it("세 갈래 안에서 무거운 차례로, 같은 무게는 지금 차례(코드에서 본 것은 요약이 고른 다섯 먼저). 모두 열린 목록이다", () => {
+    const seen = orderIn(html, '<section class="ck ck-check rv-seen-in-code">');
     expect(seen).toEqual([
       "tcra-3-2",
       "pipa-26-2",
@@ -122,20 +136,21 @@ describe("결과 체크리스트의 표지·정렬·요약 (사례 jobtalk)", ()
       "pipa-28-8-1",
       "pipa-28-8-2",
     ]);
-    const lead = elementsOf(html, '<ol class="rv-items">')[0];
-    expect(elementsOf(lead, '<li class="rv-item"')).toHaveLength(5);
-    expect(lead).toContain(lawOf("dincl-19-2"));
-    expect(lead).not.toContain(lawOf("aiact-31-2"));
-    expect(orderIn(html, '<details class="rv-group rv-check-applicability">')[0]).toBe("pipa-22-2-1");
+    expect(orderIn(html, '<section class="ck ck-check rv-check-applicability">')[0]).toBe("pipa-22-2-1");
     expect(orderIn(html, '<details class="rv-group rv-not-applicable">')[0]).toBe("pipa-34-2-1");
+    // 행의 제목은 의무 지도의 짧은 제목(조문 도감과 같은 글)이다.
+    const first = elementsOf(html, '<li class="rv-item"').find((li) => li.includes(`id="${dutyAnchor("tcra-3-2")}"`))!;
+    expect(textOf(elementsOf(first, '<span class="rv-name">')[0])).toBe(dutyMap.duties.find((duty) => duty.id === "tcra-3-2")!.title);
   });
 
-  it("맨 위 요약: 확인할 것 가운데 징역·과징금이 걸리는 항목의 수(해당 없음의 과징금은 세지 않는다), 누르면 그 항목만. 주의 문구는 한 번", () => {
-    const overview = elementsOf(html, '<p class="overview">')[0];
-    expect(textOf(overview)).toContain("어기면 징역·과징금이 걸리는 항목 3건");
-    expect(overview).toContain('aria-controls="rv-checklist"');
+  it("맨 위 요약: 확인할 것 N건 옆에 제재 단추 셋(확인할 것 가운데 그 무게의 수, 해당 없음의 과징금은 세지 않는다). 누르면 그 무게의 행만. 주의 문구는 한 번", () => {
+    const sum = elementsOf(html, '<section class="rv-sum"')[0];
+    const buttons = elementsOf(sum, "<button").map(textOf);
+    expect(buttons).toEqual([`!${SANCTION_TIERS[0].label} 3`, `${SANCTION_TIERS[1].label} 3`, `${SANCTION_TIERS[2].label} 2`]);
+    expect(sum).toContain('aria-controls="rv-checklist"');
     expect(html).toContain('<div class="rv-check" id="rv-checklist">');
-    expect(html.match(/ data-heavy=""/g)).toHaveLength(3);
+    expect(html).toContain('<div id="rv-checklist-band" class="rv-band-slot"></div>');
+    expect(html.match(/ data-tier="0"/g)).toHaveLength(4);
     expect(html.split(SANCTION_TEXT.note)).toHaveLength(2);
     expect(html.indexOf(SANCTION_TEXT.note)).toBeLessThan(html.indexOf('id="rv-checklist"'));
   });
@@ -161,23 +176,25 @@ describe("결과 체크리스트의 표지·정렬·요약 (사례 jobtalk)", ()
       checklist: (jobtalk.review as { checklist: { duty: string }[] }).checklist.filter((item) => !["tcra-3-2", "pipa-26-2", "pipa-22-2-1"].includes(item.duty)),
     })!;
     const zero = renderToStaticMarkup(<ReviewView review={light} />);
-    expect(textOf(elementsOf(zero, '<p class="overview">')[0])).toContain("어기면 징역·과징금이 걸리는 항목 0건");
-    expect(zero).not.toContain("sanc-filter");
+    // 강조 무게의 단추는 0 이고 누를 수 없다.
+    const first = elementsOf(zero, '<button type="button" class="sanc-filter sf-0"')[0];
+    expect(textOf(first)).toBe(`!${SANCTION_TIERS[0].label} 0`);
+    expect(first).toContain('disabled=""');
     expect(zero).toContain(SANCTION_TEXT.note);
     const bare = parseReview({
       ...(jobtalk.review as object),
       checklist: (jobtalk.review as { checklist: { duty: string }[] }).checklist.filter((item) => !FIXTURE_SANCTIONS[item.duty]),
     })!;
     const plain = renderToStaticMarkup(<ReviewView review={bare} />);
-    expect(plain).not.toContain(SANCTION_TEXT.heavy);
+    expect(plain).not.toContain("sanc-filter");
     expect(plain).not.toContain(SANCTION_TEXT.note);
     expect(plain).not.toContain('class="sanc');
   });
 
   it("사례 쪽 전체: 표지가 붙고, 제재 표의 몫을 빼면 쓰지 않는 말이 없다", async () => {
     const page = renderToStaticMarkup(await CasePage({ params: Promise.resolve({ slug: "jobtalk" }) }));
-    expect(elementsOf(page, '<span class="sanc ')).toHaveLength(fixtures.length);
-    expect(textOf(page)).toContain("어기면 징역·과징금이 걸리는 항목 3건");
+    expect(elementsOf(page, '<span class="sanc ').filter((b) => /^<span class="sanc sanc-\d">/.test(b))).toHaveLength(fixtures.length);
+    expect(textOf(elementsOf(page, '<button type="button" class="sanc-filter sf-0"')[0])).toBe(`!${SANCTION_TIERS[0].label} 3`);
     expectNoBanned(textOf(withoutSanctions(page)));
   });
 });

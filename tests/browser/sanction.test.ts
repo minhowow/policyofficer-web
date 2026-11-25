@@ -49,27 +49,31 @@ const heavy = review.checklist.filter((item) => {
 });
 
 describe.runIf(sanctioned)("제재가 있는 판", () => {
-  it("사례 쪽: 요약의 수를 누르면 그 항목만 남고 첫 항목으로 옮겨 가며, '모두 보기'로 돌아온다", async () => {
+  it("사례 쪽: 요약의 제재 단추를 누르면 그 무게의 행만 남고 목록 머리에 띠가 붙어 그리로 옮겨 가며, '모두 보기'로 돌아온다", async () => {
     const { page } = await open(`/cases/${CASE}/`);
-    const button = page.locator(".overview .sanc-filter");
-    await expect.poll(() => button.textContent()).toBe(`어기면 징역·과징금이 걸리는 항목 ${heavy.length}건`);
+    const button = page.locator(".rv-sum .sanc-filter.sf-0");
+    await expect.poll(() => button.textContent()).toBe(`!${SANCTION_TIERS[0].label} ${heavy.length}`);
     const visible = () =>
-      page.evaluate(() => [...document.querySelectorAll("#rv-checklist .rv-item")].filter((item) => item.checkVisibility()).map((item) => item.hasAttribute("data-heavy")));
+      page.evaluate(() => [...document.querySelectorAll("#rv-checklist .rv-item")].filter((item) => item.checkVisibility()).map((item) => item.getAttribute("data-tier")));
     await button.click();
-    await expect.poll(visible).toEqual(heavy.map(() => true));
+    await expect.poll(visible).toEqual(heavy.map(() => "0"));
     expect(await button.getAttribute("aria-pressed")).toBe("true");
-    await expect.poll(() => page.evaluate(() => document.activeElement?.hasAttribute("data-heavy") ?? false)).toBe(true);
-    // 거르는 동안 갈래의 수(거르지 않은 수)는 감춘다.
+    const band = page.locator("#rv-checklist-band .rv-band");
+    expect(await band.textContent()).toBe(`${SANCTION_TIERS[0].label} ${heavy.length}건만 보는 중 · 모두 보기`);
+    await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? "")).toBe("rv-checklist-band");
+    // 거르는 동안 갈래의 수(거르지 않은 수)와 접어 둔 나머지 갈래는 감춘다.
     expect(await page.locator("#rv-checklist .ck-n").evaluateAll((nodes) => nodes.filter((node) => (node as HTMLElement).checkVisibility()).length)).toBe(0);
-    await page.locator(".overview .sanc-all").focus();
+    expect(await page.locator("#rv-checklist .rv-folded").isVisible()).toBe(false);
+    await band.getByRole("button", { name: "모두 보기" }).focus();
     await page.keyboard.press("Enter");
     await expect.poll(async () => (await visible()).length).toBeGreaterThan(heavy.length);
     expect(await button.getAttribute("aria-pressed")).toBe("false");
-    // '모두 보기'는 사라지므로 초점은 요약의 단추로 돌아온다.
-    expect(await page.evaluate(() => document.activeElement?.className)).toBe("sanc-filter");
+    expect(await page.locator("#rv-checklist-band .rv-band").count()).toBe(0);
+    // 띠는 사라지므로 초점은 누른 단추로 돌아온다.
+    expect(await page.evaluate(() => document.activeElement?.className)).toBe("sanc-filter sf-0");
   });
 
-  it.each(["light", "dark"] as const)("360px(%s): 표지는 제목 아래, 가로로 넘치지 않는다(사례 쪽과 조문 도감)", async (colorScheme) => {
+  it.each(["light", "dark"] as const)("360px(%s): 가로로 넘치지 않고, 조문 도감의 표지는 제목 아래로 내려간다", async (colorScheme) => {
     for (const pathname of [`/cases/${CASE}/`, "/policy/"]) {
       const { page } = await open(pathname, { viewport: { width: 360, height: 800 }, colorScheme });
       await page.evaluate(() => {
@@ -77,9 +81,10 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
       });
       // 개인정보 흐름 그림은 제 상자 안에서 가로로 밀린다(service.test.ts 와 같다).
       expect(await overflow(page, ".flow-scroll"), pathname).toMatchObject({ page: 0, over: [] });
+      if (pathname !== "/policy/") continue;
       const below = await page.evaluate(() =>
-        [...document.querySelectorAll(".rv-title, .dr-head")].flatMap((head) => {
-          const title = head.querySelector(".rv-duty, .dr-title");
+        [...document.querySelectorAll(".dr-head")].flatMap((head) => {
+          const title = head.querySelector(".dr-title");
           const badge = head.querySelector(":scope > .sanc");
           return title && badge ? [badge.getBoundingClientRect().top >= title.getBoundingClientRect().bottom - 0.5] : [];
         }),
