@@ -34,7 +34,8 @@ describe("표기 약속: 소스에 적은 문구", () => {
     expect(sources).toContain(SANCTION_SOURCE);
     expect(read(SANCTION_SOURCE)).toContain(`"${SANCTION_TEXT.note}"`);
     expect(SANCTION_TEXT.note).toBe("법에 적힌 최대 제재입니다. 위반 판정이 아니며, 실제 부과는 위반 사실과 규모에 따라 다릅니다.");
-    expect(SANCTION_TEXT.badge("x")).toMatch(/^어기면 /);
+    // 표지는 제재의 말만 적는다(2026-11-25 오너 지시로 앞의 '어기면'을 뺐다. docs/commitments.md 1장).
+    expect(SANCTION_TEXT.badge("x")).toBe("x");
   });
 });
 

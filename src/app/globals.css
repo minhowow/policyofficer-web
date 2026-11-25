@@ -3446,7 +3446,7 @@ details.rv-fold[open] > summary::before {
 }
 
 /*
- * 의무 한 건의 행(2026-11-25 web16, 조문 도감의 의무 줄을 본떴다). 접힌 두 줄: 어기면 칸(폭 고정, 강조 무게만 테두리와 느낌표) · 짧은
+ * 의무 한 건의 행(2026-11-25 web16, 조문 도감의 의무 줄을 본떴다). 접힌 두 줄: 제재 칸(폭 고정, 강조 무게만 테두리와 느낌표) · 짧은
  * 제목 · 인용한 자리 / 조문 · 제재(작고 옅게). 누르면 그 자리에서 상세가 펼쳐진다.
  */
 details.rv-row > summary {
@@ -3479,7 +3479,7 @@ details.rv-row[open] > summary::before {
   font-size: var(--text-sm);
 }
 
-/* 어기면 칸: 제재 갈래 한 낱말. 강조 무게(.sanc-0)만 테두리·느낌표가 남고, 나머지는 테두리를 걷는다(흐림은 옅은 글). */
+/* 제재 칸: 제재 갈래 한 낱말. 강조 무게(.sanc-0)만 테두리·느낌표가 남고, 나머지는 테두리를 걷는다(흐림은 옅은 글). */
 .rv-sev {
   flex: none;
   justify-content: center;
@@ -3567,7 +3567,7 @@ details.rv-row[open] > summary::before {
 }
 
 /*
- * 의무마다 법에 적힌 제재(2026-11-24 오너 승인, components/result/Sanction.tsx). 표지 `어기면 · …` 의 세 무게를 색 없이 가른다:
+ * 의무마다 법에 적힌 제재(2026-11-24 오너 승인, components/result/Sanction.tsx). 표지(표의 표지 말)의 세 무게를 색 없이 가른다:
  * 강조(SANCTION_TIERS 의 첫째)는 굵은 글·두꺼운 테두리·느낌표 동그라미, 보통(둘째)은 얇은 테두리, 흐림(셋째)은 옅은 글과 점선
  * 테두리. 테두리와 기호는 흑백 인쇄에도 남는다. 긴 표지는 줄을 바꾼다(좁은 화면을 가로로 밀지 않는다).
  */
@@ -4587,7 +4587,7 @@ details.lg[open] > summary::before {
   white-space: pre-wrap;
 }
 
-/* 제재 조문(어기면 …)과 그 원문(왼쪽 선으로 가른다). */
+/* 제재 조문(제재 …)과 그 원문(왼쪽 선으로 가른다). */
 .ck-quote {
   padding-left: var(--space-3);
   border-left: 2px solid var(--rule);

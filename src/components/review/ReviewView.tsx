@@ -89,13 +89,13 @@ export function ReviewView({
         )}
       </Fold>
       <Fold id="rv-service" title="이 저장소가 하는 일" count={`기능 ${review.profile.features.filter((feature) => feature.removed === null).length}가지`}>
-        <ServiceBody review={review} code={code} />
+        <ServiceBody review={review} />
       </Fold>
       <Fold id="rv-closed" title="닫은 의무" count={`${closed}건`}>
         <Closed items={items} held={held} code={code} />
       </Fold>
       <Fold id="rv-verify" title="검증 정보">
-        <Verification review={review} />
+        <Verification review={review} code={code} />
       </Fold>
     </div>
   );
@@ -142,7 +142,7 @@ function Lead({ review }: { review: Review }) {
 /**
  * 2. 코드에서 확인된 것 카드 하나: 코드에서 본 사실(가장 큰 글. 조사 답의 걸리는 조건, 없으면 까닭의 첫 문장), 첫 인용(파일:줄, 코드 한
  * 줄, 커밋 고정 링크)과 '도구가 파일에서 확인함', 걸릴 수 있는 의무(조문·법제처, 짧은 제목, 제재 표지), 확인할 질문, 찾지 못한 것(작게).
- * 나머지(본 것, 인용 더, 도구 확인, 어기면, 찾아본 말, 자세히)는 '자세히' 안에 둔다. 글은 결과에 실린 그대로다.
+ * 나머지(본 것, 인용 더, 도구 확인, 제재 조문, 찾아본 말, 자세히)는 '자세히' 안에 둔다. 글은 결과에 실린 그대로다.
  */
 function Card({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   const cites = item.citations.filter((cite) => cite.ok && cite.why !== "profile");
@@ -262,10 +262,12 @@ function More({
   );
 }
 
-/** 접어 둔 '이 저장소가 하는 일': 서비스 설명, 플랫폼, 감지된 기능(AI 가 뺀 기능은 접어 둔다). */
-function ServiceBody({ review, code }: { review: Review; code: CodeSource | null }) {
+/**
+ * 접어 둔 '이 저장소가 하는 일': 서비스 설명, 플랫폼, 감지된 기능. 코드를 읽고 뺀 기능과 'AI 가 더함' 꼬리표는 여기 두지 않는다
+ * (2026-11-25 오너 지시: 뒤에서 걸러 준 것으로 두고 따로 알리지 않는다. 뺀 기능은 검증 정보 안에 한 줄).
+ */
+function ServiceBody({ review }: { review: Review }) {
   const kept = review.profile.features.filter((feature) => feature.removed === null);
-  const removed = review.profile.features.filter((feature) => feature.removed !== null);
   const PLATFORM: Record<string, string> = { web: "웹", mobile: "모바일 앱", server: "서버" };
   return (
     <>
@@ -280,30 +282,9 @@ function ServiceBody({ review, code }: { review: Review; code: CodeSource | null
       {kept.length > 0 && (
         <ul className="rv-features">
           {kept.map((feature) => (
-            <li key={feature.id}>
-              {feature.name}
-              {!feature.sources.includes("signal") && feature.sources.includes("model") && <span className="tag">AI 가 더함</span>}
-            </li>
+            <li key={feature.id}>{feature.name}</li>
           ))}
         </ul>
-      )}
-      {removed.length > 0 && (
-        <details className="ob ob-test">
-          <summary>
-            AI 가 뺀 기능 <span className="ob-n">{removed.length}가지</span>
-          </summary>
-          <ul className="features ft-test">
-            {removed.map((feature) => (
-              <li key={feature.id}>
-                <span className="ft-name">{feature.name}</span>
-                <div>
-                  <p className="rv-seen">{feature.removed!.reason}</p>
-                  <CitedLines citations={feature.removed!.citations.filter((c) => c.ok)} code={code} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </details>
       )}
     </>
   );
@@ -349,7 +330,7 @@ function firstCite(item: ReviewItem): ReviewCitation | null {
 }
 
 /**
- * 의무 한 건의 행(접는 요소, 조문 도감의 의무 줄을 본떴다). 접힌 두 줄: 어기면 칸(제재 갈래 한 낱말, 폭 고정, 강조 무게만 느낌표와
+ * 의무 한 건의 행(접는 요소, 조문 도감의 의무 줄을 본떴다). 접힌 두 줄: 제재 칸(제재 갈래 한 낱말, 폭 고정, 강조 무게만 느낌표와
  * 테두리) · 짧은 제목 · 인용한 자리 / 조문 · 제재 표지(해당 여부부터 확인할 항목과 품목 의무는 '해당되면' 한정어를 앞에). 펼치면 상세
  * (`children`). 주소의 자리는 의무 id 로 만든다(`dutyAnchor`, 조문 도감과 같은 꼴).
  */
@@ -364,7 +345,7 @@ function Row({ item, held = false, children }: { item: ReviewItem; held?: boolea
         <summary>
           <span className="rv-r1">
             {weight ? (
-              <span className={`sanc sanc-${weight.tier} rv-sev`} aria-label={SANCTION_TEXT.column(weight.sanction.class)}>
+              <span className={`sanc sanc-${weight.tier} rv-sev`}>
                 {weight.tier === 0 && (
                   <span className="sanc-mark" aria-hidden="true">
                     !
@@ -430,7 +411,7 @@ function DutyLine({ item }: { item: ReviewItem }) {
 /**
  * 체크리스트의 의무 한 건(펼친 상세). 차례는 포스터의 카드와 같다(2026-11-25 web16): 1 조문(법제처 링크)과 제재 표지(그 아래 의무 한
  * 줄), 2 본 것(AI 가 본 것 첫 문장. 관문이 답을 바꾼 항목은 그 까닭), 3 인용(첫 인용 하나, 둘째부터는 접는다), 4 없는 것, 5 도구 확인,
- * 6 확인할 질문, 7 어기면(조문 줄과 법제처 링크, 원문은 접힘), 8 찾아본 말 · 자세히(접힘). 글은 결과에 실린 그대로다.
+ * 6 확인할 질문, 7 제재(조문 줄과 법제처 링크, 원문은 접힘), 8 찾아본 말 · 자세히(접힘). 글은 결과에 실린 그대로다.
  */
 function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   return (
@@ -593,8 +574,9 @@ function Closed({ items, held, code }: { items: ReviewItem[]; held: ReviewItem[]
  * 달라 쓰지 않은 수, 반박의 결과). 그 아래 회색 한 줄에 모델·비용(구성과 함께)·시간·가린 비밀값·묻지 않은 의무. 결과에 실린 수
  * 그대로다.
  */
-function Verification({ review }: { review: Review }) {
+function Verification({ review, code }: { review: Review; code: CodeSource | null }) {
   const { run } = review;
+  const removed = review.profile.features.filter((feature) => feature.removed !== null);
   const sum = (record: Record<string, number>) => Object.values(record).reduce((a, b) => a + b, 0);
   const masked = sum(run.masked);
   const notAsked = sum(run.notAsked);
@@ -615,6 +597,25 @@ function Verification({ review }: { review: Review }) {
           {masked > 0 && <span>가린 비밀값 {masked}개</span>}
           {notAsked > 0 && <span>묻지 않은 의무 {notAsked}개</span>}
         </p>
+        {/* 기능 신호가 잡았지만 이해 단계가 코드를 읽고 뺀 기능(2026-11-25 오너 지시: 본문에 따로 알리지 않고 여기 한 줄, 누르면 까닭과 인용). */}
+        {removed.length > 0 && (
+          <details className="ob ob-test rv-removed">
+            <summary>
+              코드를 읽고 뺀 기능 <span className="ob-n">{removed.length}가지</span>
+            </summary>
+            <ul className="features ft-test">
+              {removed.map((feature) => (
+                <li key={feature.id}>
+                  <span className="ft-name">{feature.name}</span>
+                  <div>
+                    <p className="rv-seen">{feature.removed!.reason}</p>
+                    <CitedLines citations={feature.removed!.citations.filter((c) => c.ok)} code={code} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
     </div>
   );
 }

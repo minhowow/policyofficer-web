@@ -67,7 +67,7 @@ describe("제재 표의 모양과 무게", () => {
       "aiact-31-2": 2,
     });
     expect(SANCTION_TIERS.map((tier) => tier.label)).toEqual(["징역·과징금", "벌금·과태료", "명령·없음"]);
-    expect(SANCTION_TEXT.heavy).toBe("어기면 징역·과징금이 걸리는 항목");
+    expect(SANCTION_TEXT.heavy).toBe("징역·과징금이 걸리는 항목");
   });
 
   it("무거운 차례: 징역 > 과징금 > 벌금 > 과태료 > 명령 > 없음 > 표에 없음, 같은 갈래면 정액 상한이 큰 것, 그다음은 받은 차례", () => {
@@ -89,9 +89,9 @@ describe("제재 표의 모양과 무게", () => {
   });
 
   it("시험 도우미는 제재 표의 몫을 자리째 뺀다. 같은 글이 다른 자리에 실리면 가리지 않는다", () => {
-    const html = '<p class="rv-duty">근거가 있을 때만 [과징금 매출 3%]</p><span class="sanc sanc-0"><span class="sanc-mark">!</span> 어기면 · 과징금 매출 3%</span>';
+    const html = '<p class="rv-duty">근거가 있을 때만 [과징금 매출 3%]</p><span class="sanc sanc-0"><span class="sanc-mark">!</span> 과징금 매출 3%</span>';
     expect(textOf(withoutSanctions(html))).toBe("근거가 있을 때만 [과징금 매출 3%]");
-    const md = "- [ ] **법 제1조** · 어기면 · 과징금 매출 3% (반박이 바꿈)\n  - 의무: 과태료 메모\n  - 어기면: 3천만원 이하의 과태료 · 시험법 제1조\n    > 원문";
+    const md = "- [ ] **법 제1조** · 과징금 매출 3% (반박이 바꿈)\n  - 의무: 과태료 메모\n  - 제재: 3천만원 이하의 과태료 · 시험법 제1조\n    > 원문";
     expect(withoutSanctionsMarkdown(md)).toBe("- [ ] **법 제1조** (반박이 바꿈)\n  - 의무: 과태료 메모");
   });
 });
@@ -112,41 +112,41 @@ describe("결과 쪽의 표지·정렬·거르개 (미리 돌린 jobtalk)", () =
     expect(cards.map((card) => /^<li class="rv-card" id="duty-([^"]+)"/.exec(card)![1])).toEqual(CARDS);
     const titles = cards.map((card) => elementsOf(card, '<p class="rv-card-title">')[0]);
     expect(titles.map((title) => textOf(elementsOf(title, '<span class="sanc ')[0]))).toEqual([
-      `! 어기면 · ${FIXTURE_SANCTIONS["tcra-3-2"].label}`,
-      `! 어기면 · ${FIXTURE_SANCTIONS["pipa-26-2"].label}`,
-      `어기면 · ${FIXTURE_SANCTIONS["safety-std-7-4"].label}`,
+      `! ${FIXTURE_SANCTIONS["tcra-3-2"].label}`,
+      `! ${FIXTURE_SANCTIONS["pipa-26-2"].label}`,
+      FIXTURE_SANCTIONS["safety-std-7-4"].label,
     ]);
     for (const title of titles) expect(textOf(title)).not.toContain(SANCTION_TEXT.ifApplies);
-    expect(titles[0]).toContain('<span class="sanc sanc-0"><span class="sanc-mark" aria-hidden="true">!</span> 어기면 · ');
-    expect(titles[2]).toContain('<span class="sanc sanc-1">어기면 · ');
+    expect(titles[0]).toContain('<span class="sanc sanc-0"><span class="sanc-mark" aria-hidden="true">!</span> ' + FIXTURE_SANCTIONS["tcra-3-2"].label);
+    expect(titles[2]).toContain(`<span class="sanc sanc-1">${FIXTURE_SANCTIONS["safety-std-7-4"].label}`);
     for (const duty of CARDS) expect(rowIn(html, duty), duty).toBeUndefined();
   });
 
-  it("행의 어기면 칸은 제재 갈래 한 낱말(강조만 느낌표), 둘째 줄은 조문 · '어기면 · 표지 말', 펼친 상세의 조문 줄에 표지. 강조는 기호와 굵은 모양, 보통·흐림은 다른 모양이다", () => {
+  it("행의 제재 칸은 제재 갈래 한 낱말(강조만 느낌표), 둘째 줄은 조문 · 표지 말('어기면' 없이), 펼친 상세의 조문 줄에 표지. 강조는 기호와 굵은 모양, 보통·흐림은 다른 모양이다", () => {
     // 펼친 상세의 표지(조문 줄): 의무마다 하나. 카드는 제목 옆에 하나 더 있다.
     expect(bodyBadges).toHaveLength(fixtures.length);
     expect(elementsOf(html, '<span class="sanc ').filter((b) => /^<span class="sanc sanc-\d">/.test(b))).toHaveLength(fixtures.length + CARDS.length);
-    for (const badge of bodyBadges) expect(textOf(badge)).toMatch(/^(! )?어기면 · /);
+    for (const badge of bodyBadges) expect(textOf(badge)).not.toContain("어기면");
     const heavy = bodyBadges.filter((b) => b.startsWith('<span class="sanc sanc-0">'));
     expect(heavy.length).toBe(4);
     for (const badge of heavy) expect(badge).toContain('<span class="sanc-mark" aria-hidden="true">!</span>');
     expect(bodyBadges.filter((b) => b.startsWith('<span class="sanc sanc-1">')).map(textOf)).toEqual(
-      expect.arrayContaining(["어기면 · 과태료 3천만원", "어기면 · 과태료 1천만원", "어기면 · 벌금 3천만원"]),
+      expect.arrayContaining(["과태료 3천만원", "과태료 1천만원", "벌금 3천만원"]),
     );
-    expect(bodyBadges.filter((b) => b.startsWith('<span class="sanc sanc-2">')).map(textOf).sort()).toEqual(["어기면 · 시정명령 불이행 시 과태료", "어기면 · 제재 조항 없음"]);
-    // 어기면 칸(행에만): 갈래 한 낱말, 강조 무게만 느낌표. 화면 낭독기에는 '어기면 …'으로 읽힌다.
+    expect(bodyBadges.filter((b) => b.startsWith('<span class="sanc sanc-2">')).map(textOf).sort()).toEqual(["시정명령 불이행 시 과태료", "제재 조항 없음"]);
+    // 제재 칸(행에만): 갈래 한 낱말, 강조 무게만 느낌표. 화면 낭독기에도 그 낱말 그대로 읽힌다('어기면'은 2026-11-25 오너 지시로 뺐다).
     const columns = elementsOf(html, '<span class="sanc sanc-').filter((b) => b.includes(" rv-sev"));
     expect(columns).toHaveLength(fixtures.length - CARDS.length);
     for (const column of columns) {
       const word = textOf(column).replace(/^!/, "");
       expect(["징역", "과징금", "벌금", "과태료", "명령", "없음"]).toContain(word);
-      expect(column).toContain(`aria-label="어기면 ${word}"`);
+      expect(column).not.toContain("aria-label");
       expect(column.includes("sanc-mark"), word).toBe(column.startsWith('<span class="sanc sanc-0 rv-sev"'));
     }
-    // 둘째 줄: 조문 · 어기면 · 표지 말. 해당 여부부터 확인할 항목은 '해당되면' 한정어가 앞에 온다.
+    // 둘째 줄: 조문 · 표지 말. 해당 여부부터 확인할 항목은 '해당되면' 한정어가 앞에 온다.
     const second = (duty: string) => textOf(elementsOf(rowIn(html, duty), '<span class="rv-r2">')[0]);
-    expect(second("pipa-29-1")).toBe(`${lawOf("pipa-29-1")} · 어기면 · 과태료 3천만원`);
-    expect(second("pipa-22-2-1")).toBe(`${lawOf("pipa-22-2-1")} · ${SANCTION_TEXT.ifApplies} · 어기면 · ${FIXTURE_SANCTIONS["pipa-22-2-1"].label}`);
+    expect(second("pipa-29-1")).toBe(`${lawOf("pipa-29-1")} · 과태료 3천만원`);
+    expect(second("pipa-22-2-1")).toBe(`${lawOf("pipa-22-2-1")} · ${SANCTION_TEXT.ifApplies} · ${FIXTURE_SANCTIONS["pipa-22-2-1"].label}`);
     expect(second("pipa-15-2")).toBe(lawOf("pipa-15-2"));
   });
 
@@ -240,10 +240,11 @@ describe("체크리스트 내보내기(마크다운·인쇄용 보기)의 제재
 
   it("마크다운: 항목 줄에 표지, 아래에 제재 조문과 원문, 머리에 요약과 주의 문구", () => {
     const text = checklistMarkdown(doc, source);
-    expect(text).toContain("어기면 징역·과징금이 걸리는 항목 3건");
+    expect(text).toContain("징역·과징금이 걸리는 항목 3건");
+    expect(text).not.toContain("어기면");
     expect(text.split(SANCTION_TEXT.note)).toHaveLength(2);
-    expect(text).toMatch(/^- \[ \] \*\*약관의 규제에 관한 법률 제3조제2항\*\* · 어기면 · 징역 5년 · 과징금 매출 3%$/m);
-    expect(text).toContain("  - 어기면: 개인정보가 유출되면 전체 매출액의 100분의 3 이하의 과징금 · 시험법 제64조의2제1항 (법제처: ");
+    expect(text).toMatch(/^- \[ \] \*\*약관의 규제에 관한 법률 제3조제2항\*\* · 징역 5년 · 과징금 매출 3%$/m);
+    expect(text).toContain("  - 제재: 개인정보가 유출되면 전체 매출액의 100분의 3 이하의 과징금 · 시험법 제64조의2제1항 (법제처: ");
     expect(text).toContain("    > (시험용 원문. 실제 조문이 아닙니다)");
     expectNoBanned(withoutSanctionsMarkdown(text));
   });
@@ -253,8 +254,8 @@ describe("체크리스트 내보내기(마크다운·인쇄용 보기)의 제재
       <ChecklistSheet doc={doc} source={source} back={analysisHref(prerun.owner, prerun.name, prerun.id)} markdown={checklistMarkdownHref(prerun.id)} />,
     );
     const first = elementsOf(sheet, '<li class="ck-entry">')[0];
-    expect(textOf(elementsOf(first, '<p class="ck-law">')[0])).toBe("약관의 규제에 관한 법률 제3조제2항 ! 어기면 · 징역 5년 · 과징금 매출 3%");
-    expect(first).toContain('<span class="sanc sanc-0"><span class="sanc-mark" aria-hidden="true">!</span> 어기면 · ');
+    expect(textOf(elementsOf(first, '<p class="ck-law">')[0])).toBe("약관의 규제에 관한 법률 제3조제2항 ! 징역 5년 · 과징금 매출 3%");
+    expect(first).toContain('<span class="sanc sanc-0"><span class="sanc-mark" aria-hidden="true">!</span> 징역 5년');
     expect(elementsOf(first, '<p class="ck-quote">')).toHaveLength(2);
     expect(textOf(sheet)).toContain(SANCTION_TEXT.note);
     expectNoBanned(textOf(withoutSanctions(sheet)));
@@ -272,7 +273,7 @@ describe("조문 도감의 표지와 제재 거르개", () => {
     for (const row of tagged) expect(row).toMatch(/<span class="dr-head"><span class="dr-title">[^<]*<\/span> <span class="sanc sanc-[012]">/);
     expect(rows.filter((row) => row.includes('data-s="0"'))).toHaveLength(4);
     expect(rows.filter((row) => row.includes('data-s="-1"'))).toHaveLength(dutyMap.duties.length - fixtures.length);
-    const row = rows.find((r) => r.includes(" 어기면 · 과태료 3천만원 · 유출되면 과징금<"))!;
+    const row = rows.find((r) => r.includes("</span> 과태료 3천만원 · 유출되면 과징금<"))!;
     expect(row).toContain('<div class="sanc-detail">');
   });
 

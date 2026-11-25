@@ -15,9 +15,8 @@ import { moveTo } from "@/lib/scroll";
 const ROW = "details.rv-row";
 
 /**
- * 제재 단추 셋(`SANCTION_TIERS`: 강조, 보통, 흐림). 누르면 확인할 것의 세 갈래에서 그 무게의 행만 남기고(그 밖의 행과 그 행이 없는
- * 갈래, 거르지 않은 갈래의 수, 접어 둔 나머지 갈래를 감추는 CSS 한 줄), 목록 머리(`#{target}-band`)에 '…건만 보는 중 · 모두 보기' 띠를
- * 붙인다. 화면은 움직이지 않고 초점도 누른 단추에 그대로다(2026-11-25 오너 지시: 목록 쪽으로 옮겨 가면 헷갈린다). 같은 단추를 다시
+ * 더 살펴볼 것 머리의 제재 단추 셋(`SANCTION_TIERS`: 강조, 보통, 흐림). 누르면 그 목록에서 그 무게의 행만 남기고(그 밖의 행과
+ * 그 행이 없는 갈래, 거르지 않은 갈래의 수를 감추는 CSS 한 줄), 목록 머리(`#{target}-band`)에 '…건만 보는 중 · 모두 보기' 띠를 붙인다. 화면은 움직이지 않고 초점도 누른 단추에 그대로다(2026-11-25 오너 지시: 목록 쪽으로 옮겨 가면 헷갈린다). 같은 단추를 다시
  * 누르거나 '모두 보기'를 누르면 모두 보인다('모두 보기'를 누르면 초점은 누른 단추로 돌린다). 수가 0인 무게의 단추는 누를 수 없다.
  */
 export function TierFilter({ target, tiers }: { target: string; tiers: { label: string; count: number }[] }) {
@@ -58,7 +57,7 @@ export function TierFilter({ target, tiers }: { target: string; tiers: { label: 
         ))}
       </span>
       {on !== null && (
-        <style>{`${scope} .rv-item:not([data-tier="${on}"]),${scope} .ck:not(:has([data-tier="${on}"])),${scope} .rv-folded,${scope} .ck-n{display:none}`}</style>
+        <style>{`${scope} .rv-item:not([data-tier="${on}"]),${scope} .ck:not(:has([data-tier="${on}"])),${scope} .ck-n{display:none}`}</style>
       )}
       {on !== null &&
         slot &&
@@ -84,8 +83,9 @@ export function TierFilter({ target, tiers }: { target: string; tiers: { label: 
 }
 
 /**
- * 목록 위의 '모두 펼치기'. 누르면 목록의 모든 행(접어 둔 나머지 갈래의 행까지)을 펼치고, 다시 누르면 접는다. 주소의 자리(`#duty-…`)가
- * 행이면 처음 열 때와 쪽 안에서 자리가 바뀔 때 그 행을 펼치고(접힌 갈래 안이면 갈래도) 그리로 옮긴다.
+ * 더 살펴볼 것 머리의 '모두 펼치기'. 누르면 그 목록(`target`)의 모든 행을 펼치고, 다시 누르면 접는다. 주소의 자리(`#duty-…`)가 결과
+ * 쪽의 행(더 살펴볼 것, 접어 둔 닫은 의무)이면 처음 열 때와 쪽 안에서 자리가 바뀔 때 그 행을 펼치고(접힌 구획 안이면 구획도) 그리로
+ * 옮긴다.
  */
 export function ExpandAll({ target }: { target: string }) {
   const [all, setAll] = useState(false);
@@ -98,7 +98,7 @@ export function ExpandAll({ target }: { target: string }) {
         return;
       }
       const element = id ? document.getElementById(id) : null;
-      if (!(element instanceof HTMLDetailsElement) || !element.matches(ROW) || !element.closest(`#${target}`)) return;
+      if (!(element instanceof HTMLDetailsElement) || !element.matches(ROW) || !element.closest(".review")) return;
       for (let parent = element.parentElement?.closest("details"); parent; parent = parent.parentElement?.closest("details")) parent.open = true;
       element.open = true;
       requestAnimationFrame(() => moveTo(element));
@@ -114,7 +114,6 @@ export function ExpandAll({ target }: { target: string }) {
     const rows = [...root.querySelectorAll<HTMLDetailsElement>(ROW)];
     const next = !rows.every((row) => row.open);
     for (const row of rows) row.open = next;
-    if (next) for (const group of root.querySelectorAll<HTMLDetailsElement>("details.rv-group")) group.open = true;
     setAll(next);
   };
   return (

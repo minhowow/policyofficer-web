@@ -17,13 +17,14 @@ export function isConfirmed(item: ReviewItem): boolean {
 
 /**
  * 결과 쪽 맨 위에 크게 둘 '코드에서 확인된 것'(2026-11-25 web18, 오너 지시: 확실한 것만 크게). CLI 가 고른 '먼저 볼 것'
- * (`summary.highlights`, handoff-w13-5 부터)이 있으면 그 차례 그대로 쓴다(이 목록에 있는 항목만). 없으면 같은 규칙으로 고른다:
+ * (`summary.highlights`, handoff-w13-5 부터)이 있으면 그 차례 그대로 쓴다(이 목록에 있고 `isConfirmed` 인 항목만. 해당 여부부터·저장소
+ * 밖에서는 어느 쪽으로도 카드에 오르지 않는다). 없으면 같은 규칙으로 고른다:
  * `isConfirmed` 인 항목을 무거운 제재 차례로 늘어놓고, 기능마다 하나씩 먼저, 그다음 남은 차례로 `CONFIRMED_MAX` 건까지. 보이는
  * 차례는 무거운 차례다. 후보가 없으면 빈 배열(지어내지 않는다).
  */
 export function confirmedItems(review: Review, items: readonly ReviewItem[]): ReviewItem[] {
   if (review.summary.highlights) {
-    return review.summary.highlights.flatMap((duty) => items.filter((item) => item.duty === duty)).slice(0, CONFIRMED_MAX);
+    return review.summary.highlights.flatMap((duty) => items.filter((item) => item.duty === duty && isConfirmed(item))).slice(0, CONFIRMED_MAX);
   }
   const ordered = byWeight(items.filter(isConfirmed), (item) => sanctionOf(item.duty));
   const picked: ReviewItem[] = [];

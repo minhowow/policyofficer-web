@@ -64,7 +64,7 @@ describe("a. 쳐내기", () => {
 describe("b. 한 줄 목록", () => {
   // 2026-11-25 web18 부터 맨 위 요약(확인할 것 N건, 회색 한 줄의 '외부로 보냄', 번호 붙은 단)은 없다. 행 목록은 '더 살펴볼 것'과 접어 둔
   // '닫은 의무'에 있고, 코드에서 확인된 것은 카드다(tests/web18.test.tsx).
-  it("행: 접힌 두 줄(어기면 칸 · 짧은 제목 · 인용한 자리 / 조문 · 제재)이고, 주소의 자리는 의무 id 다. 목록 아래 보지 못한 것 한 줄", () => {
+  it("행: 접힌 두 줄(제재 칸 · 짧은 제목 · 인용한 자리 / 조문 · 제재)이고, 주소의 자리는 의무 id 다. 목록 아래 보지 못한 것 한 줄", () => {
     // 카드(코드에서 확인된 것 3건)에 오른 의무는 행이 아니다.
     const cards = elementsOf(html, '<li class="rv-card"');
     expect(cards).toHaveLength(3);
@@ -74,11 +74,11 @@ describe("b. 한 줄 목록", () => {
     expect(row).toMatch(/^<li class="rv-item" data-tier="0"><details class="rv-row" id="duty-safety-std-7-4"><summary>/);
     expect(textOf(elementsOf(row, '<span class="rv-r1">')[0])).toBe("!과징금인터넷 구간으로 개인정보를 주고받을 땐 암호화(TLS)axiosInstance.ts:4");
     expect(textOf(elementsOf(row, '<span class="rv-r2">')[0])).toBe(
-      "개인정보의 안전성 확보조치 기준 제7조제4항(영 제30조제1항제4호다목) · 어기면 · 과태료 3천만원 · 유출되면 과징금 매출 3%",
+      "개인정보의 안전성 확보조치 기준 제7조제4항(영 제30조제1항제4호다목) · 과태료 3천만원 · 유출되면 과징금 매출 3%",
     );
     // 해당 여부부터 확인할 항목: 제재 앞에 '해당되면'.
     const child = rowOf("pipa-22-2-1");
-    expect(textOf(elementsOf(child, '<span class="rv-r2">')[0])).toMatch(/ · 해당되면 · 어기면 · 징역 5년 · 과징금 매출 3%$/);
+    expect(textOf(elementsOf(child, '<span class="rv-r2">')[0])).toMatch(/ · 해당되면 · 징역 5년 · 과징금 매출 3%$/);
     // 강조 무게가 아닌 행: 느낌표 없이 갈래 한 낱말.
     expect(textOf(elementsOf(rowOf("tcra-3-2"), '<span class="rv-r1">')[0])).toBe("과태료계약 때 약관을 분명히 보여주고 사본 제공Register.tsx:793");
     const unseen = textOf(elementsOf(html, '<p class="hint rv-unseen">')[0]);
@@ -125,7 +125,7 @@ describe("c. 펼친 카드의 차례와 '도구 확인' 줄", () => {
     expect(toolCheck({ citations: [cite(true, "profile")], searches: [], verification: "" })).toEqual([]);
   });
 
-  it("펼친 카드는 포스터의 차례다: 조문·표지 → 본 것 → 인용(첫 하나, 나머지는 접음) → 없는 것 → 도구 확인 → 확인할 질문 → 어기면 → 찾아본 말·자세히", () => {
+  it("펼친 카드는 포스터의 차례다: 조문·표지 → 본 것 → 인용(첫 하나, 나머지는 접음) → 없는 것 → 도구 확인 → 확인할 질문 → 제재 → 찾아본 말·자세히", () => {
     // pipa-15-2 는 열 조각이 모두 있다(인용 둘, 없는 것, 질문, 제재, 찾아본 말 하나, 자세히).
     const body = elementsOf(rowOf("pipa-15-2"), '<div class="rv-body">')[0];
     const at = (needle: string) => {

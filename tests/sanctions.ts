@@ -64,7 +64,7 @@ function findPart(html: string): number {
 }
 
 /**
- * 내보낸 마크다운에서 제재 표의 몫을 뺀다: 항목 줄 끝의 표지(` · 어기면 · …`), 제재 조문과 보충 줄(`  - 어기면: …`), 원문 줄(`    > …`),
+ * 내보낸 마크다운에서 제재 표의 몫을 뺀다: 항목 줄의 조문 뒤 표지(`**조문** · …`), 제재 조문과 보충 줄(`  - 제재: …`), 원문 줄(`    > …`),
  * 그리고 고정 문구(요약의 수, 주의 문구).
  */
 export function withoutSanctionsMarkdown(text: string): string {
@@ -72,7 +72,7 @@ export function withoutSanctionsMarkdown(text: string): string {
   const cut = text
     .split("\n")
     .filter((line) => !line.startsWith(`  - ${head}: `) && !line.startsWith("    > "))
-    .map((line) => line.replace(new RegExp(` · ${head} · .*?(?=( \\(반박이 바꿈\\))?$)`), ""))
+    .map((line) => line.replace(/^(- (?:\[ \] )?\*\*[^*]+\*\*) · .*?(?=( \(반박이 바꿈\))?$)/, "$1"))
     .join("\n");
   return dropFixed(cut);
 }

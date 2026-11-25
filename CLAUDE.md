@@ -37,7 +37,7 @@ policyofficer 다(전 가칭 policypack. GitHub 저장소는 `minhowow/policyoff
   "사람 결정이 필요한 것"에 적는다.
 - **법에 관한 사실을 지어내지 않는다.** 조문 원문은 제재 표의 원문 인용만 싣고, 나머지는 법제처 링크로 보낸다. CLI 가 낸 의무의
   제목·질문은 화면에 써도 된다. 처분 사례는 화면에 싣지 않는다. 의무마다 법에 적힌 제재는 CLI 의 제재 표에서 온 것만, 조문·원문 인용과 함께 싣는다
-  (2026-11-24 오너 승인. 표지는 "어기면"으로 시작, 주의 문구, 제재의 말은 `src/lib/duties/sanction.ts` 에만. docs/commitments.md 1장).
+  (2026-11-24 오너 승인. 표지는 제재의 말만(2026-11-25 오너 지시로 앞의 "어기면"을 뺐다), 주의 문구, 제재의 말은 `src/lib/duties/sanction.ts` 에만. docs/commitments.md 1장).
 
 ## 표기 (자세한 것은 docs/commitments.md)
 

@@ -7,7 +7,7 @@ import { SANCTION_TEXT, sanctionTier, sanctionWhen, type Sanction } from "@/lib/
  */
 
 /**
- * 표지 `어기면 · {표지 말}`. 세 무게(`SANCTION_TIERS`)를 색 없이도 가른다: 강조는 굵은 글, 두꺼운 테두리, 앞의 느낌표 동그라미. 보통은
+ * 표지(표의 표지 말 그대로). 세 무게(`SANCTION_TIERS`)를 색 없이도 가른다: 강조는 굵은 글, 두꺼운 테두리, 앞의 느낌표 동그라미. 보통은
  * 얇은 테두리. 흐림은 옅은 글과 점선 테두리. 인쇄(흑백)에도 테두리와 기호가 남는다.
  */
 export function SanctionBadge({ sanction }: { sanction: Sanction }) {

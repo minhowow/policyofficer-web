@@ -178,7 +178,7 @@ describe("2. 코드에서 확인된 것", () => {
         at('<details class="f-more"><summary>자세히</summary>'),
       ];
       expect([...order].sort((a, b) => a - b), duty).toEqual(order);
-      // 카드 겉의 인용은 한 줄이고, '자세히'가 카드의 끝이다. 그 안은 펼친 상세 그대로다(본 것, 도구 확인, 어기면 등).
+      // 카드 겉의 인용은 한 줄이고, '자세히'가 카드의 끝이다. 그 안은 펼친 상세 그대로다(본 것, 도구 확인, 제재 등).
       expect(elementsOf(first(card, '<div class="rv-card-cite">'), '<li class="cite">'), duty).toHaveLength(1);
       const more = first(card, '<details class="f-more"><summary>자세히</summary>');
       expect(card.endsWith(`${more}</li>`), duty).toBe(true);
@@ -201,7 +201,7 @@ describe("2. 코드에서 확인된 것", () => {
     expect(cite).toContain("(GitHub, 새 창, 커밋 bbfb3ab 에 고정)");
     const duty = first(card, '<div class="rv-card-duty">');
     expect(textOf(first(duty, '<p class="rv-law">'))).toMatch(/^개인정보 보호법 제28조의8제1항\(시행령 제29조의7\)법제처/);
-    expect(textOf(first(duty, '<p class="rv-card-title">'))).toBe("국외 제공·처리위탁·보관은 별도 동의·처리방침 공개 등 근거가 있을 때만 ! 어기면 · 과징금 매출 3%");
+    expect(textOf(first(duty, '<p class="rv-card-title">'))).toBe("국외 제공·처리위탁·보관은 별도 동의·처리방침 공개 등 근거가 있을 때만 ! 과징금 매출 3%");
   });
 
   it("조사 답에 걸리는 조건이 없으면 본 사실은 까닭의 첫 문장이다(합성 예시)", () => {
@@ -304,5 +304,31 @@ describe("주의 문구와 낱말", () => {
     expect(confirmed).not.toMatch(/점수|등급|순위|%|\d+\s*점(?![가-힣])/);
     const rest = textOf(withoutSanctions(html));
     for (const [pattern, why] of BANNED_WORDING) expect(pattern.test(rest), `${pattern} — ${why}`).toBe(false);
+  });
+});
+
+describe("코드를 읽고 뺀 기능 (2026-11-25 오너 지시)", () => {
+  it("본문에는 뺀 기능 칸과 'AI 가 더함' 꼬리표가 없고, 검증 정보 안의 접힌 한 줄로만 남는다. 펼치면 까닭과 인용", () => {
+    const removed = review.profile.features.filter((feature) => feature.removed !== null);
+    expect(removed.length, "jobtalk 에 코드를 읽고 뺀 기능이 없습니다").toBeGreaterThan(0);
+    expect(textOf(html)).not.toContain("AI 가 뺀 기능");
+    expect(textOf(html)).not.toContain("AI 가 더함");
+    // 이 저장소가 하는 일에는 남은 기능만.
+    const service = first(html, '<details class="rv-fold" id="rv-service">');
+    for (const feature of removed) expect(service, feature.id).not.toContain(feature.removed!.reason);
+    expect(elementsOf(service, '<ul class="rv-features">')[0].match(/<li>/g)).toHaveLength(review.profile.features.length - removed.length);
+    // 검증 정보 안: 접힌 한 줄, 펼치면 기능마다 이름·까닭·인용.
+    const verify = first(html, '<details class="rv-fold" id="rv-verify">');
+    expect(elementsOf(html, '<details class="ob ob-test rv-removed">')).toHaveLength(1);
+    const line = first(verify, '<details class="ob ob-test rv-removed">');
+    expect(textOf(first(line, "<summary>"))).toBe(`코드를 읽고 뺀 기능 ${removed.length}가지`);
+    const items = elementsOf(line, "<li>");
+    expect(items).toHaveLength(removed.length);
+    removed.forEach((feature, i) => {
+      expect(items[i]).toContain(feature.name);
+      expect(items[i]).toContain(feature.removed!.reason);
+      const cite = feature.removed!.citations.find((c) => c.ok);
+      if (cite) expect(items[i]).toContain(cite.file);
+    });
   });
 });

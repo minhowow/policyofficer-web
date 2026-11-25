@@ -69,6 +69,8 @@ describe.runIf(sanctioned)("제재가 있는 판", () => {
     const visible = () =>
       page.evaluate(() => [...document.querySelectorAll("#rv-checklist .rv-item")].filter((item) => item.checkVisibility()).map((item) => item.getAttribute("data-tier")));
     const scrolled = () => page.evaluate(() => window.scrollY);
+    // 단추가 창 끝에 걸치면 누르기가 먼저 단추를 창 안으로 옮긴다. 그 몫은 재기 전에 둔다.
+    await button.scrollIntoViewIfNeeded();
     const before = await scrolled();
     await button.click();
     await expect.poll(visible).toEqual(heavy.map(() => "0"));

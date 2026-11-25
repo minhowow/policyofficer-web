@@ -164,7 +164,7 @@ describe("조문 도감 (/policy): 의무 지도", () => {
     ]);
   });
 
-  it("제재(있으면): 의무 줄마다 '어기면 · 표지 말', 줄의 무게(data-s), 펼치면 제재 조문마다 걸리는 때·문구·법과 조항·법제처 링크와 원문", () => {
+  it("제재(있으면): 의무 줄마다 표지 말(2026-11-25 오너 지시로 앞의 '어기면'을 뺐다), 줄의 무게(data-s), 펼치면 제재 조문마다 걸리는 때·문구·법과 조항·법제처 링크와 원문", () => {
     for (const row of rows) {
       const duty = dutyOf(row);
       expect(row.s, duty.id).toBe(String(tierOf(duty)));
@@ -172,7 +172,7 @@ describe("조문 도감 (/policy): 의무 지도", () => {
         expect(row.sanction, duty.id).toBeNull();
         continue;
       }
-      expect(row.sanction?.badge, duty.id).toBe(`어기면 · ${duty.sanction.label}`);
+      expect(row.sanction?.badge, duty.id).toBe(duty.sanction.label);
       expect(row.sanction?.lines.length, duty.id).toBe(duty.sanction.items.length);
       duty.sanction.items.forEach((item, i) => {
         const when = [item.via === "order" ? "시정명령 등을 따르지 않았을 때" : null, item.condition].filter(Boolean).join(", ");

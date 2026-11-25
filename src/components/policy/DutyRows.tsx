@@ -53,7 +53,7 @@ export function DutyRows({ groups }: { groups: { name: string; rows: DutyRowData
 
 /**
  * 의무 한 줄(접는 줄). 첫 줄은 제목(없으면 조문)과 제재 표지(좁은 화면에서는 제목 아래), 둘째 줄은 조문·기능. 펼치면 의무 한 줄과
- * 사실 줄(기능, 걸리는 코드, 조문과 법제처 링크, 어기면 받는 제재).
+ * 사실 줄(기능, 걸리는 코드, 조문과 법제처 링크, 법에 적힌 제재).
  */
 function DutyRow({ row }: { row: DutyRowData }) {
   return (
