@@ -15,7 +15,7 @@ import { CHECKS, checkCount, costText, firstSentence, gateText, notAnsweredText,
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { fileLink, shortCommit } from "@/lib/service/href";
 import { SITE } from "@/lib/site";
-import { ExpandAll, TierFilter } from "./ChecklistControls";
+import { DownLink, ExpandAll, TierFilter } from "./ChecklistControls";
 import { CitedLines, FlowFigure } from "./FlowFigure";
 
 /** 확인할 것(세 갈래)의 수. 체크리스트 내보내기·목록 줄의 수와 같은 함수다(`lib/review/text.ts`). */
@@ -144,10 +144,10 @@ function Summary({ review, items, sanctioned }: { review: Review; items: ReviewI
         {sentTo.length > 0 && (
           <>
             {" · "}외부로 보냄: {sentTo.map((node) => node.label).join(" · ")}{" "}
-            <a href={`#${FLOW_ANCHOR}`} className="rv-down">
+            <DownLink target={FLOW_ANCHOR} className="rv-down">
               <span aria-hidden="true">↓</span>
               <span className="visually-hidden">개인정보 흐름으로</span>
-            </a>
+            </DownLink>
           </>
         )}
       </p>
@@ -247,10 +247,11 @@ function firstCite(item: ReviewItem): ReviewCitation | null {
  * 테두리) · 짧은 제목 · 인용한 자리 / 조문 · 제재 표지(해당 여부부터 확인할 항목과 품목 의무는 '해당되면' 한정어를 앞에). 펼치면 상세
  * (`children`). 주소의 자리는 의무 id 로 만든다(`dutyAnchor`, 조문 도감과 같은 꼴).
  */
-function Row({ item, children }: { item: ReviewItem; children: ReactNode }) {
+function Row({ item, held = false, children }: { item: ReviewItem; held?: boolean; children: ReactNode }) {
   const weight = weightOf(item);
-  const cite = firstCite(item);
-  const iffy = item.status === "check-applicability" || item.group === "goods";
+  // 다시 검토 중인 의무(`held`)는 상태·인용을 보이지 않는다(상태에 따라 붙는 '해당되면'도 없다).
+  const cite = held ? null : firstCite(item);
+  const iffy = item.group === "goods" || (!held && item.status === "check-applicability");
   return (
     <li className="rv-item" data-tier={weight ? weight.tier : undefined}>
       <details className="rv-row" id={dutyAnchor(item.duty)}>
@@ -404,7 +405,7 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
 function HeldItem({ item, ask = false }: { item: ReviewItem; ask?: boolean }) {
   const sanction = sanctionOf(item.duty);
   return (
-    <Row item={item}>
+    <Row item={item} held={!ask}>
       <LawLine item={item} />
       <DutyLine item={item} />
       {ask && item.question && (
@@ -452,6 +453,18 @@ function Checklist({ review, items, held, code }: { review: Review; items: Revie
         );
       })}
       <div className="rv-folded">
+        {goods.length > 0 && (
+          <details className="rv-group rv-goods">
+            <summary>
+              {REVIEW_GOODS_LABEL} <span className="ck-n">{goods.length}건</span>
+            </summary>
+            <ol className="rv-items">
+              {goods.map((item) => (
+                <HeldItem key={item.duty} item={item} ask />
+              ))}
+            </ol>
+          </details>
+        )}
         {rest.map((status) => {
           const list = by(status);
           return list.length === 0 ? null : (
@@ -467,18 +480,6 @@ function Checklist({ review, items, held, code }: { review: Review; items: Revie
             </details>
           );
         })}
-        {goods.length > 0 && (
-          <details className="rv-group rv-goods">
-            <summary>
-              {REVIEW_GOODS_LABEL} <span className="ck-n">{goods.length}건</span>
-            </summary>
-            <ol className="rv-items">
-              {goods.map((item) => (
-                <HeldItem key={item.duty} item={item} ask />
-              ))}
-            </ol>
-          </details>
-        )}
         {held.length > 0 && (
           <details className="rv-group rv-recheck">
             <summary>
