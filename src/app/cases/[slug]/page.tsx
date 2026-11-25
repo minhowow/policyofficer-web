@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CaseFacts, EarlierFacts } from "@/components/cases/CaseFacts";
+import { CaseHeadLine, caseRunNote, EarlierFacts } from "@/components/cases/CaseFacts";
 import { CaseCites, CaseWhere, Prose } from "@/components/cases/CaseParts";
 import { CheckHead } from "@/components/result/PolicyCard";
-import { Tier } from "@/components/result/Tiers";
 import { ReviewView } from "@/components/review/ReviewView";
+import { StaticAux } from "@/components/review/StaticAux";
 import { Icon } from "@/components/Icon";
 import { StatusChip } from "@/components/result/StatusChip";
 import { keepArticle } from "@/components/text";
@@ -23,6 +23,7 @@ import {
 import { CASE_STORIES } from "@/lib/cases/stories";
 import { findPolicy, policyHref, primaryLaw } from "@/lib/pack";
 import { parseReview } from "@/lib/review";
+import { seenCount } from "@/lib/review/text";
 import { SITE } from "@/lib/site";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -51,8 +52,8 @@ function policyTitle(id: string, fallback: string): string {
 /**
  * 사례 하나(읽기 전용, 빌드할 때 그린다). 위는 review 2판의 실측 결과(2026-11-12 오너 지시)를 /demo/review/ 와 같은 화면으로
  * 그린다: 하는 일, 개인정보 흐름, 의무 체크리스트, 검증 정보. 사람이 답을 읽고 말이 안 된다고 짚은 의무는 "다시 검토 중"으로 접는다.
- * 그 아래 넷째 단은 앞서 돌린 정적 검사 + AI 판정의 결과(규칙만 본 결과와 AI 가 여러 파일을 읽은 뒤의 차이, 정책마다의 체크리스트와
- * AI 가 인용한 줄)이고 정책 목록은 접어 둔다. 글은 사람이 원본 코드에서 확인해 쓴 것(`lib/cases/stories.ts`), 수와 발견·인용은
+ * 그 아래는 앞서 돌린 정적 검사 + AI 판정의 결과(규칙만 본 결과와 AI 가 여러 파일을 읽은 뒤의 차이, 정책마다의 체크리스트와
+ * AI 가 인용한 줄)를 보조 한 줄로 접어 둔다(2026-11-25 web16. 접힌 줄에 규칙만의 수와 AI 검토가 코드에서 본 것의 수). 글은 사람이 원본 코드에서 확인해 쓴 것(`lib/cases/stories.ts`), 수와 발견·인용은
  * 미리 돌린 결과에서 옮긴 것(`data/cases.json`)이다. 인용한 줄은 미리 돌린 그 커밋의 GitHub 링크로 보낸다.
  */
 export default async function CasePage({ params }: Params) {
@@ -79,7 +80,7 @@ export default async function CasePage({ params }: Params) {
             <span className="visually-hidden">(새 창)</span>
           </a>
         </h1>
-        <CaseFacts cases={[c]} one={c} />
+        <CaseHeadLine one={c} />
         <p className="case-lead">{story.headline}</p>
       </div>
 
@@ -90,9 +91,15 @@ export default async function CasePage({ params }: Params) {
             code={code}
             recheck={c.recheck}
             exportLinks={{ markdown: caseChecklistMarkdownHref(c.slug), print: caseChecklistHref(c.slug) }}
+            runNote={caseRunNote()}
           />
         )}
-        <Tier n={4} name="정적 검사와 AI 판정">
+        <StaticAux
+          parts={[
+            `우리 정적 규칙만으로는 ${c.ruleOnly.length}건`,
+            ...(review ? [`AI 검토가 코드에서 본 것 ${seenCount(review.checklist.filter((item) => !c.recheck.includes(item.duty)))}건`] : []),
+          ]}
+        >
           <EarlierFacts one={c} />
           <div className="case-compare">
             <div className="box">
@@ -188,7 +195,7 @@ export default async function CasePage({ params }: Params) {
               })}
             </div>
           </details>
-        </Tier>
+        </StaticAux>
       </div>
 
       {(story.checked.length > 0 || story.extra.length > 0) && (

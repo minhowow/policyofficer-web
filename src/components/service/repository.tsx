@@ -11,6 +11,7 @@ import { duration, finishedAt, formatKst } from "@/lib/service/steps";
 import type { Analysis, Repository, ReviewFacts } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
 import { AnalysisBadge, FeatureLine, findingCount, REVIEW_NOT_RECEIVED, REVIEW_NOT_RUN } from "./parts";
+import { staticParts } from "./static-parts";
 
 /** 최신 분석 상자의 감지된 기능 한 줄(있을 때만). review 가 있으면 review 가 정한 기능이다. */
 const featureLineOf = (features: string[] | null, review: ReviewFacts | null) =>
@@ -22,17 +23,12 @@ const featureLineOf = (features: string[] | null, review: ReviewFacts | null) =>
 
 /**
  * review 가 있는 분석의 정적 검사 한 줄: '보조: 정적 검사 발견 N건'에, AI 판정자가 푼 경고와 적용 질문으로 빠진 판정이 있으면 그 수를
- * 덧붙인다(0건이면 적지 않는다. 분석 쪽의 넷째 단에는 모두 있다).
+ * 덧붙인다(0건이면 적지 않는다. 분석 쪽의 접힌 보조 줄 안에는 모두 있다).
  */
 function staticAux(view: ReportView | null): string[] {
   if (!view) return [`보조: 정적 검사 ${findingCount(null)}`];
-  const parts = [`보조: 정적 검사 발견 ${view.findingCount}건`];
-  if (aiReviewRan(view)) {
-    if (view.aiCleared.length > 0) parts.push(`${AI_CLEARED} ${view.aiCleared.length}건`);
-    if (!view.aiDismissedKnown) parts.push(`${AI_DISMISSED} ${STATUS_LABEL["pack-unknown"]}`);
-    else if (view.aiDismissed.length > 0) parts.push(`${AI_DISMISSED} ${view.aiDismissed.length}건`);
-  }
-  return parts;
+  const [first, ...rest] = staticParts(view);
+  return [`보조: ${first}`, ...rest];
 }
 
 /** 최신 분석 상자에 보이는 발견 줄의 수. 나머지는 "결과 보기"의 분석 쪽에 있다. */

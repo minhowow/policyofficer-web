@@ -119,3 +119,25 @@ export function ReportWithRecord({
     </div>
   );
 }
+
+/**
+ * 조문별 검사 기록 단추를 결과의 머리가 아니라 정적 검사 구역 안에 두는 틀(2026-11-25 web16: review 가 있는 분석 쪽은 정적 검사를 접힌
+ * 보조 줄로 줄이고, 머리의 이 단추도 그 안으로 옮긴다). 기록은 정적 검사의 결과(`view`)로만 만든다. 누르면 이 구역의 정적 검사
+ * 화면(`children`)을 가리고 기록을 보이며, 다시 누르면 돌아온다. 늦춰 그리는 것과 인쇄(기록만 나온다)는 `ReportWithRecord` 와 같다.
+ */
+export function StaticRecord({ view, pack, source, children }: { view: ReportView; pack: PackIndex; source: RecordSource; children: ReactNode }) {
+  const [record, setRecord] = useState(false);
+  const drawn = useDeferredValue(record);
+  const shown = record && drawn;
+  return (
+    <div className="report-switch">
+      <div className="aux-tools">
+        <button type="button" className="btn record-btn" aria-pressed={record} onClick={() => setRecord((on) => !on)}>
+          {SITE.record.title} <span className="sub">인쇄용</span>
+        </button>
+      </div>
+      <div hidden={shown}>{children}</div>
+      {shown && <RecordPanel view={view} pack={pack} source={source} />}
+    </div>
+  );
+}

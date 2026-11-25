@@ -8,7 +8,7 @@ import { closeChrome, launchChrome, NO_STORAGE, openPage, serveSite, stored, typ
 //   그동안 사이트 밖으로 나가는 요청과 브라우저 저장소가 없다.
 // - 1280px: 56px 한 줄이고 본문과 왼쪽 끝이 같다. 머리글의 검색창은 본문에 검색창이 없는 쪽에만 보인다. 지금 쪽을 굵게 적고
 //   aria-current 로 알린다. 첫 화면에는 머리글이 없다(재디자인 D3). 이름은 검색 쪽(/search/)으로 간다.
-// - 메뉴는 최근 분석(질의 없는 /search/), 사례, 조문 도감, 데모, 구조다(재디자인 D4, 2026-11-11·13). 최근 분석은 질의 없는 검색 쪽에서만 지금 쪽이다.
+// - 메뉴는 최근 분석(질의 없는 /search/), 사례, 조문 도감, 구조다(재디자인 D4, 2026-11-11·13. 데모는 2026-11-25 메뉴에서 뺐다). 최근 분석은 질의 없는 검색 쪽에서만 지금 쪽이다.
 // - "/" 키는 검색창으로 가지 않는다(글자 하나짜리 단축키는 뺐다. docs/ROADMAP.md 의 "사람 결정이 필요한 것").
 // 머리글의 HTML 이 모든 쪽에서 같은지는 tests/browser/served-files.test.ts 가 본다.
 
@@ -69,9 +69,9 @@ describe("390px: 펼치는 메뉴", () => {
     expect(await page.locator(".site-header .menu-pop").isVisible()).toBe(false);
     // 지금 쪽(조문 도감)은 굵게 적고 화면 낭독기에도 알린다.
     expect(await page.locator(".site-header .menu-pop a[href='/policy/']").evaluate((el) => getComputedStyle(el).fontWeight)).toBe("600");
-    expect(await page.locator(".site-header .menu-pop a[href='/demo/']").evaluate((el) => getComputedStyle(el).fontWeight)).toBe("400");
+    expect(await page.locator(".site-header .menu-pop a[href='/how/']").evaluate((el) => getComputedStyle(el).fontWeight)).toBe("400");
     expect(await page.locator(".site-header .menu-pop a[href='/policy/']").getAttribute("aria-current")).toBe("page");
-    expect(await page.locator(".site-header .menu-pop a[href='/demo/']").getAttribute("aria-current")).toBe(null);
+    expect(await page.locator(".site-header .menu-pop a[href='/how/']").getAttribute("aria-current")).toBe(null);
 
     // 지금 쪽의 링크를 눌러도(주소가 그대로여도) 닫힌다.
     await page.locator(".site-header .menu > summary").click();
@@ -86,12 +86,12 @@ describe("390px: 펼치는 메뉴", () => {
     expect(await menuOpen(page)).toBe(false);
     expect(await page.evaluate(() => document.activeElement?.closest(".menu") !== null)).toBe(true);
 
-    // 데모로도 옮겨 간다.
+    // 구조로도 옮겨 간다.
     await page.locator(".site-header .menu > summary").click();
-    await page.locator(".site-header .menu-pop a", { hasText: "데모" }).click();
-    await page.waitForURL(`${site.origin}/demo/`);
+    await page.locator(".site-header .menu-pop a", { hasText: "구조" }).click();
+    await page.waitForURL(`${site.origin}/how/`);
     await expect.poll(() => menuOpen(page)).toBe(false);
-    expect(await page.locator(".site-header .menu-pop a[href='/demo/']").getAttribute("aria-current")).toBe("page");
+    expect(await page.locator(".site-header .menu-pop a[href='/how/']").getAttribute("aria-current")).toBe("page");
     expect(await page.locator(".site-header .menu-pop a[href='/policy/']").getAttribute("aria-current")).toBe(null);
 
     expect(outside).toEqual([]);
@@ -114,12 +114,12 @@ describe("390px: 펼치는 메뉴", () => {
         return hidden;
       });
 
-    // 키보드로 메뉴를 열고 메뉴의 링크 다섯(최근 분석, 사례, 조문 도감, 데모, 구조. 재디자인 D4 에서 하나, 2026-11-11 사례로,
-    // 2026-11-13 구조로 하나씩 늘었다)을 지나 본문으로 간다.
+    // 키보드로 메뉴를 열고 메뉴의 링크 넷(최근 분석, 사례, 조문 도감, 구조. 재디자인 D4 에서 하나, 2026-11-11 사례로,
+    // 2026-11-13 구조로 하나씩 늘었고, 2026-11-25 데모가 빠졌다)을 지나 본문으로 간다.
     await page.locator(".site-header .menu > summary").focus();
     await page.keyboard.press("Enter");
     expect(await menuOpen(page)).toBe(true);
-    for (let i = 0; i < 5; i++) await page.keyboard.press("Tab");
+    for (let i = 0; i < 4; i++) await page.keyboard.press("Tab");
     expect(await menuOpen(page)).toBe(true);
     await page.keyboard.press("Tab");
     expect(await page.evaluate(() => document.activeElement?.closest(".site-header") === null)).toBe(true);
@@ -171,7 +171,7 @@ describe("1280px: 한 줄 머리글", () => {
           menu: document.querySelector(".site-header .hdr-m")!.getClientRects().length > 0,
           recent: weight("/search/"),
           policy: weight("/policy/"),
-          demo: weight("/demo/"),
+          how: weight("/how/"),
           current: [...document.querySelectorAll(".site-header .hdr-nav a[aria-current=page]")].map((a) => a.getAttribute("href")),
         };
       });
@@ -184,20 +184,20 @@ describe("1280px: 한 줄 머리글", () => {
       menu: false,
       recent: "400",
       policy: "600",
-      demo: "400",
+      how: "400",
       current: ["/policy/"],
     });
     // 머리글과 본문은 같은 폭(1280px)이라 1280px 화면에서는 좌우 여백(24px)에서 시작한다.
     expect(policy.mainLeft).toBe(24);
 
-    await page.goto(`${site.origin}/demo/`, { waitUntil: "networkidle" });
-    expect(await read()).toMatchObject({ height: 56, search: true, policy: "400", demo: "600", current: ["/demo/"] });
+    await page.goto(`${site.origin}/how/`, { waitUntil: "networkidle" });
+    expect(await read()).toMatchObject({ height: 56, search: true, policy: "400", how: "600", current: ["/how/"] });
 
     // 본문에 검색창이 있는 쪽(검색)에서는 머리글의 검색창을 감춘다. 최근 분석은 질의 없는 검색 쪽에서만 지금 쪽이다.
     await page.goto(`${site.origin}/search/`, { waitUntil: "networkidle" });
-    expect(await read(), "/search/").toMatchObject({ height: 56, search: false, recent: "600", policy: "400", demo: "400", current: ["/search/"] });
+    expect(await read(), "/search/").toMatchObject({ height: 56, search: false, recent: "600", policy: "400", how: "400", current: ["/search/"] });
     await page.goto(`${site.origin}/search/?q=kids`, { waitUntil: "networkidle" });
-    expect(await read(), "/search/?q=kids").toMatchObject({ height: 56, search: false, recent: "400", policy: "400", demo: "400", current: [] });
+    expect(await read(), "/search/?q=kids").toMatchObject({ height: 56, search: false, recent: "400", policy: "400", how: "400", current: [] });
     // 경로가 같은 이동(질의 있는 검색 → 최근 분석)에서도 지금 쪽 표시가 따라온다(클라이언트 이동).
     await page.locator(".site-header .hdr-nav a", { hasText: "최근 분석" }).click();
     await page.waitForURL(`${site.origin}/search/`);
@@ -225,15 +225,15 @@ describe("쪽 이동 중 표시와 클라이언트 이동(2026-11-12 오너 지�
     const { page } = await open("/policy/", 1280);
     // 누른 바로 그 순간(같은 작업 안)에 붙는다: 서버의 답을 기다리지 않는다.
     const right = await page.evaluate(() => {
-      document.querySelector<HTMLAnchorElement>(".site-header .hdr-nav a[href='/demo/']")!.click();
+      document.querySelector<HTMLAnchorElement>(".site-header .hdr-nav a[href='/how/']")!.click();
       return { nav: document.documentElement.dataset.nav ?? null, busy: document.querySelector("main")?.getAttribute("aria-busy") ?? null };
     });
     expect(right).toEqual({ nav: "pending", busy: "true" });
-    await page.waitForURL(`${site.origin}/demo/`);
+    await page.waitForURL(`${site.origin}/how/`);
     await expect.poll(() => navState(page)).toEqual({ nav: null, busy: null });
     // 지금 쪽의 링크는 옮기지 않으므로 표시가 없다.
     const same = await page.evaluate(() => {
-      document.querySelector<HTMLAnchorElement>(".site-header .hdr-nav a[href='/demo/']")!.click();
+      document.querySelector<HTMLAnchorElement>(".site-header .hdr-nav a[href='/how/']")!.click();
       return document.documentElement.dataset.nav ?? null;
     });
     expect(same).toBe(null);
@@ -273,7 +273,7 @@ describe("쪽 이동 중 표시와 클라이언트 이동(2026-11-12 오너 지�
     await page.locator("form.cbx-page button[type=submit]").click();
     expect(await navState(page)).toEqual({ nav: null, busy: null });
     const restored = await page.evaluate(() => {
-      document.querySelector<HTMLAnchorElement>(".site-header .hdr-nav a[href='/demo/']")!.click();
+      document.querySelector<HTMLAnchorElement>(".site-header .hdr-nav a[href='/how/']")!.click();
       const before = document.documentElement.dataset.nav ?? null;
       window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
       return { before, after: document.documentElement.dataset.nav ?? null };

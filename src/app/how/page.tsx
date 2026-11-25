@@ -54,6 +54,10 @@ export default function HowPage() {
           ))}
         </div>
       </details>
+      {/* 데모는 메뉴에서 뺐다(2026-11-25 web16). 주소는 남기고 여기서만 잇는다. */}
+      <p className="how-demo">
+        <Link href="/demo/">정적 규칙만 쓰는 모습(합성 예시)</Link>
+      </p>
     </div>
   );
 }

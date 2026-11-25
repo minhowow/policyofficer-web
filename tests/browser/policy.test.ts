@@ -535,7 +535,7 @@ describe("쪽이 스스로 내는 요청이 없다", () => {
     await settle(site, page);
     const loading = site.requests.slice(start).map((request) => request.url);
     expect(loading[0]).toBe(INDEX);
-    expect(loading.some((url) => url.startsWith("/demo/"))).toBe(true);
+    expect(loading.some((url) => url.startsWith("/how/"))).toBe(true);
 
     let hovered = 0;
     for (const policy of policies) {

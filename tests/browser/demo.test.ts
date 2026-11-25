@@ -994,7 +994,10 @@ describe("다른 쪽에 다녀오거나 새로 고친 뒤", () => {
     // 재디자인 D2: 머리글에는 넓은 화면의 메뉴(.hdr-nav)와 좁은 화면의 펼치는 메뉴(.menu-pop)가 함께 있다. 넓은 화면의 것을 누른다.
     await page.locator(".site-header .hdr-nav a", { hasText: "조문 도감" }).click();
     await page.waitForURL("**/policy/");
-    await page.locator(".site-header .hdr-nav a", { hasText: "데모" }).click();
+    // 데모는 2026-11-25 메뉴에서 빠졌다. 머리의 구조로 가서 그 쪽 맨 아래 링크로 돌아온다.
+    await page.locator(".site-header .hdr-nav a", { hasText: "구조" }).click();
+    await page.waitForURL("**/how/");
+    await page.locator(".how-demo a").click();
     await page.waitForURL("**/demo/");
     await shown(page, "광고 푸시 · 고친 뒤");
     expect(await pressed(page)).toEqual(["광고 푸시", "고친 뒤"]);

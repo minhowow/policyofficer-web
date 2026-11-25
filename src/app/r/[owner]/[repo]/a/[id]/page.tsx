@@ -113,6 +113,52 @@ export default async function AnalysisPage({ params }: PageProps<"/r/[owner]/[re
   const ranOn = formatKst(analysis.steps.find((step) => step.name === "fetch")?.startedAt ?? analysis.requestedAt).slice(0, 10);
   const limitDay = analysis.review === "limit" && ranOn !== formatKst(new Date().toISOString()).slice(0, 10) ? ranOn : null;
 
+  const source = {
+    name: `${repository.owner}/${repository.name} · 분석 ${analysis.id}`,
+    synthetic: tagged,
+    analysis: { id: analysis.id, commit: analysis.commit, scannedAt: `${formatKst(scannedAt)} KST` },
+  };
+  const dashboard = (record?: { pack: typeof packIndex; source: typeof source }) => (
+    <AnalysisDashboard
+      view={view}
+      code={code}
+      statutes={statutes}
+      profile={profile}
+      review={review}
+      reviewPlan={analysis.review}
+      limitDay={limitDay}
+      exportLinks={{ markdown: checklistMarkdownHref(analysis.id), print: checklistHref(repository.owner, repository.name, analysis.id) }}
+      record={record}
+      progress={
+        <details className="lg an-steps">
+          <summary>
+            진행 기록 <span className="lg-name">{analysis.steps.length}단계</span>
+          </summary>
+          <div className="lg-body">
+            <StepList analysis={analysis} />
+          </div>
+        </details>
+      }
+    />
+  );
+
+  // review 가 있으면 정적 검사는 접힌 보조 줄 안이고, 조문별 검사 기록 단추도 머리가 아니라 그 안에 둔다(2026-11-25 web16).
+  if (review) {
+    return (
+      <div className="page-wide an-page">
+        <div className="report-switch">
+          <header className="an-head report-head">
+            <div className="ttl">
+              <AnalysisTitle repository={repository} tagged={tagged} />
+            </div>
+            <AnalysisMeta repository={repository} analysis={analysis} />
+          </header>
+          {dashboard({ pack: packIndex, source })}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-wide an-page">
       <ReportWithRecord
@@ -120,32 +166,9 @@ export default async function AnalysisPage({ params }: PageProps<"/r/[owner]/[re
         pack={packIndex}
         heading={<AnalysisTitle repository={repository} tagged={tagged} />}
         meta={<AnalysisMeta repository={repository} analysis={analysis} />}
-        source={{
-          name: `${repository.owner}/${repository.name} · 분석 ${analysis.id}`,
-          synthetic: tagged,
-          analysis: { id: analysis.id, commit: analysis.commit, scannedAt: `${formatKst(scannedAt)} KST` },
-        }}
+        source={source}
       >
-        <AnalysisDashboard
-          view={view}
-          code={code}
-          statutes={statutes}
-          profile={profile}
-          review={review}
-          reviewPlan={analysis.review}
-          limitDay={limitDay}
-          exportLinks={{ markdown: checklistMarkdownHref(analysis.id), print: checklistHref(repository.owner, repository.name, analysis.id) }}
-          progress={
-            <details className="lg an-steps">
-              <summary>
-                진행 기록 <span className="lg-name">{analysis.steps.length}단계</span>
-              </summary>
-              <div className="lg-body">
-                <StepList analysis={analysis} />
-              </div>
-            </details>
-          }
-        />
+        {dashboard()}
       </ReportWithRecord>
     </div>
   );

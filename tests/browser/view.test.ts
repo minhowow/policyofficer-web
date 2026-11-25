@@ -238,7 +238,7 @@ describe("연 파일을 어디로도 보내지 않는다", () => {
     expect(await title(page)).toBe(DEFAULT_TITLE);
     const loading = site.requests.slice(start).map((request) => request.url);
     expect(loading[0]).toBe("/view/");
-    expect(loading.some((url) => url.startsWith("/demo/"))).toBe(true);
+    expect(loading.some((url) => url.startsWith("/how/"))).toBe(true);
     expect(loading.some((url) => url.startsWith("/policy/"))).toBe(true);
     const before = await policyOrder(page);
     const mark = { server: site.requests.length, browser: seen.length };
@@ -820,8 +820,8 @@ describe("다른 쪽에 다녀오거나 새로 고친 뒤", () => {
     const sample = SAMPLES.find((s) => s.id === "genai-chat.main")!;
     await page.locator("#sample-select").selectOption(sample.id);
     await opened(page, `${sample.label} (${sample.origin})`);
-    await page.locator(".site-header .hdr-nav a", { hasText: "데모" }).click();
-    await page.waitForURL("**/demo/");
+    await page.locator(".site-header .hdr-nav a", { hasText: "구조" }).click();
+    await page.waitForURL("**/how/");
     await page.goBack();
     await page.waitForURL("**/view/");
     await opened(page, `${sample.label} (${sample.origin})`);

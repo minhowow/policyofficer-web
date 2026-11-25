@@ -134,6 +134,10 @@ export interface Review {
     models: { investigate: string; verify: string };
     seconds: number;
     usdEstimate: number;
+    /** 단계(understand · investigate · rebut)마다 든 돈(질문 기록 `run.questions` 의 usd 합). 기록이 없는 결과면 null. */
+    stageUsd: Record<string, number> | null;
+    /** 이해 단계(기능 파악)를 앞 결과에서 되살렸는지(`run.understanding.reused`). 없으면 null. */
+    understandReused: boolean | null;
     limits: { usd: number; seconds: number } | null;
     citations: number;
     citationsRejected: number;
@@ -177,6 +181,17 @@ const remainingOf = (answer: unknown): string => {
   const text = isObj(answer) ? (str(answer.remaining)?.trim() ?? "") : "";
   return text === "없음" ? "" : text;
 };
+
+/** 질문 기록(`run.questions[]`: stage, usd)에서 단계마다 든 돈. 기록이 없으면 null. */
+function stageUsdOf(questions: unknown): Record<string, number> | null {
+  if (!Array.isArray(questions) || questions.length === 0) return null;
+  const out: Record<string, number> = {};
+  for (const q of questions) {
+    if (!isObj(q) || str(q.stage) === null) continue;
+    out[q.stage as string] = (out[q.stage as string] ?? 0) + (num(q.usd) ?? 0);
+  }
+  return out;
+}
 
 const isStatus = (v: unknown): v is ReviewStatus => typeof v === "string" && (REVIEW_STATUSES as readonly string[]).includes(v);
 const KINDS: readonly string[] = ["input", "server", "store", "external"];
@@ -274,6 +289,8 @@ export function parseReview(data: unknown): Review | null {
       models: { investigate: str(models.investigate) ?? "", verify: str(models.verify) ?? "" },
       seconds: num(run.seconds) ?? 0,
       usdEstimate: num(run.usd_estimate) ?? 0,
+      stageUsd: stageUsdOf(run.questions),
+      understandReused: isObj(run.understanding) && typeof run.understanding.reused === "boolean" ? run.understanding.reused : null,
       limits,
       citations: num(run.citations) ?? 0,
       citationsRejected: num(run.citations_rejected) ?? 0,

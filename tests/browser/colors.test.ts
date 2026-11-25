@@ -477,12 +477,12 @@ describe("두 테마의 명도 대비: 그려진 글자마다 4.5:1 이상", () 
     }
     scans.expectParts(POPUP, `${scheme} ${width}`);
     if (width === 375) {
-      // 좁은 화면의 펼친 메뉴(머리글의 `메뉴`). 데모 쪽에서 열어 지금 쪽 표시(굵게)도 잰다.
-      await go(page, "/demo/");
+      // 좁은 화면의 펼친 메뉴(머리글의 `메뉴`). 구조 쪽에서 열어 지금 쪽 표시(굵게)도 잰다(데모는 2026-11-25 메뉴에서 뺐다).
+      await go(page, "/how/");
       await page.locator("details.menu > summary").click();
-      await scans.count(page, [".menu-pop", '.menu-pop a[href="/demo/"]']);
-      scans.add(`${scheme} 375 /demo/ 펼친 메뉴`, await textContrast(page, { root: ".site-header" }));
-      scans.expectParts([".menu-pop", '.menu-pop a[href="/demo/"]'], `${scheme} 375 메뉴`);
+      await scans.count(page, [".menu-pop", '.menu-pop a[href="/how/"]']);
+      scans.add(`${scheme} 375 /how/ 펼친 메뉴`, await textContrast(page, { root: ".site-header" }));
+      scans.expectParts([".menu-pop", '.menu-pop a[href="/how/"]'], `${scheme} 375 메뉴`);
     }
     expectReadable(scans, `${scheme} ${width}`);
   });
@@ -822,10 +822,10 @@ describe("강제 색 모드(윈도의 고대비 테마 등)", () => {
     // 지금 쪽: 같은 링크(머리글의 HTML 은 모든 쪽에서 같다)를 지금 쪽일 때와 아닐 때 찍어 견준다.
     const shot = async (page: Page, selector: string) => page.screenshot({ clip: snap(await rectOf(page, selector)) });
     for (const [width, selector, open_] of [
-      [1280, '.hdr-nav a[href="/demo/"]', false],
-      [375, '.menu-pop a[href="/demo/"]', true],
+      [1280, '.hdr-nav a[href="/how/"]', false],
+      [375, '.menu-pop a[href="/how/"]', true],
     ] as const) {
-      const here = await forced("/demo/", scheme, width);
+      const here = await forced("/how/", scheme, width);
       const away = await forced("/policy/", scheme, width);
       if (open_) for (const page of [here, away]) await page.locator("details.menu > summary").click();
       expect((await shot(here, selector)).equals(await shot(away, selector)), `${width}px ${selector}`).toBe(false);
@@ -852,7 +852,7 @@ describe("강제 색 모드(윈도의 고대비 테마 등)", () => {
       ["/", ".act-row", ".act-row", 1280],
       ["/search/", "#search-page-q", "#search-page-q", 1280],
       ["/policy/", ".site-header input[role=combobox]", ".site-header input[role=combobox]", 1280],
-      ["/policy/", '.hdr-nav a[href="/demo/"]', '.hdr-nav a[href="/demo/"]', 1280],
+      ["/policy/", '.hdr-nav a[href="/how/"]', '.hdr-nav a[href="/how/"]', 1280],
       ["/policy/", ".duty-row > summary", ".duty-row > summary", 1280],
       ["/demo/", ".segmented button", ".segmented button", 1280],
       ["/demo/", ".record-btn", ".record-btn", 1280],

@@ -10,7 +10,7 @@ import { lawArticle } from "@/lib/duties/article";
 import { byWeight, SANCTION_TEXT, sanctionTier } from "@/lib/duties/sanction";
 import { REVIEW_STATUSES, type Review, type ReviewCitation, type ReviewItem, type ReviewStatus } from "@/lib/review";
 import { layoutFlow } from "@/lib/review/flow";
-import { CHECKS, checkCount, firstSentence, gateText, notAnsweredText, rebutLine, SANCTION } from "@/lib/review/text";
+import { CHECKS, checkCount, costText, firstSentence, gateText, notAnsweredText, rebutLine, SANCTION } from "@/lib/review/text";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { fileLink, shortCommit } from "@/lib/service/href";
 import { SITE } from "@/lib/site";
@@ -50,12 +50,15 @@ export function ReviewView({
   code = null,
   recheck = [],
   exportLinks,
+  runNote,
 }: {
   review: Review;
   code?: CodeSource | null;
   recheck?: readonly string[];
   /** 체크리스트 내보내기(마크다운 파일, 인쇄용 보기)의 주소. 없으면(데모의 합성 예시) 링크를 두지 않는다. */
   exportLinks?: { markdown: string; print: string };
+  /** 검증 정보에 함께 적는 실행의 사실(사례 쪽: 결과를 낸 CLI 커밋, 판정 규칙만 다시 건 결과면 그 규칙의 CLI 커밋). */
+  runNote?: { cli: string; regate: string | null };
 }) {
   const held = review.checklist.filter((item) => recheck.includes(item.duty));
   const items = review.checklist.filter((item) => !recheck.includes(item.duty));
@@ -108,7 +111,7 @@ export function ReviewView({
           </p>
         )}
         <Checklist review={review} items={items} held={held} code={code} />
-        <Verification review={review} />
+        <Verification review={review} note={runNote} />
       </Tier>
     </div>
   );
@@ -394,8 +397,8 @@ function Checklist({ review, items, held, code }: { review: Review; items: Revie
   );
 }
 
-/** 검증 정보: 결과에 실린 수 그대로. */
-function Verification({ review }: { review: Review }) {
+/** 검증 정보: 결과에 실린 수 그대로. 사례 쪽은 머리에서 옮겨 온 CLI 커밋과 판정 규칙만 다시 적용한 사실을 함께 적는다. */
+function Verification({ review, note }: { review: Review; note?: { cli: string; regate: string | null } }) {
   const { run } = review;
   const sum = (record: Record<string, number>) => Object.values(record).reduce((a, b) => a + b, 0);
   const notAsked = sum(run.notAsked);
@@ -440,7 +443,7 @@ function Verification({ review }: { review: Review }) {
         <div>
           <dt>비용 어림</dt>
           <dd>
-            ${run.usdEstimate.toFixed(2)}
+            {costText(run)}
             {run.limits && ` (상한 $${run.limits.usd})`}
           </dd>
         </div>
@@ -450,6 +453,22 @@ function Verification({ review }: { review: Review }) {
             {Math.round(run.seconds)}초{run.limits && ` (상한 ${Math.round(run.limits.seconds)}초)`}
           </dd>
         </div>
+        {note && (
+          <div>
+            <dt>CLI</dt>
+            <dd>
+              <code translate="no">{note.cli}</code>
+            </dd>
+          </div>
+        )}
+        {note?.regate && (
+          <div>
+            <dt>판정 규칙</dt>
+            <dd>
+              {SITE.cases.regate} · 규칙 CLI <code translate="no">{note.regate}</code>
+            </dd>
+          </div>
+        )}
       </dl>
     </section>
   );

@@ -2,14 +2,20 @@ import type { ReactNode } from "react";
 import type { CodeSource } from "@/components/result/PolicyCard";
 import { ReportSummary, type Statute } from "@/components/result/ReportSummary";
 import { ObligationTier, ProfileTier, Tier } from "@/components/result/Tiers";
+import { StaticRecord } from "@/components/result/ReportWithRecord";
+import { StaticAux } from "@/components/review/StaticAux";
 import { ReviewView } from "@/components/review/ReviewView";
+import type { PackIndex } from "@/lib/pack/types";
 import type { Profile } from "@/lib/profile";
 import type { Review } from "@/lib/review";
+import { seenCount } from "@/lib/review/text";
+import type { RecordSource } from "@/lib/report/record";
 import { CHECKLIST_LABEL } from "@/lib/report/status";
 import type { ReportView } from "@/lib/report/view-model";
 import type { ReviewPlan } from "@/lib/service/types";
 import { SITE } from "@/lib/site";
 import { NO_SIGNAL_LINE } from "./parts";
+import { staticParts } from "./static-parts";
 
 export type { Statute } from "@/components/result/ReportSummary";
 
@@ -75,6 +81,7 @@ export function AnalysisDashboard({
   reviewPlan,
   limitDay = null,
   exportLinks,
+  record,
 }: {
   view: ReportView;
   code: CodeSource | null;
@@ -85,7 +92,8 @@ export function AnalysisDashboard({
   profile?: Profile | null;
   /**
    * 같은 커밋의 review 결과(policyofficer review 2판, 실행기에서 켰을 때만 있다). 있으면 맨 위가 review 화면(하는 일, 개인정보 흐름,
-   * 의무 체크리스트, 검증 정보)이고, 정적 검사의 결과는 그 아래 넷째 단이다.
+   * 의무 체크리스트, 검증 정보)이고, 정적 검사의 결과는 그 아래 접힌 보조 한 줄 안이다(2026-11-25 web16). 조문별 검사 기록 단추(`record`)도
+   * 그 안에 둔다.
    */
   review?: Review | null;
   /**
@@ -97,6 +105,8 @@ export function AnalysisDashboard({
   limitDay?: string | null;
   /** review 체크리스트 내보내기의 주소(마크다운 파일, 인쇄용 보기). */
   exportLinks?: { markdown: string; print: string };
+  /** review 가 있을 때 정적 검사 구역 안에 두는 조문별 검사 기록(팩 색인과 기록의 출처). 없으면 기록 단추가 없다. */
+  record?: { pack: PackIndex; source: RecordSource };
 }) {
   if (!review && (reviewPlan === "limit" || reviewPlan === "run")) {
     return (
@@ -116,12 +126,19 @@ export function AnalysisDashboard({
     );
   }
   if (review) {
+    const summary = <ReportSummary view={view} code={code} statutes={statutes} progress={progress} />;
     return (
       <div className="tiers">
         <ReviewView review={review} code={code} exportLinks={exportLinks} />
-        <Tier n={4} name="정적 검사">
-          <ReportSummary view={view} code={code} statutes={statutes} progress={progress} />
-        </Tier>
+        <StaticAux parts={[...staticParts(view), `AI 검토가 코드에서 본 것 ${seenCount(review.checklist)}건`]}>
+          {record ? (
+            <StaticRecord view={view} pack={record.pack} source={record.source}>
+              {summary}
+            </StaticRecord>
+          ) : (
+            summary
+          )}
+        </StaticAux>
       </div>
     );
   }
