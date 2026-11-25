@@ -125,6 +125,78 @@ export function costText(run: {
   return `${parts.length > 0 ? `${parts.join("+")} ` : ""}$${run.usdEstimate.toFixed(2)}`;
 }
 
+/** 관문이 받지 않은 인용의 까닭(CLI 의 citation `why`)을 사이트의 말로. */
+const REJECTED: Record<string, string> = {
+  "test-file": "테스트·설정 파일",
+  "too-short": "너무 짧은 조각",
+  "bare-word": "너무 짧은 조각",
+  empty: "너무 짧은 조각",
+  "comment-only": "주석",
+  "trailing-comment": "주석",
+  "not-found": "파일에 없는 줄",
+};
+
+/**
+ * 펼친 상세의 '도구 확인' 줄(2026-11-25 web16): 새 자료 없이 그 의무의 인용(받은 수/모두), '없다' 검색(다시 돌려 같은 수/모두), 반박의
+ * 결과로 만든다. 사실대로 쓴다: 받지 않은 인용이 있으면 그 수와 까닭, 같지 않은 검색이 있으면 그 수, 반박하지 않았으면 반박 조각이
+ * 없다. 조각이 하나도 없으면 빈 배열(줄을 두지 않는다). '고치는 법'은 만들지 않는다.
+ */
+export function toolCheck(item: Pick<ReviewItem, "citations" | "searches" | "verification">): string[] {
+  const parts: string[] = [];
+  const cites = item.citations.filter((cite) => cite.why !== "profile");
+  const taken = cites.filter((cite) => cite.ok).length;
+  if (cites.length > 0) {
+    if (taken === cites.length) parts.push(`인용 ${taken}줄이 파일에 그대로 있음`);
+    else {
+      const why = new Map<string, number>();
+      for (const cite of cites.filter((c) => !c.ok)) {
+        const label = REJECTED[cite.why] ?? "그 밖의 까닭";
+        why.set(label, (why.get(label) ?? 0) + 1);
+      }
+      const reasons = [...why].map(([label, n]) => `${n}줄: ${label}`).join(", ");
+      parts.push(taken === 0 ? `인용 ${cites.length}줄 모두 받지 않음(${reasons})` : `인용 ${cites.length}줄 중 ${taken}줄만 받음(${reasons})`);
+    }
+  }
+  const same = item.searches.filter((search) => search.ok).length;
+  if (item.searches.length > 0) {
+    parts.push(
+      same === item.searches.length
+        ? `'없다' 검색 ${same}개를 다시 돌려 같음`
+        : `'없다' 검색 ${item.searches.length}개 중 ${same}개를 다시 돌려 같음(${item.searches.length - same}개는 같지 않음)`,
+    );
+  }
+  const rebut: Record<string, string> = {
+    upheld: "반박 후 유지",
+    overturned: "반박이 뒤집음",
+    "overturn-ungrounded": "반박의 뒤집기는 근거가 없어 받지 않음",
+  };
+  if (rebut[item.verification]) parts.push(rebut[item.verification]);
+  return parts;
+}
+
+/**
+ * 쪽 아래 검증 정보의 문장(2026-11-25 web16): 인용을 파일에서 글자 그대로 확인한 수, '없다' 검색을 도구가 다시 돌려 같은 수와 달라
+ * '해당 없음'의 근거로 쓰지 않은 수, 반박의 결과. 결과에 실린 수 그대로다.
+ */
+export function verifySentence(run: {
+  citations: number;
+  citationsRejected: number;
+  searches: number;
+  searchesRejected: number;
+  verificationCounts: Record<string, number>;
+  rebutScope: string | null;
+}): string[] {
+  const kept = run.citations - run.citationsRejected;
+  const same = run.searches - run.searchesRejected;
+  return [
+    run.citationsRejected === 0
+      ? `인용 ${run.citations}줄 모두 파일에서 글자 그대로 확인`
+      : `인용 ${run.citations}줄 중 ${kept}줄을 파일에서 글자 그대로 확인, ${run.citationsRejected}줄은 받지 않음`,
+    `'없다' 검색 ${run.searches}개를 도구가 다시 돌림 → ${same}개 같음${run.searchesRejected > 0 ? `, ${run.searchesRejected}개는 달라 '${REVIEW_STATUS_LABEL["not-applicable"]}'으로 쓰지 않음` : ""}`,
+    `반박 ${rebutLine(run)}`,
+  ];
+}
+
 /** 글의 첫 문장(마침표·물음표 다음 빈칸까지). 나머지가 있으면 함께 돌려준다. 글을 고치지 않는다. */
 export function firstSentence(text: string): [string, string] {
   const match = /^(.+?[.?!])\s+(\S[\s\S]*)$/.exec(text.trim());

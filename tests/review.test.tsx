@@ -70,10 +70,10 @@ describe("review 결과 (2판)", () => {
     expect(textOf(na)).toContain("다시 센 줄 0줄");
     // 검증 정보: 결과에 실린 수 그대로.
     const info = textOf(elementsOf(html, '<section class="box info rv-verify"')[0]);
-    expect(info).toContain("31개 · 검사기가 거절 2개");
+    expect(info).toContain("인용 31줄 중 29줄을 파일에서 글자 그대로 확인, 2줄은 받지 않음");
     // 반박은 '코드에서 본 것'·'충족 근거 있음'에만 건다(실행기의 --rebut-scope found, 2026-11-15). 나머지는 '반박 안 함'으로 센다.
     expect(info).toContain(
-      `유지 6 · 뒤집음 1 · 반박 안 함 5 (반박은 '${REVIEW_STATUS_LABEL["seen-in-code"].split(" · ").at(-1)}'·'${REVIEW_STATUS_LABEL["evidence-found"]}'에만)`,
+      `반박 유지 6 · 뒤집음 1 · 반박 안 함 5 (반박은 '${REVIEW_STATUS_LABEL["seen-in-code"].split(" · ").at(-1)}'·'${REVIEW_STATUS_LABEL["evidence-found"]}'에만)`,
     );
     expect(info).toContain("$1.42 (상한 $2)");
     // 반박하지 않은 항목의 줄에는 반박 이야기가 없다(뒤집힌 항목에만 '반박이 바꿈').

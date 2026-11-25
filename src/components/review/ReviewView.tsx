@@ -11,7 +11,7 @@ import { lawArticle } from "@/lib/duties/article";
 import { byWeight, SANCTION_TEXT, SANCTION_TIERS, sanctionTier, type Sanction } from "@/lib/duties/sanction";
 import { REVIEW_STATUSES, type Review, type ReviewCitation, type ReviewItem, type ReviewStatus } from "@/lib/review";
 import { layoutFlow } from "@/lib/review/flow";
-import { CHECKS, checkCount, costText, firstSentence, gateText, notAnsweredText, rebutLine, SANCTION, shortStatus } from "@/lib/review/text";
+import { CHECKS, checkCount, costText, firstSentence, gateText, notAnsweredText, SANCTION, shortStatus, toolCheck, verifySentence } from "@/lib/review/text";
 import { REVIEW_GOODS_LABEL, REVIEW_RECHECK_LABEL, REVIEW_STATUS_LABEL } from "@/lib/report/status";
 import { fileLink, shortCommit } from "@/lib/service/href";
 import { SITE } from "@/lib/site";
@@ -320,7 +320,11 @@ function DutyLine({ item }: { item: ReviewItem }) {
   return duty ? <p className="rv-duty">{keepParticles(duty)}</p> : null;
 }
 
-/** 체크리스트의 의무 한 건(펼친 상세). */
+/**
+ * 체크리스트의 의무 한 건(펼친 상세). 차례는 포스터의 카드와 같다(2026-11-25 web16): 1 조문(법제처 링크)과 제재 표지(그 아래 의무 한
+ * 줄), 2 본 것(AI 가 본 것 첫 문장. 관문이 답을 바꾼 항목은 그 까닭), 3 인용(첫 인용 하나, 둘째부터는 접는다), 4 없는 것, 5 도구 확인,
+ * 6 확인할 질문, 7 어기면(조문 줄과 법제처 링크, 원문은 접힘), 8 찾아본 말 · 자세히(접힘). 글은 결과에 실린 그대로다.
+ */
 function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   // 관문이 답을 바꾼 항목은 그 까닭을 첫 줄에, 모델의 말은 모두 '자세히'에 둔다.
   const gate = gateText(item);
@@ -329,21 +333,40 @@ function Item({ item, code }: { item: ReviewItem; code: CodeSource | null }) {
   const cites = item.citations.filter((cite) => cite.ok && cite.why !== "profile");
   const signals = item.citations.filter((cite) => cite.ok && cite.why === "profile");
   const sanction = sanctionOf(item.duty);
+  const checked = toolCheck(item);
   return (
     <Row item={item}>
       <LawLine item={item} overturned={item.verification === "overturned"} />
       <DutyLine item={item} />
-      {seen && <p className="rv-seen">{keepParticles(seen)}</p>}
+      {seen &&
+        (gate ? (
+          <p className="rv-seen">{keepParticles(seen)}</p>
+        ) : (
+          <p className="ask-line rv-seen">
+            <span className="lbl">본 것</span> {keepParticles(seen)}
+          </p>
+        ))}
+      <CitedLines citations={cites.slice(0, 1)} code={code} />
+      {cites.length > 1 && (
+        <details className="f-more rv-more-cites">
+          <summary>인용 {cites.length - 1}개 더</summary>
+          <CitedLines citations={cites.slice(1)} code={code} />
+        </details>
+      )}
+      <SignalFiles citations={signals} code={code} />
       {item.missing && CHECKS.includes(item.status) && (
         <p className="ask-line">
           <span className="lbl">없는 것</span> {item.missing}
         </p>
       )}
-      <CitedLines citations={cites} code={code} />
-      <SignalFiles citations={signals} code={code} />
+      {checked.length > 0 && (
+        <p className="ask-line rv-tool">
+          <span className="lbl">도구 확인</span> {checked.join(" · ")}
+        </p>
+      )}
       {item.question && (
         <p className="ask-line">
-          <span className="lbl">질문</span> {item.question}
+          <span className="lbl">확인할 질문</span> {item.question}
         </p>
       )}
       {notAnswered && <p className="hint">{notAnswered}</p>}
@@ -386,7 +409,7 @@ function HeldItem({ item, ask = false }: { item: ReviewItem; ask?: boolean }) {
       <DutyLine item={item} />
       {ask && item.question && (
         <p className="ask-line">
-          <span className="lbl">질문</span> {item.question}
+          <span className="lbl">확인할 질문</span> {item.question}
         </p>
       )}
       {sanction && <SanctionDetails sanction={sanction} />}
@@ -474,79 +497,48 @@ function Checklist({ review, items, held, code }: { review: Review; items: Revie
   );
 }
 
-/** 검증 정보: 결과에 실린 수 그대로. 사례 쪽은 머리에서 옮겨 온 CLI 커밋과 판정 규칙만 다시 적용한 사실을 함께 적는다. */
+/**
+ * 검증 정보(쪽 아래, 2026-11-25 web16): 숫자 나열 대신 문장으로(인용을 파일에서 글자 그대로 확인한 수, '없다' 검색을 다시 돌려 같은 수와
+ * 달라 쓰지 않은 수, 반박의 결과). 그 아래 회색 한 줄에 모델·비용(구성과 함께)·시간·가린 비밀값·묻지 않은 의무, 사례 쪽은 CLI 커밋과
+ * 판정 규칙만 다시 적용한 사실. 결과에 실린 수 그대로다.
+ */
 function Verification({ review, note }: { review: Review; note?: { cli: string; regate: string | null } }) {
   const { run } = review;
   const sum = (record: Record<string, number>) => Object.values(record).reduce((a, b) => a + b, 0);
+  const masked = sum(run.masked);
   const notAsked = sum(run.notAsked);
   return (
     <section className="box info rv-verify" aria-labelledby="rv-verify-title">
       <div className="box-hd">
         <h3 id="rv-verify-title">검증 정보</h3>
       </div>
-      <dl className="report-meta">
-        <div>
-          <dt>인용</dt>
-          <dd>
-            {run.citations}개 · 검사기가 거절 {run.citationsRejected}개
-          </dd>
-        </div>
-        <div>
-          <dt>부재 검색</dt>
-          <dd>
-            {run.searches}개 · 건수가 맞지 않음 {run.searchesRejected}개
-          </dd>
-        </div>
-        <div>
-          <dt>반박</dt>
-          <dd>{rebutLine(run)}</dd>
-        </div>
-        <div>
-          <dt>가린 비밀값</dt>
-          <dd>{sum(run.masked)}개</dd>
-        </div>
-        {notAsked > 0 && (
-          <div>
-            <dt>묻지 않은 의무</dt>
-            <dd>{notAsked}개</dd>
-          </div>
-        )}
-        <div>
-          <dt>모델</dt>
-          <dd>
+      <div className="box-in rv-verify-in">
+        <p className="rv-verify-say">{verifySentence(run).join(" · ")}</p>
+        <p className="rv-verify-meta">
+          <span>
             조사 <code translate="no">{run.models.investigate}</code> · 반박 <code translate="no">{run.models.verify}</code>
-          </dd>
-        </div>
-        <div>
-          <dt>비용 어림</dt>
-          <dd>
+          </span>
+          <span>
             {costText(run)}
             {run.limits && ` (상한 $${run.limits.usd})`}
-          </dd>
-        </div>
-        <div>
-          <dt>시간</dt>
-          <dd>
+          </span>
+          <span>
             {Math.round(run.seconds)}초{run.limits && ` (상한 ${Math.round(run.limits.seconds)}초)`}
-          </dd>
-        </div>
-        {note && (
-          <div>
-            <dt>CLI</dt>
-            <dd>
-              <code translate="no">{note.cli}</code>
-            </dd>
-          </div>
-        )}
-        {note?.regate && (
-          <div>
-            <dt>판정 규칙</dt>
-            <dd>
+          </span>
+          {masked > 0 && <span>가린 비밀값 {masked}개</span>}
+          {notAsked > 0 && <span>묻지 않은 의무 {notAsked}개</span>}
+          {note && (
+            <span>
+              CLI <code translate="no">{note.cli}</code>
+            </span>
+          )}
+          {note?.regate && (
+            <span>
               {SITE.cases.regate} · 규칙 CLI <code translate="no">{note.regate}</code>
-            </dd>
-          </div>
-        )}
-      </dl>
+            </span>
+          )}
+        </p>
+      </div>
     </section>
   );
 }

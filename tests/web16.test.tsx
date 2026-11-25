@@ -6,7 +6,7 @@ import { casesFile } from "@/lib/cases";
 import { dutyAnchor } from "@/lib/duties";
 import { SANCTION_TEXT } from "@/lib/duties/sanction";
 import { parseReview } from "@/lib/review";
-import { costText, modelLabel } from "@/lib/review/text";
+import { costText, modelLabel, toolCheck } from "@/lib/review/text";
 import { SITE } from "@/lib/site";
 import { elementAt, elementsOf, readJson, textOf } from "./helpers";
 
@@ -52,7 +52,7 @@ describe("a. 쳐내기", () => {
     const verify = textOf(elementAt(html, html.indexOf('<section class="box info rv-verify"')));
     expect(verify).toContain("조사+반박 $1.20 (상한 $5)");
     expect(verify).toContain("조사 claude-haiku-5-5 · 반박 claude-sonnet-5-5");
-    expect(verify).toContain("CLIf4967db");
+    expect(verify).toContain("CLI f4967db");
     expect(verify).toContain(`${SITE.cases.regate} · 규칙 CLI 2a24d94`);
   });
 
@@ -133,5 +133,71 @@ describe("b. 요약과 목록", () => {
     expect(unseen).toBe("이번 검토가 보지 못한 것 — 저장소 밖(처리방침·약관·배포 설정) · 읽지 않는 파일(.env 등) · 판단 못 한 의무 0건");
     // 목록 위: 모두 펼치기 · 마크다운으로 받기 · 인쇄용 보기.
     expect(textOf(elementsOf(html, '<p class="rv-export">')[0])).toBe("모두 펼치기마크다운으로 받기인쇄용 보기");
+  });
+});
+
+describe("c. 펼친 카드의 차례와 '도구 확인' 줄", () => {
+  const sample = () => readJson("contract", "review", "genai-chat.review.json") as Record<string, unknown>;
+
+  it("도구 확인: 인용(받은 수와 받지 않은 까닭), '없다' 검색(다시 돌려 같은 수), 반박 결과로만 만든다. 없는 조각은 빼고 '고치는 법'은 없다", () => {
+    const cite = (ok: boolean, why = "grounded") => ({ file: "a.ts", line: 1, text: "x", ok, why });
+    const search = (ok: boolean) => ({ pattern: "p", path: ".", claimed: 1, found: ok ? 1 : 2, ok });
+    expect(toolCheck({ citations: [cite(true), cite(true)], searches: [search(true), search(true)], verification: "upheld" })).toEqual([
+      "인용 2줄이 파일에 그대로 있음",
+      "'없다' 검색 2개를 다시 돌려 같음",
+      "반박 후 유지",
+    ]);
+    expect(toolCheck({ citations: [cite(true), cite(true), cite(false, "test-file")], searches: [search(true), search(false)], verification: "not-run" })).toEqual([
+      "인용 3줄 중 2줄만 받음(1줄: 테스트·설정 파일)",
+      "'없다' 검색 2개 중 1개를 다시 돌려 같음(1개는 같지 않음)",
+    ]);
+    expect(toolCheck({ citations: [cite(false, "not-found"), cite(false, "too-short")], searches: [], verification: "overturned" })).toEqual([
+      "인용 2줄 모두 받지 않음(1줄: 파일에 없는 줄, 1줄: 너무 짧은 조각)",
+      "반박이 뒤집음",
+    ]);
+    // 프로필 신호(기능이 있다는 파일)는 모델의 인용이 아니라 세지 않는다. 아무 조각도 없으면 줄을 두지 않는다.
+    expect(toolCheck({ citations: [cite(true, "profile")], searches: [], verification: "" })).toEqual([]);
+  });
+
+  it("펼친 카드는 포스터의 차례다: 조문·표지 → 본 것 → 인용(첫 하나, 나머지는 접음) → 없는 것 → 도구 확인 → 확인할 질문 → 어기면 → 찾아본 말·자세히", async () => {
+    const html = await casePage("jobtalk");
+    const li = elementsOf(html, '<li class="rv-item"').find((item) => item.includes(`id="${dutyAnchor("pipa-28-8-1")}"`))!;
+    const body = elementsOf(li, '<div class="rv-body">')[0];
+    const at = (needle: string) => {
+      const i = body.indexOf(needle);
+      expect(i, needle).toBeGreaterThan(-1);
+      return i;
+    };
+    const order = [
+      at('<p class="rv-law">'),
+      at('<span class="lbl">본 것</span>'),
+      at('<ul class="cites">'),
+      at("인용 1개 더"),
+      at('<span class="lbl">없는 것</span>'),
+      at('<span class="lbl">도구 확인</span>'),
+      at('<span class="lbl">확인할 질문</span>'),
+      at('<div class="sanc-detail">'),
+      at("찾아본 말 2개"),
+      at("<summary>자세히</summary>"),
+    ];
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(textOf(elementsOf(body, '<p class="ask-line rv-tool">')[0])).toBe("도구 확인 인용 2줄이 파일에 그대로 있음 · '없다' 검색 2개를 다시 돌려 같음 · 반박 후 유지");
+    // 첫 인용은 펼치자마자 보인다: 파일:줄, 코드 한 줄, 커밋 고정 링크.
+    const first = elementsOf(body, '<ul class="cites">')[0];
+    expect(textOf(first)).toContain("backend/src/controllers/chatController.ts:135");
+    expect(textOf(first)).toContain("openai.responses.create");
+    expect(first).toContain("/blob/bbfb3ab14534907ff4618c563ff92a6354da97a1/backend/src/controllers/chatController.ts#L135");
+  });
+
+  it("검증 정보는 문장으로, 그 아래 회색 한 줄에 모델·비용(구성)·시간·CLI·판정 규칙", async () => {
+    const html = await casePage("jobtalk");
+    const verify = elementsOf(html, '<section class="box info rv-verify"')[0];
+    expect(textOf(elementsOf(verify, '<p class="rv-verify-say">')[0])).toBe(
+      "인용 69줄 모두 파일에서 글자 그대로 확인 · '없다' 검색 93개를 도구가 다시 돌림 → 88개 같음, 5개는 달라 '해당 없음'으로 쓰지 않음 · 반박 유지 25 · 뒤집음 1 · 반박 안 함 4",
+    );
+    expect(textOf(elementsOf(verify, '<p class="rv-verify-meta">')[0])).toBe(
+      `조사 claude-haiku-5-5 · 반박 claude-sonnet-5-5조사+반박 $1.20 (상한 $5)177초 (상한 1500초)CLI f4967db${SITE.cases.regate} · 규칙 CLI 2a24d94`,
+    );
+    expect(parseReview(sample())).not.toBeNull();
   });
 });
